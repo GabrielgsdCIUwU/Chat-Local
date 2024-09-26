@@ -1,0 +1,52 @@
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GSD-Login</title>
+  </head>
+  <body>
+    <form action="login" id="login">
+      <label for="nombre">Nombre:</label>
+      <input type="text" id="nombre" />
+      <label for="passwd">Password:</label>
+      <input type="text" id="passwd" />
+      <input type="button" value="login" id="button-login" />
+    </form>
+    <script>
+      document.getElementById("button-login").addEventListener("click", function () {
+        const nombre = document.getElementById("nombre").value;
+        const passwd = document.getElementById("passwd").value;
+
+        if (!nombre || !passwd) return alert("Debes poner usuario y contraseña!");
+
+
+        //TODO: guardar en la variable pc la direccion ip local del ordenador.
+        pc = "IP";
+        const data = {
+          name: nombre,
+          passwd: passwd,
+          location: pc,
+        };
+
+        fetch("/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        })
+          .then((response) => {
+            if (!response.ok) throw new Error("Ha ocurrido un error.");
+            return response.json();
+          })
+          .then(() => {
+            //TODO: añadir redirect para el chat
+          })
+          .catch((error) => {
+            console.error("Error", error);
+            alert("Ha ocurrido un error al hacer login, intentalo más tarde.");
+          });
+      });
+    </script>
+  </body>
+</html>
