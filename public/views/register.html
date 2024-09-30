@@ -9,8 +9,8 @@
       <label for="nombre">Nombre:</label>
       <input type="text" id="nombre" />
       <label for="passwd">Password:</label>
-      <input type="text" id="passwd" />
-      <input type="button" value="login" id="button-login" />
+      <input type="password" id="passwd" />
+      <input type="button" value="Registrarse" id="button-login" />
     </form>
     <script>
       document.getElementById("button-login").addEventListener("click", function () {
@@ -28,7 +28,7 @@
           location: pc,
         };
 
-        fetch("/login", {
+        fetch("/register", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -40,7 +40,8 @@
             return response.json();
           })
           .then(() => {
-            //TODO: añadir redirect para el chat
+            alert("Se ha creado con exito tu usuario:" + nombre)
+            
           })
           .catch((error) => {
             console.error("Error", error);
