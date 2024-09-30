@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "name": "Gabriel",
+    "passwd": "A"
+  },
+  {
+    "name": "Marcelo",
+    "passwd": "whatami"
+  },
+  {
+    "name": "bardia",
+    "passwd": "User69&"
+  }
+]
