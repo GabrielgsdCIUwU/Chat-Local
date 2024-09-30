@@ -19,13 +19,9 @@
 
         if (!nombre || !passwd) return alert("Debes poner usuario y contraseña!");
 
-
-        //TODO: guardar en la variable pc la direccion ip local del ordenador.
-        pc = "IP";
         const data = {
           name: nombre,
           passwd: passwd,
-          location: pc,
         };
 
         fetch("/register", {
@@ -36,16 +32,20 @@
           body: JSON.stringify(data),
         })
           .then((response) => {
-            if (response.status != 200) throw new Error("Ha ocurrido un error.");
+            if (!response.ok) {
+              return response.json().then((errorData) => {
+                throw new Error(errorData.message || "Ha ocurrido un error.")
+              })
+            }
             return response.json();
           })
           .then(() => {
-            alert("Se ha creado con exito tu usuario:" + nombre)
-            
+            alert("Usuario creado!");
+            window.location.href = "/login";
           })
           .catch((error) => {
-            console.error("Error", error);
-            alert("Ha ocurrido un error al hacer login, intentalo más tarde.");
+            console.error("Error", error.message);
+            alert(error.message || "Ha ocurrido un error al hacer login, intentalo más tarde.");
           });
       });
     </script>

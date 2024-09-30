@@ -36,15 +36,20 @@
           body: JSON.stringify(data),
         })
           .then((response) => {
-            if (response.status != 200) throw new Error("Ha ocurrido un error.");
+            if (!response.ok) {
+              return response.json().then((errorData) => {
+                throw new Error(errorData.message || "Ha ocurrido un error.")
+              })
+            }
             return response.json();
           })
           .then(() => {
-            //TODO: añadir redirect para el chat
+            alert("Login exitoso!");
+            window.location.href = "/msg";
           })
           .catch((error) => {
-            console.error("Error", error);
-            alert("Ha ocurrido un error al hacer login, intentalo más tarde.");
+            console.error("Error", error.message);
+            alert(error.message || "Ha ocurrido un error al hacer login, intentalo más tarde.");
           });
       });
     </script>
