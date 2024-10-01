@@ -9,7 +9,7 @@
       <label for="nombre">Nombre:</label>
       <input type="text" id="nombre" />
       <label for="passwd">Password:</label>
-      <input type="text" id="passwd" />
+      <input type="password" id="passwd" />
       <input type="button" value="login" id="button-login" />
     </form>
     <script>
@@ -20,12 +20,10 @@
         if (!nombre || !passwd) return alert("Debes poner usuario y contraseña!");
 
 
-        //TODO: guardar en la variable pc la direccion ip local del ordenador.
-        pc = "IP";
+        
         const data = {
           name: nombre,
           passwd: passwd,
-          location: pc,
         };
 
         fetch("/login", {

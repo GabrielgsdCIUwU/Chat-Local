@@ -3,3 +3,4 @@
 .env
 public/json/users.json
 sessions
+public/json/messages.json
