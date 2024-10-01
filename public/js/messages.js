@@ -39,10 +39,31 @@ clearbutton.addEventListener("click", () => {
 function loadmessages(msg, isHistory) {
     const mensajes = document.getElementById("mensajes");
     const gridItem = document.createElement("div");
-    const texto = document.createElement("p");
+    const userName = document.createElement("p");
+    const messageText = document.createElement("p");
 
-    texto.textContent = `${msg.user}: ${msg.message}`;
-    gridItem.appendChild(texto);
+    // Estilos con TailwindCSS
+    gridItem.classList.add("bg-white", "rounded-lg", "shadow-md", "p-4", "mb-3", "transition-all", "duration-300", "ease-in-out", "margin-bott");
+
+    if (isHistory) {
+        gridItem.classList.add("opacity-75");
+    } else {
+        gridItem.classList.add("opacity-100");
+    }
+
+    // Estilo del nombre del usuario
+    userName.classList.add("text-gray-900", "font-bold", "text-lg", "mb-1");
+    userName.textContent = msg.user;
+
+    // Estilo del mensaje
+    messageText.classList.add("text-gray-700", "text-sm");
+    messageText.textContent = msg.message;
+
+    gridItem.appendChild(userName);
+    gridItem.appendChild(messageText);
+
+    // Opcional: puedes mostrar la hora si es necesario
+    // gridItem.setAttribute('data-timestamp', msg.timestamp);
 
     if (isHistory) {
         const allMessages = Array.from(mensajes.children);
@@ -65,8 +86,6 @@ function loadmessages(msg, isHistory) {
     } else {
         mensajes.prepend(gridItem);
     }
-    // en caso de necesitar el tiempo en el mensaje:
-    // gridItem.setAttribute('data-timestamp', msg.timestamp);
 }
 
 function clearmsg() {
