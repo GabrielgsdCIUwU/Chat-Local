@@ -1,4 +1,4 @@
-import express from "express";
+import express, { json } from "express";
 import path from "path";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
@@ -7,6 +7,7 @@ import { Server as SocketIOServer } from "socket.io";
 import session from "express-session";
 import passport from "passport";
 import FileStoreFactory from "session-file-store";
+import fs from "fs";
 
 import webrouter from "./router/paginas.js";
 import admin from "./router/admin.js";
@@ -75,12 +76,61 @@ io.on("connection", (socket) => {
         const user = socket.request.session.user;
 
         socket.on("sendmsg", (msg) => {
-            io.emit("sendmsg", { user: user.name, message: msg });
+            const timestamp = new Date().getTime();
+            const messagesFilePath = path.join(__dirname, "./public/json/messages.json");
+
+            fs.readFile(messagesFilePath, "utf-8", (err, data) => {
+                if (err) {
+                    console.error("Error al leer el archivo de mensajes:", err);
+                    return socket.emit("error", { message: "Error al leer los mensajes" });
+                }
+
+                let messagesData = [];
+                try {
+                    messagesData = JSON.parse(data);
+                } catch (error) {
+                    console.error("Error al parsear los mensajes:", error);
+                    return socket.emit("error", { message: "Error al parsear los mensajes" });
+                }
+
+                const newMessage = { name: user.name, message: msg, timestamp };
+                messagesData.push(newMessage);
+
+                fs.writeFile(messagesFilePath, JSON.stringify(messagesData, null, 2), "utf-8", (err) => {
+                    if (err) {
+                        console.error("Error al escribir el mensaje en el archivo:", err);
+                        return socket.emit("error", { message: "Error al escribir el mensaje" });
+                    }
+
+                    io.emit("sendmsg", { user: user.name, message: msg });
+                });
+            });
         });
 
-        socket.on("disconnect", () => { });
+        socket.on("requestHistory", () => {
+            const messagesFilePath = path.join(__dirname, "./public/json/messages.json");
+            fs.readFile(messagesFilePath, "utf-8", (err, data) => {
+                if (err) {
+                    console.error("Error al leer el archivo de mensajes:", err);
+                    return socket.emit("error", { message: "Error al leer los mensajes" });
+                }
+                
+                let messagesData = [];
+                try {
+                    messagesData = JSON.parse(data);
+                } catch (error) {
+                    console.error("Error al parsear los mensajes:", error);
+                    return socket.emit("error", { message: "Error al parsear los mensajes" });
+                }
+
+                io.emit("messageHistory", messagesData);
+            })
+        });
+
+        socket.on("disconnect", () => {});
     });
 });
+
 
 server.listen(port, () => {
     console.log("Escuchando: " + port);
