@@ -13,12 +13,16 @@ import webrouter from "./router/paginas.js";
 import admin from "./router/admin.js";
 import chat from "./router/chat.js";
 
+
+
 const FileStore = FileStoreFactory(session);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const envFilePath = path.join(__dirname, ".env");
 dotenv.config({ path: envFilePath });
+
+const usersFilePath = path.join(__dirname, './public/json/users.json');
 
 const app = express();
 
@@ -65,6 +69,24 @@ io.use((socket, next) => {
         next();
     });
 });
+
+function getUserNames() {
+    return new Promise((resolve, reject) => {
+        fs.readFile(usersFilePath, 'utf-8', (err, data) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            try {
+                const users = JSON.parse(data);
+                const userNames = users.map(user => user.name);
+                resolve(userNames);
+            } catch (parseError) {
+                reject(parseError);
+            }
+        });
+    });
+}
 
 io.on("connection", (socket) => {
     isAuthenticated(socket, (err) => {
@@ -124,8 +146,12 @@ io.on("connection", (socket) => {
                 }
 
                 io.emit("messageHistory", messagesData);
-            })
+            });
         });
+
+        getUserNames().then( userNames => {
+            socket.emit("userNames", userNames);
+        })
 
         socket.on("disconnect", () => {});
     });
