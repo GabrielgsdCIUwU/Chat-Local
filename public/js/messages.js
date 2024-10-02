@@ -34,6 +34,11 @@ const inputMessage = document.getElementById("mensaje");
 let filteredUsers = [];
 let selectedUserIndex = -1;
 
+sendbutton.addEventListener("click", (event) => {
+    event.preventDefault();
+    sendMessage();
+});
+
 inputMessage.addEventListener("input", adjustHeight);
 
 inputMessage.addEventListener("input", function () {
@@ -71,11 +76,20 @@ function selectUser(userName) {
     inputMessage.value = inputMessage.value.slice(0, atIndex + 1) + userName + ' ';
     userList.classList.add("hidden");
     inputMessage.focus();
-    selectedUserIndex = -1; // Reinicia el índice al seleccionar un usuario
+    selectedUserIndex = -1;
 }
 
 inputMessage.addEventListener("keydown", (event) => {
     const atIndex = inputMessage.value.lastIndexOf('@');
+
+    if (event.key === 'Enter' && event.shiftKey) {
+        event.preventDefault();
+        const start = inputMessage.selectionStart;
+        const end = inputMessage.selectionEnd;
+        inputMessage.value = inputMessage.value.substring(0, start) + "\n" + inputMessage.value.substring(end);
+        inputMessage.selectionStart = inputMessage.selectionEnd = start + 1;
+        return;
+    }
 
     if (atIndex !== -1 && filteredUsers.length > 0) {
         if (event.key === 'ArrowDown') {
@@ -199,6 +213,7 @@ function loadmessages(msg, isHistory) {
 }
 
 function formatMessage(message) {
+    message = message.trim();
     message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     message = message.replace(/\*(.*?)\*/g, '<em>$1</em>');
     message = message.replace(/\|\| (.*?) \|\|/g, `<span class="hidden-message" style="cursor: pointer; color: blue;">[Mostrar]</span><span class="actual-message" style="display:none;">$1</span>`);
@@ -218,18 +233,23 @@ function formatMessage(message) {
         message += `<ol class="list-decimal pl-5">${listItems}</ol>`;
     }
 
+    if (!unorderedListItems && !orderedListItems) {
+        message = message.replace(/\n/g, '<br>');
+    }
     return message;
 }
+
 
 document.addEventListener("click", function (e) {
     if (e.target.classList.contains("hidden-message")) {
         const actualMessage = e.target.nextElementSibling;
-        if (actualMessage.style.display === "none") {
+        if (actualMessage && actualMessage.style.display === "none") {
             actualMessage.style.display = "inline";
             e.target.style.display = "none";
         }
     }
 });
+
 
 function clearmsg() {
     mensajes.innerHTML = "";

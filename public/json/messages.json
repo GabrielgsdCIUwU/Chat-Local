@@ -1,62 +1,7 @@
 [
   {
-    "name": "Gabriel",
-    "message": "test",
-    "timestamp": 1727781385848
-  },
-  {
-    "name": "Gabriel",
-    "message": "hola que tal",
-    "timestamp": 1727781396839
-  },
-  {
-    "name": "Gabriel",
-    "message": "test",
-    "timestamp": 1727781652641
-  },
-  {
-    "name": "Rubi",
-    "message": "el pibe menos esquizofrénico",
-    "timestamp": 1727781653050
-  },
-  {
-    "name": "Gabriel",
-    "message": "estoy haciendo pruebas porque quiero añadir historial",
-    "timestamp": 1727781669024
-  },
-  {
-    "name": "Gabriel",
-    "message": "y que los mensajes salgan primero en vez de al final",
-    "timestamp": 1727781684336
-  },
-  {
-    "name": "Rubi",
-    "message": "vaya peligro",
-    "timestamp": 1727781684970
-  },
-  {
-    "name": "Gabriel",
-    "message": "xD",
-    "timestamp": 1727781692072
-  },
-  {
-    "name": "Rubi",
-    "message": "sí, lo de tener que subir para escribir es lo unico que es medio incómodo la vd",
-    "timestamp": 1727781709521
-  },
-  {
-    "name": "Gabriel",
-    "message": "yap por eso",
-    "timestamp": 1727781737024
-  },
-  {
-    "name": "Gabriel",
-    "message": "Testing",
-    "timestamp": 1727782940032
-  },
-  {
     "name": "test",
-    "message": "chat testing",
-    "timestamp": 1727783009495
+    "message": "este mensaje \" contiene comillas\" aj \"",
+    "timestamp": 1727858931658
   }
 ]
