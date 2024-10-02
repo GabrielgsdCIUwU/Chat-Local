@@ -43,5 +43,15 @@
     "name": "test",
     "passwd": "test",
     "location": "::1"
+  },
+  {
+    "name": "Lx_Albert",
+    "passwd": "putoelquelolea",
+    "location": "::ffff:192.168.8.3"
+  },
+  {
+    "name": "Miguel",
+    "passwd": "Miguel",
+    "location": "::ffff:192.168.8.8"
   }
 ]
