@@ -53,5 +53,35 @@
     "name": "Miguel",
     "passwd": "Miguel",
     "location": "::ffff:192.168.8.8"
+  },
+  {
+    "name": "David_Gelpi",
+    "passwd": "Ont_tweuhif9",
+    "location": "::ffff:192.168.8.12"
+  },
+  {
+    "name": "Anuel",
+    "passwd": ".",
+    "location": "::ffff:192.168.8.26"
+  },
+  {
+    "name": "Emo",
+    "passwd": ".",
+    "location": "::ffff:192.168.8.26"
+  },
+  {
+    "name": "Gabriel_Diacich",
+    "passwd": "a",
+    "location": "::ffff:192.168.8.21"
+  },
+  {
+    "name": "El_Kanikas",
+    "passwd": ".",
+    "location": "::ffff:192.168.8.26"
+  },
+  {
+    "name": "Carlos",
+    "passwd": "abc123.",
+    "location": "::ffff:192.168.8.27"
   }
 ]
