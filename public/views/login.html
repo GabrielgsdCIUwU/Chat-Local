@@ -2,15 +2,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/public/css/css.css">
     <title>GSD-Login</title>
   </head>
   <body>
     <form action="login" id="login">
       <label for="nombre">Nombre:</label>
-      <input type="text" id="nombre" />
+      <input type="text" id="nombre" class="input_nombre"/>
       <label for="passwd">Password:</label>
-      <input type="password" id="passwd" />
-      <input type="button" value="login" id="button-login" />
+      <input type="password" id="passwd" class=" input_pass"/>
+      <input type="button" value="Login" id="button-login" class="button_login"/>
     </form>
     <script>
       document.getElementById("button-login").addEventListener("click", function () {
