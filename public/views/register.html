@@ -2,15 +2,36 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/public/css/css.css">
     <title>GSD-Login</title>
   </head>
   <body>
-    <form action="login" id="login">
-      <label for="nombre">Nombre:</label>
-      <input type="text" id="nombre" />
-      <label for="passwd">Password:</label>
-      <input type="password" id="passwd" />
-      <input type="button" value="Registrarse" id="button-login" />      
+    <form action="login" id="login" class="inicio">
+      <h1>Bienvenido a la página de registro</h1>
+      <table>
+        <tr>
+          <td class="reg">
+            <label for="nombre">Nombre:</label>
+          </td>
+          <td >
+            <input type="text" id="nombre" class="input_nombre"/>
+          </td>
+
+        </tr>
+        <tr>
+          <td class="reg">
+            <label for="passwd">Password:</label>
+          </td>
+          <td>
+            <input type="password" id="passwd" class=" input_pass"/>
+          </td>
+        </tr>
+        <tr class="botones">
+          <td class="td_button_register" colspan="2">
+            <input type="button" value="Registrarse" id="button-login" class="button_login_register"/>
+          </td>
+        </tr>
+      </table>
     </form>
     <script>
       document.getElementById("button-login").addEventListener("click", function () {

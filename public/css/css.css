@@ -1,6 +1,19 @@
 body{
-    background-color: rgb (75 85 99 );
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  background-color: #1F2937;
+  align-items: center;
+  box-sizing: border-box;
+  background-size: cover;  
+  background-position: center; 
 }
+.inicio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translateY(+100px);
+  }
 
 .input_nombre {
     border-radius: 7px;
@@ -11,10 +24,44 @@ body{
     font-family: Verdana, Arial, Helvetica, sans-serif;
 
 }
-.button_login{
+.td_button {
+    text-align: center;
+}
+.td_button_register{
+    text-align: center;
+}
+
+/* Opcional: ajustes para el botón */
+.button_login {
     border-radius: 7px;
-    background-color: lightblue;
-    margin-left: 4px;
+    background-color: transparent;
+    margin: 10px 0; /* Ajuste de margen para espacio vertical */
+    padding: 5px 10px; /* Ajuste de padding para un mejor tamaño */
     font-family: Verdana, Arial, Helvetica, sans-serif;
     font-weight: bold;
+    color: white;
+    width: 70px;
+    text-align: center;
 }
+.button_login_register {
+    border-radius: 7px;
+    background-color: transparent;
+    margin: 10px 0; /* Ajuste de margen para espacio vertical */
+    padding: 5px 10px; /* Ajuste de padding para un mejor tamaño */
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    color: white;
+    width: px;
+    text-align: center;
+}
+.reg {
+    font-weight: bold;
+    color:white
+  }
+  h1{
+    text-align: center;
+    color: white;
+  }
+  
+  
+  
