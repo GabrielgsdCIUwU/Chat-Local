@@ -1,1677 +1,897 @@
 [
   {
-    "name": "Emily",
-    "message": "Hola!!!",
-    "timestamp": 1727943552137
-  },
-  {
-    "name": "Luly",
-    "message": "Estais atendiendo? más os vale",
-    "timestamp": 1727943834216
-  },
-  {
-    "name": "Alex",
-    "message": "Buenas",
-    "timestamp": 1727943881840
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "Actualizad el SCRUM",
-    "timestamp": 1727943906193
-  },
-  {
-    "name": "Alex",
-    "message": "Soy un buen Scrum?",
-    "timestamp": 1727944172441
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "No 👌",
-    "timestamp": 1727944250449
-  },
-  {
-    "name": "Alex",
-    "message": "Que puedo hacer para ser un mejor Scrum?",
-    "timestamp": 1727944303108
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "Tienes subido al drive 34 videos de 4 minutos. Espabila",
-    "timestamp": 1727944376634
-  },
-  {
-    "name": "Alex",
-    "message": "Los vi toditos",
-    "timestamp": 1727944409926
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "Pues ponlo en azul 👿",
-    "timestamp": 1727944450874
-  },
-  {
-    "name": "Alex",
-    "message": "Ya está en azulito",
-    "timestamp": 1727944481462
-  },
-  {
-    "name": "Emily",
-    "message": "Ahora esto tiene mas forma",
-    "timestamp": 1727944508823
-  },
-  {
-    "name": "Alex",
-    "message": "Por cierto, hay una tarea de Sustenibilidad en  el aula virtual",
-    "timestamp": 1727944531039
-  },
-  {
-    "name": "Alex",
-    "message": "es de ayer?",
-    "timestamp": 1727944536295
-  },
-  {
-    "name": "Emily",
-    "message": "es para el 15 de outubro",
-    "timestamp": 1727944590494
-  },
-  {
-    "name": "Alex",
-    "message": "aah vale",
-    "timestamp": 1727944601435
-  },
-  {
-    "name": "Alex",
-    "message": "todo cuadra",
-    "timestamp": 1727944604846
-  },
-  {
-    "name": "Emily",
-    "message": "UD1 - El desarrollo sostenible en el mundo actual",
-    "timestamp": 1727944621463
-  },
-  {
-    "name": "Alex",
-    "message": "Gabri, te falta poner un botón de emojis",
-    "timestamp": 1727944623270
-  },
-  {
-    "name": "Rubi",
-    "message": "windows + .",
-    "timestamp": 1727944639889
-  },
-  {
-    "name": "Alex",
-    "message": "Se hace el miercoles siguiente entonces, supongo",
-    "timestamp": 1727944654687
-  },
-  {
-    "name": "Emily",
-    "message": "me gusta que el chat este al revés",
-    "timestamp": 1727944674112
-  },
-  {
-    "name": "Emily",
-    "message": "No es como los demás chats",
-    "timestamp": 1727944685583
-  },
-  {
-    "name": "Luly",
-    "message": "Se escucha?",
-    "timestamp": 1727944702907
-  },
-  {
-    "name": "Emily",
-    "message": "lo veis?",
-    "timestamp": 1727944727475
-  },
-  {
-    "name": "Emily",
-    "message": "ah no.. lo escuchais?",
-    "timestamp": 1727944740331
-  },
-  {
-    "name": "Alex",
-    "message": "Y si , está bien así, pero le quita un toque al lore",
-    "timestamp": 1727944776487
-  },
-  {
-    "name": "Mercedes",
-    "message": "Lo veis?",
-    "timestamp": 1727944813031
-  },
-  {
-    "name": "Emily",
-    "message": "deberían activar subtítulos",
-    "timestamp": 1727944832719
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "Están en la misma carpeta del drive que los videos",
-    "timestamp": 1727944853859
-  },
-  {
-    "name": "Emily",
-    "message": "jajaja",
-    "timestamp": 1727944866624
-  },
-  {
-    "name": "Alex",
-    "message": "con como se escucha, la IA no conseguiria hacer los subtitulos o los haría raros",
-    "timestamp": 1727944887552
-  },
-  {
-    "name": "Gabriel",
-    "message": "Hola!",
-    "timestamp": 1727944902460
-  },
-  {
-    "name": "Alex",
-    "message": "Gabrii, puedes añadir en la proxima actualización un boton de emojis?",
-    "timestamp": 1727944930040
-  },
-  {
-    "name": "Emily",
-    "message": "alex ya estas pidiendo mucho",
-    "timestamp": 1727944967105
-  },
-  {
-    "name": "Gabriel",
-    "message": "tienes el del propio windows con windows + .",
-    "timestamp": 1727944975780
-  },
-  {
-    "name": "Gabriel",
-    "message": "tambien puse que podais poner **negrita** o *cursiva* para darle mas info",
-    "timestamp": 1727945003173
-  },
-  {
-    "name": "Alex",
-    "message": "pero que pereza windows +",
-    "timestamp": 1727945009985
-  },
-  {
-    "name": "Alex",
-    "message": "estoy en LInux",
-    "timestamp": 1727945012289
+    "name": "Mark",
+    "message": ".",
+    "timestamp": 1728377221462
   },
   {
     "name": "Mark",
-    "message": "Aprende a ponerlos graciosos como Emily el otro día sólo con carácteres",
-    "timestamp": 1727945031167
-  },
-  {
-    "name": "Alex",
-    "message": "Emily, esque soy abaricioso (como se escriba)",
-    "timestamp": 1727945045193
-  },
-  {
-    "name": "Mark",
-    "message": "Si no os enteráis de algo siempre podéis preguntarme después, que aunque el audio venga comprimido yo me estoy enterando",
-    "timestamp": 1727945047094
-  },
-  {
-    "name": "Gabriel",
-    "message": "@Alex puedo intentarlo pero no se tendria que descargar por asi decir todos los emojis",
-    "timestamp": 1727945065389
-  },
-  {
-    "name": "Alex",
-    "message": "aah, no los coje del navegador o algo?",
-    "timestamp": 1727945082521
-  },
-  {
-    "name": "Gabriel",
-    "message": "chuloooooooooo Mark",
-    "timestamp": 1727945086341
-  },
-  {
-    "name": "Gabriel",
-    "message": "(no fui yo)",
-    "timestamp": 1727945094453
-  },
-  {
-    "name": "Emily",
-    "message": "@Mark eso solo lo sabe nuestra generación :D",
-    "timestamp": 1727945113553
+    "message": ":",
+    "timestamp": 1728377241067
   },
   {
     "name": "Bardia",
-    "message": "Hola mi gente",
-    "timestamp": 1727945126339
-  },
-  {
-    "name": "Luly",
-    "message": "Lenguaje de marcas NO ES SOLO PARA LAS WEBS",
-    "timestamp": 1727945128008
+    "message": "Hola",
+    "timestamp": 1728377244300
   },
   {
     "name": "Gabriel",
-    "message": "**automaticamente yo creando una web**",
-    "timestamp": 1727945144396
-  },
-  {
-    "name": "Emily",
-    "message": "*Cómo se coloca en negrita?*",
-    "timestamp": 1727945159193
-  },
-  {
-    "name": "Emily",
-    "message": "**así?**",
-    "timestamp": 1727945171377
-  },
-  {
-    "name": "Gabriel",
-    "message": "sip",
-    "timestamp": 1727945175644
-  },
-  {
-    "name": "Emily",
-    "message": "**ya aprendí**",
-    "timestamp": 1727945182025
-  },
-  {
-    "name": "Luly",
-    "message": "<strong>Negrita</strong>",
-    "timestamp": 1727945187494
-  },
-  {
-    "name": "Bardia",
-    "message": "hahahaha",
-    "timestamp": 1727945188627
-  },
-  {
-    "name": "Gabriel",
-    "message": "me encanta que tambien || jajaja le diste a un boton oculto!! ||",
-    "timestamp": 1727945204749
-  },
-  {
-    "name": "Luly",
-    "message": "< strong>Negrita< /strong>",
-    "timestamp": 1727945206838
-  },
-  {
-    "name": "Gabriel",
-    "message": "uh?",
-    "timestamp": 1727945216028
-  },
-  {
-    "name": "Emily",
-    "message": "ja ja ja ja",
-    "timestamp": 1727945242945
-  },
-  {
-    "name": "Luly",
-    "message": "Aprender a usar HTML<br><br> SI?",
-    "timestamp": 1727945251271
-  },
-  {
-    "name": "Gabriel",
-    "message": "No",
-    "timestamp": 1727945262341
-  },
-  {
-    "name": "Emily",
-    "message": "están interesados en hacer un erasmus?",
-    "timestamp": 1727945271242
-  },
-  {
-    "name": "Gabriel",
-    "message": "yo ya lo hice",
-    "timestamp": 1727945277821
-  },
-  {
-    "name": "Emily",
-    "message": "a donde fuiste?",
-    "timestamp": 1727945288930
-  },
-  {
-    "name": "Luly",
-    "message": "<h1>COMO QUE NO?</h1>",
-    "timestamp": 1727945290202
-  },
-  {
-    "name": "Emily",
-    "message": "en que año?",
-    "timestamp": 1727945294858
-  },
-  {
-    "name": "Gabriel",
-    "message": "fui el año pasado a praga",
-    "timestamp": 1727945304373
-  },
-  {
-    "name": "Emily",
-    "message": "como te fue?",
-    "timestamp": 1727945308026
-  },
-  {
-    "name": "Gabriel",
-    "message": "bastante bien la verdad y justamente encontre unos cuantos españoles jajaja",
-    "timestamp": 1727945323230
-  },
-  {
-    "name": "Emily",
-    "message": "me pasa e.e",
-    "timestamp": 1727945334211
-  },
-  {
-    "name": "Alex",
-    "message": "@Emily Si fuera a Japón, lo haria (y si supiera Japonés)",
-    "timestamp": 1727945335779
-  },
-  {
-    "name": "Emily",
-    "message": "bueno con venezolanos",
-    "timestamp": 1727945340771
-  },
-  {
-    "name": "Emily",
-    "message": "@alex",
-    "timestamp": 1727945360315
-  },
-  {
-    "name": "Gabriel",
-    "message": "si encontre tambien de  latam y justamente un compañero mio del trabajo era de canarias",
-    "timestamp": 1727945364805
-  },
-  {
-    "name": "Emily",
-    "message": "cúal es tu fascinación con Japón?",
-    "timestamp": 1727945388205
-  },
-  {
-    "name": "Gabriel",
-    "message": "spoiler: ||otaku||",
-    "timestamp": 1727945400183
-  },
-  {
-    "name": "Emily",
-    "message": "jajajaja",
-    "timestamp": 1727945404925
-  },
-  {
-    "name": "Gabriel",
-    "message": "hay que separar xD",
-    "timestamp": 1727945406559
-  },
-  {
-    "name": "Mark",
-    "message": "No haber leído sobre la unidad 731 japonesa ayuda a tenerle cariño al país, imagino",
-    "timestamp": 1727945410457
-  },
-  {
-    "name": "Gabriel",
-    "message": "|| otaku ||",
-    "timestamp": 1727945412407
-  },
-  {
-    "name": "Alex",
-    "message": "@EM",
-    "timestamp": 1727945424970
-  },
-  {
-    "name": "Rubi",
-    "message": "japón sociedad decadente",
-    "timestamp": 1727945432837
-  },
-  {
-    "name": "Mark",
-    "message": "2 bombas fueron pocas, digo yo",
-    "timestamp": 1727945436897
-  },
-  {
-    "name": "Emily",
-    "message": "@mark qué dice la unidad japonesa??",
-    "timestamp": 1727945446405
-  },
-  {
-    "name": "Gabriel",
-    "message": "@Mark  nah terrible",
-    "timestamp": 1727945450085
-  },
-  {
-    "name": "Mark",
-    "message": "Búscala en wikipedia, Unidad 731 y la violación de Manilla",
-    "timestamp": 1727945465118
-  },
-  {
-    "name": "Alex",
-    "message": "@Emily la cultura, lo bonito que es y las personas",
-    "timestamp": 1727945469747
-  },
-  {
-    "name": "Emily",
-    "message": "ay no",
-    "timestamp": 1727945479019
-  },
-  {
-    "name": "Emily",
-    "message": "@Alex qué sabes de la cultura japonesa?",
-    "timestamp": 1727945510555
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "se viene racistada",
-    "timestamp": 1727945532866
-  },
-  {
-    "name": "Mark",
-    "message": "Yo la tengo en el cargador",
-    "timestamp": 1727945547718
-  },
-  {
-    "name": "Mark",
-    "message": "pero como estoy atendiendo...",
-    "timestamp": 1727945551005
-  },
-  {
-    "name": "Emily",
-    "message": "racistada o xenofobia?",
-    "timestamp": 1727945556963
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "ambas. pocas son",
-    "timestamp": 1727945574772
-  },
-  {
-    "name": "Mark",
-    "message": "Hoy en día se usan intecambiablemente",
-    "timestamp": 1727945580464
-  },
-  {
-    "name": "Alex",
-    "message": "@Emily pues su religión, sus vestimentas, su comida, sus modales y etc.",
-    "timestamp": 1727945592525
-  },
-  {
-    "name": "Gabriel",
-    "message": "por cierto teneis alguna sugerencia para el chat? tampoco os paseis xD",
-    "timestamp": 1727945597054
-  },
-  {
-    "name": "Emily",
-    "message": "ya sé quien eres @David_Gelpi",
-    "timestamp": 1727945597661
-  },
-  {
-    "name": "Luly",
-    "message": "Gelpi, puedes dejar de molestar a los alumnos en mi clase?",
-    "timestamp": 1727945617726
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "a ver, me sorprendería que no te hubieses dado cuenta aún",
-    "timestamp": 1727945619196
-  },
-  {
-    "name": "Bardia",
-    "message": "Expulsar a Gabriel mi sugerencia",
-    "timestamp": 1727945625796
-  },
-  {
-    "name": "Emily",
-    "message": "@Alex aja pero define cómo es su religión, su vestimenta, su comida y sus modales",
-    "timestamp": 1727945632613
-  },
-  {
-    "name": "Gabriel",
-    "message": "vale **automaticamente se acaba el chat**",
-    "timestamp": 1727945642381
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "En cuanto Gabriel decida imponer su dictadura esto se acabó",
-    "timestamp": 1727945658378
-  },
-  {
-    "name": "Alex",
-    "message": "@Emily",
-    "timestamp": 1727945660401
-  },
-  {
-    "name": "Bardia",
-    "message": "@Emily cuando el profesor te pide que justifiques tu respuesta",
-    "timestamp": 1727945661058
-  },
-  {
-    "name": "Emily",
-    "message": "@",
-    "timestamp": 1727945664109
-  },
-  {
-    "name": "Alex",
-    "message": "que pereza describirlo por aquí xD",
-    "timestamp": 1727945672485
-  },
-  {
-    "name": "Gabriel",
-    "message": "@David_Gelpi  tengo el poder absoluto y me la pela",
-    "timestamp": 1727945677013
-  },
-  {
-    "name": "Emily",
-    "message": "@Gabriel que se puedan eliminar los mensajes, o editarlos como ws",
-    "timestamp": 1727945685956
-  },
-  {
-    "name": "Bardia",
-    "message": "Falsooooo, se que te pone",
-    "timestamp": 1727945687683
-  },
-  {
-    "name": "Gabriel",
-    "message": "de momento no",
-    "timestamp": 1727945707437
-  },
-  {
-    "name": "Bardia",
-    "message": "Ya ya ......",
-    "timestamp": 1727945715306
-  },
-  {
-    "name": "Emily",
-    "message": "@Gabriel creo en ti",
-    "timestamp": 1727945715796
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "@Gabriel pon gifs de risa",
-    "timestamp": 1727945724083
-  },
-  {
-    "name": "Emily",
-    "message": "<3",
-    "timestamp": 1727945724708
-  },
-  {
-    "name": "Bardia",
-    "message": "madre mia..... lo que hace uno para caerle bien al moderador",
-    "timestamp": 1727945738514
-  },
-  {
-    "name": "Alex",
-    "message": "Gabri, puedes poner que cuando le demos click a los nombres se mencione automaticamente",
-    "timestamp": 1727945766836
-  },
-  {
-    "name": "Gabriel",
-    "message": "@Emily  pero que se pueda editar solo el ultimo mensaje y editar el ultimo o tiene que ser alguno en especifico? si es el ultimo me es mas facil que uno que puede perderse en el tiempo",
-    "timestamp": 1727945769157
-  },
-  {
-    "name": "Gabriel",
-    "message": "@Alex estoy en ello ahora mismo solo puedes seleccionar con las flechas",
-    "timestamp": 1727945794701
-  },
-  {
-    "name": "Emily",
-    "message": "si obvio, el ultimo estaría bien",
-    "timestamp": 1727945800613
-  },
-  {
-    "name": "Gabriel",
-    "message": "vale",
-    "timestamp": 1727945805693
-  },
-  {
-    "name": "Alex",
-    "message": "Gelpi, no pude actualizar el Scrum",
-    "timestamp": 1727945831549
-  },
-  {
-    "name": "Rubi",
-    "message": "Hablando de editar mensajes. Borraste tú el ofertón que habia de 50€ gratis en el discord? @Gabriel Gratis es mi precio favorito.",
-    "timestamp": 1727945849484
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "@Alex Decepcinante.",
-    "timestamp": 1727945870027
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "ojalá editar eso",
-    "timestamp": 1727945885451
-  },
-  {
-    "name": "Gabriel",
-    "message": "@Rubi si quieres perder tu cuenta solo escanea el codigo qr que te enviare :>",
-    "timestamp": 1727945918621
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "👍",
-    "timestamp": 1727945931378
-  },
-  {
-    "name": "Rubi",
-    "message": "👍(ups)",
-    "timestamp": 1727945947178
-  },
-  {
-    "name": "Emily",
-    "message": "Epa, david cómo hiciste eso?",
-    "timestamp": 1727945952045
-  },
-  {
-    "name": "Emily",
-    "message": "ah! Rubi",
-    "timestamp": 1727945957645
-  },
-  {
-    "name": "Emily",
-    "message": "jajaa",
-    "timestamp": 1727945960325
-  },
-  {
-    "name": "Emily",
-    "message": "👍",
-    "timestamp": 1727945967005
-  },
-  {
-    "name": "Anuel",
-    "message": "Que pasó mi gente BRRR",
-    "timestamp": 1727945970573
-  },
-  {
-    "name": "Rubi",
-    "message": "@Emily hacer el qué?",
-    "timestamp": 1727945981802
-  },
-  {
-    "name": "Emily",
-    "message": "ya no da risa ¬¬",
-    "timestamp": 1727945993109
-  },
-  {
-    "name": "Emily",
-    "message": "la manito esta 👍",
-    "timestamp": 1727946000829
-  },
-  {
-    "name": "Gabriel",
-    "message": "chat goes brrrrrr",
-    "timestamp": 1727946002965
-  },
-  {
-    "name": "Rubi",
-    "message": "manten el boton de windows y pulsa \".\"",
-    "timestamp": 1727946014403
-  },
-  {
-    "name": "Emily",
-    "message": "😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂😂",
-    "timestamp": 1727946051351
-  },
-  {
-    "name": "Emily",
-    "message": "(^///^)(^///^)",
-    "timestamp": 1727946070440
-  },
-  {
-    "name": "Emily",
-    "message": "callateee!!!!",
-    "timestamp": 1727946077152
-  },
-  {
-    "name": "Gabriel",
-    "message": "<img src=\"/public/img/Gabri.png\" alt=\"gabri\">",
-    "timestamp": 1727946089560
-  },
-  {
-    "name": "Emily",
-    "message": "^_^",
-    "timestamp": 1727946090377
-  },
-  {
-    "name": "Emily",
-    "message": "@Gabriel siempre supe tu personaje del panel de david",
-    "timestamp": 1727946116515
-  },
-  {
-    "name": "Alex",
-    "message": "e(º¿º)e<br>Toy fuerte bby",
-    "timestamp": 1727946125927
-  },
-  {
-    "name": "Gabriel",
-    "message": "a ver es mi identidad digital",
-    "timestamp": 1727946128434
-  },
-  {
-    "name": "Gabriel",
-    "message": "llevo 1 año practicamente con ese avatar haciendolo asi que no podia desaprovechar el momento",
-    "timestamp": 1727946153594
-  },
-  {
-    "name": "Rubi",
-    "message": "es como batman",
-    "timestamp": 1727946162480
-  },
-  {
-    "name": "Emily",
-    "message": "por qué un solo colmillo?",
-    "timestamp": 1727946188670
-  },
-  {
-    "name": "Gabriel",
-    "message": "realmente tiene 2",
-    "timestamp": 1727946197965
-  },
-  {
-    "name": "Mark",
-    "message": "El otro se lo partieron por listo",
-    "timestamp": 1727946200543
-  },
-  {
-    "name": "Gabriel",
-    "message": "@Mark  culpa de @Bardia",
-    "timestamp": 1727946216421
-  },
-  {
-    "name": "Alex",
-    "message": "Porque a veces el audio del video parece una radio random de un mapa del Call Of Duty?",
-    "timestamp": 1727946225415
-  },
-  {
-    "name": "Gabriel",
-    "message": "@Alex viene la 3 oleada de zombies",
-    "timestamp": 1727946245221
-  },
-  {
-    "name": "Mark",
-    "message": "Tragar está bien pero morder no, hay que ir aprendiendo",
-    "timestamp": 1727946248404
-  },
-  {
-    "name": "Rubi",
-    "message": "falta que diga que se folla a mi madre y 100% es del cod @Alex",
-    "timestamp": 1727946267287
-  },
-  {
-    "name": "Alex",
-    "message": "\"Tragar está bien pero morder no, hay que ir aprendiendo\" Marcelo - 2024",
-    "timestamp": 1727946286756
-  },
-  {
-    "name": "Alex",
-    "message": "BOF, ZOMBIES",
-    "timestamp": 1727946310663
-  },
-  {
-    "name": "Alex",
-    "message": "Hay 3 dormidos en clase",
-    "timestamp": 1727946385647
-  },
-  {
-    "name": "Alex",
-    "message": "ahora 2",
-    "timestamp": 1727946392927
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "Dormidos por qué? si está siendo super dinámica",
-    "timestamp": 1727946409475
-  },
-  {
-    "name": "Alex",
-    "message": "ahora 1",
-    "timestamp": 1727946419024
-  },
-  {
-    "name": "Emily",
-    "message": "no veo a nadie dormido",
-    "timestamp": 1727946484239
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "Luly",
-    "timestamp": 1727946500082
-  },
-  {
-    "name": "Luly",
-    "message": "Dime",
-    "timestamp": 1727946524400
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "Puedes quitar ya el video pocho este?",
-    "timestamp": 1727946539603
-  },
-  {
-    "name": "Luly",
-    "message": "@Emily Arianna creo",
-    "timestamp": 1727946544236
-  },
-  {
-    "name": "Luly",
-    "message": "No, no puedo, me obliga la Xunta",
-    "timestamp": 1727946558923
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "Maldito Perro Snche",
-    "timestamp": 1727946570975
-  },
-  {
-    "name": "Alex",
-    "message": "Pero y esa música de juego de terror? me recuerda a los juegos .exe",
-    "timestamp": 1727946588492
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "puta madre pense que metieron al Gelpi en serio",
-    "timestamp": 1727946609176
-  },
-  {
-    "name": "Gabriel",
-    "message": "TE IMAGINAS? JAJAJAJAJA",
-    "timestamp": 1727946623571
-  },
-  {
-    "name": "Mark",
-    "message": "Ese aún está en el quinto sueño",
-    "timestamp": 1727946635677
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "me dormi pinches 3 veces wn, ese señor parece sacado de un shitpost alemán",
-    "timestamp": 1727946647912
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "Obvio que me metieron. Como en el discord. 😐",
-    "timestamp": 1727946650913
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "hostia",
-    "timestamp": 1727946659040
-  },
-  {
-    "name": "Lx_Albert",
-    "message": ":fear:",
-    "timestamp": 1727946662640
-  },
-  {
-    "name": "Emily",
-    "message": "@Lx_Albert quién eres?",
-    "timestamp": 1727946672717
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "Alberto :v",
-    "timestamp": 1727946683534
-  },
-  {
-    "name": "Mark",
-    "message": "El furro",
-    "timestamp": 1727946686347
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "te estoy viendo",
-    "timestamp": 1727946689734
-  },
-  {
-    "name": "Gabriel",
-    "message": "cuidado te vigila",
-    "timestamp": 1727946716881
-  },
-  {
-    "name": "Mark",
-    "message": "Tiene que haber una fobia que consista en que un furry te esté observando desde algún lugar del mundo en algún momento dado",
-    "timestamp": 1727946737310
-  },
-  {
-    "name": "Mark",
-    "message": "Y yo la tengo.",
-    "timestamp": 1727946741758
-  },
-  {
-    "name": "Rubi",
-    "message": "🤨",
-    "timestamp": 1727946760362
-  },
-  {
-    "name": "Gabriel",
-    "message": "-.-",
-    "timestamp": 1727946763867
-  },
-  {
-    "name": "Rubi",
-    "message": "hay gente para todo",
-    "timestamp": 1727946765274
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "@Mark  se llama \"te puedo dejar una pipe bomb en el buzon\"",
-    "timestamp": 1727946773032
-  },
-  {
-    "name": "Gabriel",
-    "message": "@Rubi si.",
-    "timestamp": 1727946773548
-  },
-  {
-    "name": "Mark",
-    "message": "El retorno del Unabomber",
-    "timestamp": 1727946782966
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "JAJAJAJAJ",
-    "timestamp": 1727946796744
-  },
-  {
-    "name": "Mark",
-    "message": "Una verdadera catástrofe, la revolución industrial",
-    "timestamp": 1727946799292
-  },
-  {
-    "name": "Luly",
-    "message": "<h1>Gelpi,que dejes en paz a mis alumnos ostia</h1>",
-    "timestamp": 1727946801662
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "un segundo como le subiste el temaño",
-    "timestamp": 1727946825294
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "*Pues quita el vídeo*",
-    "timestamp": 1727946828504
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "y quien es @Mark",
-    "timestamp": 1727946834190
-  },
-  {
-    "name": "Mark",
-    "message": "Marcelo",
-    "timestamp": 1727946838708
-  },
-  {
-    "name": "Gabriel",
-    "message": "propiedades html compatibles @Lx_Albert",
-    "timestamp": 1727946838914
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "concho",
-    "timestamp": 1727946862538
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "WHAT THE HELL",
-    "timestamp": 1727946873586
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "JAJAJAJAJA",
-    "timestamp": 1727946875650
-  },
-  {
-    "name": "Mark",
-    "message": "Antes el tío soltó un \"bullshit\" clarísimo",
-    "timestamp": 1727946889481
-  },
-  {
-    "name": "Mark",
-    "message": "No se corta un pelo",
-    "timestamp": 1727946891480
-  },
-  {
-    "name": "Gabriel",
-    "message": "tal cual",
-    "timestamp": 1727946897207
-  },
-  {
-    "name": "Luly",
-    "message": "Como que como? no atiendes a mis clases o que? <h1>LOS LENGUAJES DE MARCAS NO SON SOLO PARA LAS PÁGINAS WEB</h1>",
-    "timestamp": 1727946898779
-  },
-  {
-    "name": "Rubi",
-    "message": "yo en cuanto empezó a hablar de buses dejé de escucharlo",
-    "timestamp": 1727946913125
-  },
-  {
-    "name": "Mark",
-    "message": "Alex, ¿eres un elemento simple o compuesto?",
-    "timestamp": 1727946916193
-  },
-  {
-    "name": "Alex",
-    "message": "Soy un atributo erroneo...",
-    "timestamp": 1727946942373
-  },
-  {
-    "name": "Rubi",
-    "message": "#deep",
-    "timestamp": 1727946951910
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "yo soy un compuesto de Oro, Titanio, Azufre y Tantalo",
-    "timestamp": 1727946967644
-  },
-  {
-    "name": "Mark",
-    "message": "¿Te asignaron el que no tocaba al nacer?",
-    "timestamp": 1727946987602
-  },
-  {
-    "name": "Mark",
-    "message": "¿Quieres que te mandemos a un psicólogo?",
-    "timestamp": 1727946995163
-  },
-  {
-    "name": "Mark",
-    "message": "Igual te cortan las kanikas",
-    "timestamp": 1727946999970
+    "message": "Hola",
+    "timestamp": 1728377256401
   },
   {
     "name": "Emo",
-    "message": "Me quiero morir",
-    "timestamp": 1727947002439
-  },
-  {
-    "name": "Rubi",
-    "message": "Alguien intercambia cromosomas repes?",
-    "timestamp": 1727947009080
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "pongan musica de Askin Alexandria y traigan Gilletes",
-    "timestamp": 1727947021172
+    "message": "hola",
+    "timestamp": 1728377306358
   },
   {
     "name": "Alex",
-    "message": "dejar mis Kanikas",
-    "timestamp": 1727947028607
-  },
-  {
-    "name": "Alex",
-    "message": "Quien me intercambia comosomas?",
-    "timestamp": 1727947067698
-  },
-  {
-    "name": "Luly",
-    "message": "<h1>ATENDER AL VIDEO OSTIA</h1>",
-    "timestamp": 1727947104490
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "que me ofreces",
-    "timestamp": 1727947107087
-  },
-  {
-    "name": "Alex",
-    "message": "Yo tengo xy , no tengo repe",
-    "timestamp": 1727947150362
-  },
-  {
-    "name": "Emily",
-    "message": "iremos a tomar cafecito?",
-    "timestamp": 1727947165202
-  },
-  {
-    "name": "Emo",
-    "message": "Yo me quiero morir",
-    "timestamp": 1727947175394
-  },
-  {
-    "name": "Emily",
-    "message": "no quiero llegar tarde :c",
-    "timestamp": 1727947177202
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "Ojala me sobrara 1,20",
-    "timestamp": 1727947187407
-  },
-  {
-    "name": "Bardia",
-    "message": "Si, yo voy",
-    "timestamp": 1727947192728
-  },
-  {
-    "name": "Bardia",
-    "message": "en cuanto toque yo me largo",
-    "timestamp": 1727947198007
-  },
-  {
-    "name": "Bardia",
-    "message": "me da igual que este la mierda esta",
-    "timestamp": 1727947203055
-  },
-  {
-    "name": "Gabriel",
-    "message": "nobody ask no one care",
-    "timestamp": 1727947216645
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "bodrio de clase, duerman a ese viejo zzzzzz",
-    "timestamp": 1727947220543
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "Nos vamos 10 minutos antes, que no hubo descanso",
-    "timestamp": 1727947224235
+    "message": "hola*",
+    "timestamp": 1728377344087
   },
   {
     "name": "Mark",
-    "message": "Gelpi, preparándonos para ser buenos trabajadores españoles",
-    "timestamp": 1727947245960
+    "message": ".",
+    "timestamp": 1728377349580
+  },
+  {
+    "name": "Bardia",
+    "message": "tengoooooooooo hambreeeeeeeeeeeeeeeeeeeeee",
+    "timestamp": 1728377364011
+  },
+  {
+    "name": "Gabriel",
+    "message": "pues come",
+    "timestamp": 1728377370913
   },
   {
     "name": "Alex",
-    "message": "Soleis ir en los recreos a tomar cafe",
-    "timestamp": 1727947267412
+    "message": "cmete a gabriel",
+    "timestamp": 1728377373863
   },
   {
-    "name": "Alex",
+    "name": "Bardia",
+    "message": "Gabri, te vas a quedar en fol",
+    "timestamp": 1728377437735
+  },
+  {
+    "name": "Bardia",
     "message": "?",
-    "timestamp": 1727947271388
-  },
-  {
-    "name": "Bardia",
-    "message": "Si",
-    "timestamp": 1727947354794
-  },
-  {
-    "name": "Bardia",
-    "message": "pero si vienes te toca pagar a todos",
-    "timestamp": 1727947364291
-  },
-  {
-    "name": "Alex",
-    "message": "Os parecerá bonito,no?",
-    "timestamp": 1727947375732
-  },
-  {
-    "name": "Gabriel",
-    "message": "@Alex pues es atun",
-    "timestamp": 1727947384764
-  },
-  {
-    "name": "Rubi",
-    "message": "@gabri",
-    "timestamp": 1727947393171
-  },
-  {
-    "name": "Rubi",
-    "message": "fuck",
-    "timestamp": 1727947397979
-  },
-  {
-    "name": "Bardia",
-    "message": "La vida es dura, espabila",
-    "timestamp": 1727947399079
-  },
-  {
-    "name": "Gabriel",
-    "message": "xD",
-    "timestamp": 1727947404525
-  },
-  {
-    "name": "Emily",
-    "message": "muchachos",
-    "timestamp": 1727947405259
-  },
-  {
-    "name": "Gabriel",
-    "message": "ustedes escucharon el rempalago?",
-    "timestamp": 1727947417237
-  },
-  {
-    "name": "Alex",
-    "message": "Que soy atun dices? @Gabriel",
-    "timestamp": 1727947417445
-  },
-  {
-    "name": "Emily",
-    "message": "si luly ve el chat, nos puede regañar cierto?",
-    "timestamp": 1727947423651
+    "timestamp": 1728377447751
   },
   {
     "name": "Lx_Albert",
-    "message": "relampago?",
-    "timestamp": 1727947424542
+    "message": "wenas",
+    "timestamp": 1728377473581
+  },
+  {
+    "name": "Gabriel",
+    "message": "bon dia",
+    "timestamp": 1728377500793
+  },
+  {
+    "name": "Xián",
+    "message": "Buenas",
+    "timestamp": 1728377526801
+  },
+  {
+    "name": "Carlos",
+    "message": "boas",
+    "timestamp": 1728377551553
+  },
+  {
+    "name": "Alex",
+    "message": "Quien es Carlos?",
+    "timestamp": 1728377683005
+  },
+  {
+    "name": "Alex",
+    "message": "Ya no está la araña y ahora está el bicho cienpies casero ese",
+    "timestamp": 1728377746958
   },
   {
     "name": "Mark",
-    "message": "\"*Rempalago*\"",
-    "timestamp": 1727947426703
+    "message": "EL DE LOS HUEVOS LARGOS",
+    "timestamp": 1728378131829
+  },
+  {
+    "name": "Mark",
+    "message": "(Lo siento)",
+    "timestamp": 1728378140861
   },
   {
     "name": "Gabriel",
-    "message": "@Alex maybe",
-    "timestamp": 1727947427956
+    "message": "lmao",
+    "timestamp": 1728378157739
   },
   {
-    "name": "Lx_Albert",
-    "message": "@Emily muy probablemente",
-    "timestamp": 1727947439127
+    "name": "Alex",
+    "message": "la profe no grita",
+    "timestamp": 1728378280863
+  },
+  {
+    "name": "Alex",
+    "message": "nos grita*",
+    "timestamp": 1728378286703
+  },
+  {
+    "name": "Gabriel",
+    "message": "@Alex pa que aprendas",
+    "timestamp": 1728378411250
+  },
+  {
+    "name": "Mark",
+    "message": "Para que le escuches",
+    "timestamp": 1728378417716
+  },
+  {
+    "name": "Mark",
+    "message": "Y le veas",
+    "timestamp": 1728378421828
+  },
+  {
+    "name": "Mark",
+    "message": "Y te fijes",
+    "timestamp": 1728378423539
+  },
+  {
+    "name": "Alex",
+    "message": "pero esque nos chilla T-T",
+    "timestamp": 1728378455315
+  },
+  {
+    "name": "Gabriel",
+    "message": "generacion de cristal...",
+    "timestamp": 1728378465273
+  },
+  {
+    "name": "Mark",
+    "message": "Mucha voz para poca señora",
+    "timestamp": 1728378471904
   },
   {
     "name": "Alex",
     "message": "todos iguales",
-    "timestamp": 1727947445413
-  },
-  {
-    "name": "Rubi",
-    "message": "@Emily Luly ya está en el chat",
-    "timestamp": 1727947446084
-  },
-  {
-    "name": "Luly",
-    "message": "SI",
-    "timestamp": 1727947453301
-  },
-  {
-    "name": "Emily",
-    "message": "creo que ya lo vio",
-    "timestamp": 1727947456772
-  },
-  {
-    "name": "Lx_Albert",
-    "message": ":SKULL:",
-    "timestamp": 1727947460694
-  },
-  {
-    "name": "Gabriel",
-    "message": "es obvio",
-    "timestamp": 1727947461934
-  },
-  {
-    "name": "Gabriel",
-    "message": "pero como no dice nada pues no molestamos :)",
-    "timestamp": 1727947474742
-  },
-  {
-    "name": "Emily",
-    "message": "nos anda cazando",
-    "timestamp": 1727947484693
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "I wanna kms rn",
-    "timestamp": 1727947494703
-  },
-  {
-    "name": "Alex",
-    "message": "Aunque mientras de clase yo creo que si nos dirá algo",
-    "timestamp": 1727947499776
-  },
-  {
-    "name": "Gabriel",
-    "message": "esta claro",
-    "timestamp": 1727947510592
-  },
-  {
-    "name": "Gabriel",
-    "message": "igualmente seguro que cambio la imagen y el nombre para disimular",
-    "timestamp": 1727947529176
-  },
-  {
-    "name": "Mercedes",
-    "message": "Lo veis?",
-    "timestamp": 1727947540552
+    "timestamp": 1728378475383
   },
   {
     "name": "Mark",
-    "message": "¿Lo entendéis?",
-    "timestamp": 1727947552930
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "PERO QUIEN SE ANDA HACIENDO MULTIS CON LOS NOMBRES DE LOS PROFES JAJAJAJAJA",
-    "timestamp": 1727947559882
+    "message": "t@d@s igu@les****",
+    "timestamp": 1728378515360
   },
   {
     "name": "Mark",
-    "message": "Es Alex",
-    "timestamp": 1727947567085
+    "message": "Hay que ser inclusivo",
+    "timestamp": 1728378519440
   },
   {
     "name": "Mark",
-    "message": "\"El Kanikas\"",
-    "timestamp": 1727947572268
+    "message": "Y",
+    "timestamp": 1728378522368
+  },
+  {
+    "name": "Mark",
+    "message": "Y",
+    "timestamp": 1728378523192
+  },
+  {
+    "name": "Mark",
+    "message": "Y sostenible.",
+    "timestamp": 1728378526488
   },
   {
     "name": "Alex",
-    "message": "Que va",
-    "timestamp": 1727947583689
+    "message": "pero porque la profe nos habla enfadada, le caemos mal ? :c",
+    "timestamp": 1728378592834
   },
   {
     "name": "Gabriel",
-    "message": "Mercedes: venga lo vais a leer. **empieza a leer mercedes**",
-    "timestamp": 1727947588834
-  },
-  {
-    "name": "Lx_Albert",
-    "message": ":v lit",
-    "timestamp": 1727947598138
-  },
-  {
-    "name": "El_Kanikas",
-    "message": "que pasa conmigo?",
-    "timestamp": 1727947617130
-  },
-  {
-    "name": "Alex",
-    "message": "Ostia",
-    "timestamp": 1727947623845
-  },
-  {
-    "name": "Gabriel",
-    "message": "super interesante: **zzz**",
-    "timestamp": 1727947654877
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "** \"Es interesante escuchar inglés**: *procede a pasar olimpicamente del viejito*",
-    "timestamp": 1727947698188
-  },
-  {
-    "name": "Alex",
-    "message": "A las 12 hay más charla?",
-    "timestamp": 1727947701237
-  },
-  {
-    "name": "Rubi",
-    "message": "a mi no me van a raptar más tiempo",
-    "timestamp": 1727947703923
-  },
-  {
-    "name": "Gabriel",
-    "message": "lo bueno es que no damos clase",
-    "timestamp": 1727947714165
+    "message": "claro hay que cuidar a las plantas, mira la de bbdd usando cientos de papeles",
+    "timestamp": 1728378600769
   },
   {
     "name": "Mark",
-    "message": "Creo que hasta las 2 hay chapa",
-    "timestamp": 1727947715575
+    "message": "Así va el Amazonas",
+    "timestamp": 1728378614859
   },
   {
     "name": "Mark",
-    "message": "algo escuché al entrar antes",
-    "timestamp": 1727947718871
+    "message": "normal que simios como tú escapen",
+    "timestamp": 1728378623955
+  },
+  {
+    "name": "Gabriel",
+    "message": "@Alex parece que esta quemada de otros ciclos",
+    "timestamp": 1728378630313
   },
   {
     "name": "Alex",
-    "message": "Espero que Gelpi al menos ponga proxy",
-    "timestamp": 1727947719950
+    "message": "sisi...pero muy duro eh",
+    "timestamp": 1728378651472
   },
   {
-    "name": "Lx_Albert",
-    "message": "la puta que me **PARIOOOOOOOOOOOOOOOOOO**",
-    "timestamp": 1727947732860
-  },
-  {
-    "name": "Gabriel_Diacich",
-    "message": "dfgjdfgj",
-    "timestamp": 1727947751872
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "se prendio esta mierda",
-    "timestamp": 1727949836106
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "tenemos cátering",
-    "timestamp": 1727949894560
-  },
-  {
-    "name": "Emily",
-    "message": "y cómo sabemos quien está aquí ahora?",
-    "timestamp": 1727949994390
+    "name": "Gabriel",
+    "message": "@Alex terrible inhalemos",
+    "timestamp": 1728378740080
   },
   {
     "name": "Bardia",
-    "message": "No se sabe",
-    "timestamp": 1727950045746
+    "message": "zzzzzzzzz",
+    "timestamp": 1728378760400
+  },
+  {
+    "name": "Mark",
+    "message": "Cualquier momento le tira el rotulador a alguien",
+    "timestamp": 1728378802172
+  },
+  {
+    "name": "Gabriel",
+    "message": "@Mark cuando le dices que lenguajes de marcas es html",
+    "timestamp": 1728378823857
   },
   {
     "name": "Alex",
-    "message": "A programar señores",
-    "timestamp": 1727950116263
+    "message": "@Mark a alguien random que la mire mal",
+    "timestamp": 1728378846588
+  },
+  {
+    "name": "Alex",
+    "message": "Yo si tengo una duda...mejor no preguntarle..eh...",
+    "timestamp": 1728378886733
+  },
+  {
+    "name": "Mark",
+    "message": "Le va a dar a Bardia o Emily, que los tiene enfilados",
+    "timestamp": 1728378907252
+  },
+  {
+    "name": "Rubi",
+    "message": "es muy expresiva, pero no se la ve mala gente",
+    "timestamp": 1728378913990
+  },
+  {
+    "name": "Alex",
+    "message": "Expresiva...pero parece que se enfada explicando",
+    "timestamp": 1728378944332
+  },
+  {
+    "name": "Rubi",
+    "message": "no me extraña la verdad. las locuras que habrá visto",
+    "timestamp": 1728379042735
   },
   {
     "name": "Emily",
-    "message": "con el @",
-    "timestamp": 1727950354217
-  },
-  {
-    "name": "Alex",
-    "message": "A programar @señores",
-    "timestamp": 1727950384017
-  },
-  {
-    "name": "Rubi",
-    "message": "esta guapa la diapositiva",
-    "timestamp": 1727950469042
-  },
-  {
-    "name": "Alex",
-    "message": "va fluido el video",
-    "timestamp": 1727950501577
-  },
-  {
-    "name": "Mark",
-    "message": "Tremenda presentación powerpoint",
-    "timestamp": 1727950947430
-  },
-  {
-    "name": "Emo",
-    "message": "Ya ves",
-    "timestamp": 1727952299870
-  },
-  {
-    "name": "El_Kanikas",
-    "message": "Lo veis?",
-    "timestamp": 1727952304918
-  },
-  {
-    "name": "David_Gelpi",
-    "message": "Me duermo",
-    "timestamp": 1727952372588
+    "message": "Parece poseída",
+    "timestamp": 1728379086444
   },
   {
     "name": "Emily",
-    "message": "Qué difícil se me hace entender los videos",
-    "timestamp": 1727953448095
-  },
-  {
-    "name": "Emily",
-    "message": "No he avanzado nada ;c",
-    "timestamp": 1727953473607
+    "message": "Qué dijo  que va a preguntar en el examen?",
+    "timestamp": 1728379102938
   },
   {
     "name": "Rubi",
-    "message": "yo soy incapaz de concentrarme con la confe esta",
-    "timestamp": 1727953520982
-  },
-  {
-    "name": "Emily",
-    "message": "sii también",
-    "timestamp": 1727953557232
-  },
-  {
-    "name": "Alex",
-    "message": "a mi tambien me cuesta",
-    "timestamp": 1727953669674
-  },
-  {
-    "name": "Emily",
-    "message": "@Gabriel el siguiente reto es activarle una notificación",
-    "timestamp": 1727953677239
-  },
-  {
-    "name": "Rubi",
-    "message": "para que nos pillen antes. si si si 👌",
-    "timestamp": 1727953701814
-  },
-  {
-    "name": "Alex",
-    "message": "sisisi, renta",
-    "timestamp": 1727953716538
-  },
-  {
-    "name": "Rubi",
-    "message": "vaya temón, no?",
-    "timestamp": 1727953739589
-  },
-  {
-    "name": "Alex",
-    "message": "Pero y ese remix de \"música al maximo volumen\"",
-    "timestamp": 1727953740226
+    "message": "sí.",
+    "timestamp": 1728379119644
   },
   {
     "name": "Mark",
-    "message": "@Emily lo de los videos es lo que aparece en el libro de la rata pero distendido",
-    "timestamp": 1727953839433
+    "message": "Con lo blanca que es te la encuentras por la calle de madrugada e igual la confundes con un fantasma",
+    "timestamp": 1728379124129
+  },
+  {
+    "name": "Alex",
+    "message": "@Emily dijo que los atributos tienen que tener lo de las comillas a lado",
+    "timestamp": 1728379154379
   },
   {
     "name": "Mark",
-    "message": "a mi me matan con lo lento que explica el tipo",
-    "timestamp": 1727953848489
+    "message": "El que cuando un atributo tiene =\"\" con su mismo nombre no hacía falta escribirlo",
+    "timestamp": 1728379159953
+  },
+  {
+    "name": "Alex",
+    "message": "no me acuerdo de como se llamaba",
+    "timestamp": 1728379160619
+  },
+  {
+    "name": "Alex",
+    "message": "pero @Mark dijo que era obligatorio para nosotros pq en xml es obligatorio poner lo,no?",
+    "timestamp": 1728379206031
+  },
+  {
+    "name": "casal",
+    "message": "si",
+    "timestamp": 1728379213486
   },
   {
     "name": "Mark",
-    "message": "pero en lo que a claridad de la explicación respecta, no están mal",
-    "timestamp": 1727953879929
+    "message": "Correcto",
+    "timestamp": 1728379215943
+  },
+  {
+    "name": "Alex",
+    "message": "pues yo no se lo voy a poner, pq soy un malote",
+    "timestamp": 1728379233585
+  },
+  {
+    "name": "Mark",
+    "message": "Será una norma impuesta por XML",
+    "timestamp": 1728379242584
+  },
+  {
+    "name": "Alex",
+    "message": "SIp, en html no lo poniamos.",
+    "timestamp": 1728379272162
+  },
+  {
+    "name": "Alex",
+    "message": "entonces en los formularios cuando es requerido, habrá que pone required=\"required\" supongo",
+    "timestamp": 1728379312789
+  },
+  {
+    "name": "Mark",
+    "message": "Si required accepta más de un valor, sí",
+    "timestamp": 1728379331107
+  },
+  {
+    "name": "Alex",
+    "message": "pero segun ella en xml siempre tiene que poner eso,no?",
+    "timestamp": 1728379349894
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "supuestamente",
+    "timestamp": 1728379356383
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "es mas estricto",
+    "timestamp": 1728379364295
+  },
+  {
+    "name": "Alex",
+    "message": "pero bueno, se verá en las tareas",
+    "timestamp": 1728379376548
+  },
+  {
+    "name": "casal",
+    "message": "who the fuck is @Mark ?",
+    "timestamp": 1728379427601
+  },
+  {
+    "name": "Alex",
+    "message": "Marcelino",
+    "timestamp": 1728379443989
+  },
+  {
+    "name": "casal",
+    "message": "supuse",
+    "timestamp": 1728379449074
+  },
+  {
+    "name": "Alex",
+    "message": "(Manuela Marcelo) para que cuente como mujer",
+    "timestamp": 1728379472981
+  },
+  {
+    "name": "Mark",
+    "message": "Hoy me identifico como boya de buceo",
+    "timestamp": 1728379550892
+  },
+  {
+    "name": "Alex",
+    "message": "bof",
+    "timestamp": 1728379573705
+  },
+  {
+    "name": "Alex",
+    "message": "que mania con quitarnos recreo",
+    "timestamp": 1728379792112
+  },
+  {
+    "name": "Alex",
+    "message": "Oye, le dije a Marcelo, pero de paso os digo a los demas, que yo y Bardia a veces vamos al japonés a comer ramen y así, si a alguien le gusta ese tipo de comidas y se anima algún día es bienvenido.",
+    "timestamp": 1728381939327
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "@Alex mi apellido es pobreza, no se como te lo explico",
+    "timestamp": 1728381959159
+  },
+  {
+    "name": "Gabriel",
+    "message": "@Lx_Albert Dineron't",
+    "timestamp": 1728381980444
+  },
+  {
+    "name": "Alex",
+    "message": "a ver, por 12 euros comeis",
+    "timestamp": 1728382026419
+  },
+  {
+    "name": "Alex",
+    "message": "y bebeis",
+    "timestamp": 1728382035763
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "no llego ni a los 5",
+    "timestamp": 1728382043819
+  },
+  {
+    "name": "Alex",
+    "message": "pues una tapa de gyozas creo que te llega",
+    "timestamp": 1728382069235
+  },
+  {
+    "name": "Alex",
+    "message": "...es para UNIR recursos...",
+    "timestamp": 1728382157765
+  },
+  {
+    "name": "Alex",
+    "message": "...es para <h1>UNIR</h1> recursos...",
+    "timestamp": 1728382175685
   },
   {
     "name": "Rubi",
-    "message": "velocidad a x2 👍",
-    "timestamp": 1727953880422
+    "message": "@Gabriel @Bardia os quedáis con nosotros 😈",
+    "timestamp": 1728382256065
+  },
+  {
+    "name": "Bardia",
+    "message": "para nuestra desgracia si",
+    "timestamp": 1728382276443
+  },
+  {
+    "name": "Gabriel",
+    "message": "@Rubi es triste porque estaba interesante todo",
+    "timestamp": 1728382281688
   },
   {
     "name": "Mark",
-    "message": "x2 no me es suficiente",
-    "timestamp": 1727953885505
+    "message": "No escaparán vivos",
+    "timestamp": 1728382285148
+  },
+  {
+    "name": "Bardia",
+    "message": "tengo que venir a ingles y a sosmierda",
+    "timestamp": 1728382299081
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "que chucha es una gyoza",
+    "timestamp": 1728382302378
+  },
+  {
+    "name": "Rubi",
+    "message": "pero aplazan en general las confes o qué?",
+    "timestamp": 1728382308303
   },
   {
     "name": "Mark",
-    "message": "voy saltando, así siempre tengo 1 o 2 tokens en cada tarea de videos.",
-    "timestamp": 1727953901488
+    "message": "Sosténme esta",
+    "timestamp": 1728382309701
   },
   {
-    "name": "Alex",
-    "message": "porque parece un audio ruso super petado",
-    "timestamp": 1727953972465
+    "name": "Bardia",
+    "message": "saco lupa",
+    "timestamp": 1728382318737
   },
   {
-    "name": "Rubi",
-    "message": "vaya racistada",
-    "timestamp": 1727953992749
+    "name": "Lx_Albert",
+    "message": "diablo Markus",
+    "timestamp": 1728382318745
+  },
+  {
+    "name": "Gabriel",
+    "message": "@Bardia  🔎",
+    "timestamp": 1728382337152
   },
   {
     "name": "Mark",
-    "message": "Cheeky breeky iv damke",
-    "timestamp": 1727954028065
+    "message": "¿Para que no se te escape nada? Qué preparado",
+    "timestamp": 1728382342268
+  },
+  {
+    "name": "Bardia",
+    "message": "para que no se me escape nada tengo la boca",
+    "timestamp": 1728382357745
   },
   {
     "name": "Mark",
-    "message": "Cuidado que las piedras no empiecen a hablar en cirílico",
-    "timestamp": 1727954042776
+    "message": "Traete un mapa y topografías ya que está",
+    "timestamp": 1728382360636
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "se te sale lo 👁️🫦👁️",
+    "timestamp": 1728382397305
   },
   {
     "name": "Alex",
-    "message": "no dejo de crear un bucle help",
-    "timestamp": 1727954237028
+    "message": "Entonces un survival irl?",
+    "timestamp": 1728382421325
+  },
+  {
+    "name": "Mark",
+    "message": "Es un vividor, claramente",
+    "timestamp": 1728382423740
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "(me dio cringe escribir esa madre, alguien me regala un balazo?)",
+    "timestamp": 1728382428640
+  },
+  {
+    "name": "Mark",
+    "message": "Inyección de plomo en camino",
+    "timestamp": 1728382438532
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "yay",
+    "timestamp": 1728382442488
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "plomoterapia",
+    "timestamp": 1728382445745
+  },
+  {
+    "name": "Gabriel",
+    "message": "<img src=\"/public/img/Gabri.png\" width=\"50px\">",
+    "timestamp": 1728382456632
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "URI nario :v",
+    "timestamp": 1728382466771
+  },
+  {
+    "name": "Mark",
+    "message": "La mejor cura para el retraso",
+    "timestamp": 1728382467912
+  },
+  {
+    "name": "Mark",
+    "message": ":",
+    "timestamp": 1728382473094
+  },
+  {
+    "name": "Mark",
+    "message": "ejecución sumaria.",
+    "timestamp": 1728382476438
   },
   {
     "name": "Alex",
-    "message": "def countdown(seconds):\n    i = 1\n    print(seconds)\n    while i != 0:\n        print(i)\n        i = seconds = 1\n    print(\"Blastoff!\")\n\n    \n        def countdown(seconds):\n    i = 1\n    print(seconds)\n    while i != 0:\n        print(i)\n        i = seconds = 1\n    print(\"Blastoff!\")",
-    "timestamp": 1727955061505
+    "message": "Oreoreoreoreoreoreoreoreoreoreoreoreoreo",
+    "timestamp": 1728382487359
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "ese japo de las oreos :v",
+    "timestamp": 1728382499787
   },
   {
     "name": "Alex",
-    "message": "uiy se envió x2",
-    "timestamp": 1727955073641
+    "message": "JSJSJJSJS sisi",
+    "timestamp": 1728382506752
+  },
+  {
+    "name": "Mark",
+    "message": "Cuidado no se le salga un Stand del culo",
+    "timestamp": 1728382527269
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "jojoreferencia",
+    "timestamp": 1728382534634
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "muerte de diavolo",
+    "timestamp": 1728382538609
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "empalamiento annal",
+    "timestamp": 1728382541513
   },
   {
     "name": "Alex",
-    "message": "def countdown(seconds):\n    i = 1\n    print(seconds)\n    while i != 0:\n        print(i)\n        i = seconds = 1\n    print(\"Blastoff!\")",
-    "timestamp": 1727955076809
+    "message": "Stand es un mod menú de gta",
+    "timestamp": 1728382545191
+  },
+  {
+    "name": "Mark",
+    "message": "De eso veíamos hablando antes Berto",
+    "timestamp": 1728382568901
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "GTAV online murio cuando agregaron esas pinches motos",
+    "timestamp": 1728382579417
+  },
+  {
+    "name": "Alex",
+    "message": "el lunar el el culo...",
+    "timestamp": 1728382581943
+  },
+  {
+    "name": "Alex",
+    "message": "en*",
+    "timestamp": 1728382586519
+  },
+  {
+    "name": "Mark",
+    "message": "El lunar del culo...",
+    "timestamp": 1728382587197
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "la profe me recuerda a Bernadette de Big Bang Theory",
+    "timestamp": 1728382624046
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "solo con menopausia",
+    "timestamp": 1728382642830
+  },
+  {
+    "name": "Lx_Albert",
+    "message": ":v",
+    "timestamp": 1728382644078
+  },
+  {
+    "name": "Mark",
+    "message": "Y sin nariz judía",
+    "timestamp": 1728382660251
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "JAJAJAJAJAJAJAJJA",
+    "timestamp": 1728382666694
+  },
+  {
+    "name": "Mark",
+    "message": "Esta mujer tiene más sangre aria que todo el Ejército de África",
+    "timestamp": 1728382713982
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "🗿",
+    "timestamp": 1728382738337
+  },
+  {
+    "name": "Alex",
+    "message": "La conversación se nos va de las manos...",
+    "timestamp": 1728382740408
+  },
+  {
+    "name": "Gabriel",
+    "message": "si",
+    "timestamp": 1728382744130
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "el baneo se acerca",
+    "timestamp": 1728382763961
+  },
+  {
+    "name": "Alex",
+    "message": "alguien sabe como van las convalidaciones?",
+    "timestamp": 1728382773008
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "@Mark convalidaba y @Rubi tambien creo",
+    "timestamp": 1728382805279
+  },
+  {
+    "name": "Alex",
+    "message": "y yo,pero digo cuanto queda",
+    "timestamp": 1728382821583
+  },
+  {
+    "name": "Alex",
+    "message": "para que lo hagan",
+    "timestamp": 1728382825887
   },
   {
     "name": "Rubi",
-    "message": "lo que quieres hacer supongo que es esto\n\nseconds = 3\ndef countdown(seconds):\n    while seconds != 0:\n        print(seconds)\n        seconds -= 1\n    else:\n        print(\"Blastoff!\")\n\ncountdown(seconds)",
-    "timestamp": 1727955717494
+    "message": "no convalido na",
+    "timestamp": 1728382827054
   },
   {
-    "name": "Alex",
-    "message": "si ya se",
-    "timestamp": 1727955907901
-  },
-  {
-    "name": "Alex",
-    "message": "Bardia que es eso? que psaó?",
-    "timestamp": 1727955916893
+    "name": "Lx_Albert",
+    "message": "a poco no convalidabas ingles",
+    "timestamp": 1728382833622
   },
   {
     "name": "Rubi",
-    "message": "Aviso de deportación",
-    "timestamp": 1727955952542
+    "message": "me lo tanqueo todo",
+    "timestamp": 1728382837734
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "🗿🗿🗿🗿🗿🗿",
+    "timestamp": 1728382847270
+  },
+  {
+    "name": "Mark",
+    "message": "🍷🗿👌",
+    "timestamp": 1728382910860
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "como usuario de discord desde 2015 declaro que esta clase de URLs me es inherente",
+    "timestamp": 1728382956599
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "no estoy orgulloso de lo de discord",
+    "timestamp": 1728382982599
+  },
+  {
+    "name": "Mark",
+    "message": "Convalidar hasta finales de octubre o inicios de noviembre olvídate, pero nos van borrando faltas por lo que he visto",
+    "timestamp": 1728382995093
   },
   {
     "name": "Alex",
-    "message": "y eso que es?",
-    "timestamp": 1727955967485
-  },
-  {
-    "name": "Rubi",
-    "message": "que le echan por fin de españa",
-    "timestamp": 1727955976478
+    "message": "como que no? osea per dan igual,no?",
+    "timestamp": 1728383033046
   },
   {
     "name": "Alex",
+    "message": "loque me da miedo es que no convaliden al final y bye bye evaliación continua",
+    "timestamp": 1728383050750
+  },
+  {
+    "name": "Mark",
+    "message": "Si te las convalidan dan completamente igual, sí",
+    "timestamp": 1728383054491
+  },
+  {
+    "name": "Mark",
+    "message": "Si no...",
+    "timestamp": 1728383060147
+  },
+  {
+    "name": "Alex",
+    "message": "...",
+    "timestamp": 1728383064229
+  },
+  {
+    "name": "Mark",
+    "message": "Pues te puede pasar eso",
+    "timestamp": 1728383065594
+  },
+  {
+    "name": "Alex",
+    "message": "esque si el profe pusiera internet...pero ni eso, osea se la suda nuestra situación",
+    "timestamp": 1728383094471
+  },
+  {
+    "name": "Mark",
+    "message": "¿Pero tú te quedas a FOL, animal?",
+    "timestamp": 1728383110419
+  },
+  {
+    "name": "Alex",
+    "message": "tenía pensado si para avanzar en programación y así,pero el profe no me quiere poner internet ni aunque convalide",
+    "timestamp": 1728383154730
+  },
+  {
+    "name": "Mark",
+    "message": "Vete a casa y avanza ahí",
+    "timestamp": 1728383166768
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "qeu pesadez honestamente",
+    "timestamp": 1728383171007
+  },
+  {
+    "name": "Alex",
+    "message": "el tema esque tardo como hora y algo en llegar  a casa, entonces aprovechaba para avazar aquí",
+    "timestamp": 1728383193003
+  },
+  {
+    "name": "Alex",
+    "message": "pero en fin, sin internet nada",
+    "timestamp": 1728383198506
+  },
+  {
+    "name": "Mark",
+    "message": "Esa hora y algo la vas a perder del día igual",
+    "timestamp": 1728383204942
+  },
+  {
+    "name": "Mark",
+    "message": "¿En qué zona vivías? No vaya a ser que me pille a mi de camino",
+    "timestamp": 1728383226070
+  },
+  {
+    "name": "Alex",
+    "message": "yap, pero al llegar a casa de clase, lo que menos me apetece es ponerme a trabajar la verdad",
+    "timestamp": 1728383230746
+  },
+  {
+    "name": "Alex",
+    "message": "en Cangas, pero voy al muelle para pillar el barco, por eso voy en el C3",
+    "timestamp": 1728383252091
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "245684256542865428654865428652486",
+    "timestamp": 1728383339131
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "no wn",
+    "timestamp": 1728383347347
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "srry",
+    "timestamp": 1728383349498
+  },
+  {
+    "name": "Alex",
+    "message": "en un sitio DESCENDEN<h1>TE</h1>",
+    "timestamp": 1728383472931
+  },
+  {
+    "name": "Gabriel",
+    "message": "y si es?:\n<h6>ascendente?</h6>",
+    "timestamp": 1728383578442
+  },
+  {
+    "name": "Alex",
+    "message": "shi",
+    "timestamp": 1728383606125
+  },
+  {
+    "name": "Gabriel",
+    "message": "😪",
+    "timestamp": 1728383656188
+  },
+  {
+    "name": "Bardia",
+    "message": "ADIOS",
+    "timestamp": 1728384563158
+  },
+  {
+    "name": "Alex",
+    "message": "ADIOOS AMORES MUAK MUAK",
+    "timestamp": 1728384573208
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "que onda recien me despierto",
+    "timestamp": 1728385058815
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "me dormi en lmdm",
+    "timestamp": 1728385067791
+  },
+  {
+    "name": "Lx_Albert",
+    "message": "(lo que coño signifique)",
+    "timestamp": 1728385087147
+  },
+  {
+    "name": "Gabriel",
     "message": "xD",
-    "timestamp": 1727955983877
+    "timestamp": 1728385251722
   },
   {
-    "name": "Emily",
-    "message": "@Carlos quien eres?",
-    "timestamp": 1727956831029
-  },
-  {
-    "name": "Carlos",
-    "message": "@Emily pues Carlos jajaj, ando detras de Alex y Gabriel",
-    "timestamp": 1727956926876
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "me duele la puta cabeza",
-    "timestamp": 1727957117363
-  },
-  {
-    "name": "Alex",
-    "message": "y a mi",
-    "timestamp": 1727957709397
-  },
-  {
-    "name": "Alex",
-    "message": "Pero piensa Albert, solo puede haber una letra impar, pq si hay 2 impares, ya no puede ser",
-    "timestamp": 1727957754830
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "el problema en si es ubicar esas letra, pero creo que ya me hago a la idea",
-    "timestamp": 1727957902306
-  },
-  {
-    "name": "Lx_Albert",
-    "message": "**creo**",
-    "timestamp": 1727957907463
+    "name": "Gabriel",
+    "message": "bon dia",
+    "timestamp": 1728385253450
   }
 ]

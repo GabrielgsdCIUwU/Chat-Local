@@ -5,3 +5,7 @@
 - añadir emojis al chat
 
 - multer añadir imagenes para subir
+
+- responder como en discord
+- añadir mensajes no leidos (off foccus)
+- maybe añadir noti en el logo (num)
