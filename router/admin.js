@@ -18,7 +18,6 @@ router.post("/login", (req, res) => {
     if (!location) {
         return res.status(400).json({ message: "Se ha producido un error al obtener tu IP local" });
     }
-
     const usersFilePath = path.join(__dirname, "../public/json/users.json");
 
     fs.readFile(usersFilePath, "utf-8", (err, data) => {
