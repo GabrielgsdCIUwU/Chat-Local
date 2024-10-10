@@ -72,25 +72,14 @@ io.use((socket, next) => {
         next();
     });
 });
-
+const connectedUsers = new Set();
 function getUserNames() {
-    return new Promise((resolve, reject) => {
-        fs.readFile(usersFilePath, 'utf-8', (err, data) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            try {
-                const users = JSON.parse(data);
-                const userNames = users.map(user => user.name);
-                resolve(userNames);
-            } catch (parseError) {
-                reject(parseError);
-            }
-        });
+    return new Promise((resolve) => {
+        const userNames = Array.from(connectedUsers);
+        resolve(userNames);
     });
 }
-const connectedUsers = new Set();
+
 io.on("connection", (socket) => {
     isAuthenticated(socket, (err) => {
         if (err) {

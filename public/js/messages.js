@@ -1,8 +1,28 @@
 const socket = io();
 mensajes.innerHTML = "";
 
-socket.on("connect", () => {
+let emojiCache = [];
+
+async function fetchAndCacheEmojis() {
+    if (sessionStorage.getItem("emojiCache")) {
+        emojiCache = JSON.parse(sessionStorage.getItem("emojiCache"));
+        console.log("Emojis loaded from cache");
+    } else {
+        try {
+            const response = await fetch("/img/emoji");
+            emojiCache = await response.json();
+            sessionStorage.setItem("emojiCache", JSON.stringify(emojiCache));
+            console.log("Emojis downloaded and cached");
+            window.location.reload();
+        } catch (error) {
+            console.error("Error al cargar los emojis:", error);
+        }
+    }
+}
+
+socket.on("connect", async () => {
     socket.emit("requestHistory");
+    await fetchAndCacheEmojis();
 });
 
 socket.on("messageHistory", async (history) => {
@@ -169,7 +189,12 @@ async function loadmessages(msg, isHistory) {
     userName.textContent = msg.user;
 
     messageText.classList.add("text-white", "text-lg");
-    messageText.innerHTML = msg.message;
+    if (isHistory) {
+        messageText.innerHTML = msg.message
+    } else {
+        messageText.innerHTML = await formatMessage(msg.message);
+    }
+
 
     const mentionRegex = /@([^\s]+)/g;
     messageText.innerHTML = messageText.innerHTML.replace(mentionRegex, (match, username) => {
@@ -189,13 +214,13 @@ async function loadmessages(msg, isHistory) {
     gridItem.appendChild(userName);
     gridItem.appendChild(messageText);
     gridItem.appendChild(timeText);
-    
+
     if (isHistory) {
-       mensajes.appendChild(gridItem);
+        mensajes.appendChild(gridItem);
     } else {
         mensajes.prepend(gridItem);
     }
-    gridItem.dataset.timestamp = msg.timestamp; 
+    gridItem.dataset.timestamp = msg.timestamp;
 }
 
 async function formatMessage(message) {
@@ -204,10 +229,8 @@ async function formatMessage(message) {
     message = message.replace(/\*(.*?)\*/g, '<em>$1</em>');
     message = message.replace(/\|\| (.*?) \|\|/g, `<span class="hidden-message" style="cursor: pointer; color: blue;">[Mostrar]</span><span class="actual-message" style="display:none;">$1</span>`);
     if (message.includes(':')) {
-        const response = await fetch("/img/emoji");
-        const data = await response.json();
 
-        data.forEach((emoji) => {
+        emojiCache.forEach((emoji) => {
             const emojiUrl = emoji.url;
             const emojiName = emoji.name;
             const emojiPattern = new RegExp(`:${emojiName}:`, 'g');
@@ -256,7 +279,7 @@ async function formatAllMessages() {
     for (const messageText of messageTexts) {
         const originalMessage = messageText.textContent;
         const formattedMessage = await formatMessage(originalMessage);
-        messageText.innerHTML = formattedMessage; 
+        messageText.innerHTML = formattedMessage;
     }
 }
 
