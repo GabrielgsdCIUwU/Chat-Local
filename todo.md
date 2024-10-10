@@ -3,7 +3,6 @@
 
 - clicable los botones de las menciones
 
-- multer añadir imagenes para subir
 
 - MDs como discord
 - responder como en discord
