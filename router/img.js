@@ -37,9 +37,8 @@ const upload = multer({ storage: storageEmoji });
 
 router.get("/emoji", isAuthenticated, (req, res) => {
     const images = [];
-    const imgDir = path.join(__dirname, "../resources/");
+    const imgDir = path.join(__dirname, "../resources/emojis");
     
-
     const files = fs.readdirSync(imgDir);
     files.forEach((file) => {
         const fullPath = path.join(imgDir, file);
@@ -73,3 +72,4 @@ router.post(
     }
 );
 
+export default router;
