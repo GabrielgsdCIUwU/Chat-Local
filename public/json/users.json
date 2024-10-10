@@ -90,11 +90,6 @@
     "location": "::ffff:192.168.8.26"
   },
   {
-    "name": "Un Topo",
-    "passwd": "eltopo",
-    "location": "::ffff:192.168.8.3"
-  },
-  {
     "name": "breixo",
     "passwd": "canelo14",
     "location": "::ffff:192.168.8.14"
@@ -143,5 +138,30 @@
     "name": "El Malote",
     "passwd": ".",
     "location": "::ffff:192.168.8.26"
+  },
+  {
+    "name": "Derek",
+    "passwd": "nose",
+    "location": "::ffff:192.168.8.20"
+  },
+  {
+    "name": "xurxo",
+    "passwd": "123456789b",
+    "location": "::ffff:192.168.8.15"
+  },
+  {
+    "name": "alex",
+    "passwd": "Itxaso0200!",
+    "location": "::ffff:192.168.8.10"
+  },
+  {
+    "name": "El mynor ",
+    "passwd": "eaeaeaea",
+    "location": "::ffff:192.168.8.5"
+  },
+  {
+    "name": "bruh",
+    "passwd": "javilol5",
+    "location": "::ffff:192.168.8.25"
   }
 ]

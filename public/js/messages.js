@@ -218,6 +218,22 @@ function formatMessage(message) {
     message = message.replace(/\*(.*?)\*/g, '<em>$1</em>');
     message = message.replace(/\|\| (.*?) \|\|/g, `<span class="hidden-message" style="cursor: pointer; color: blue;">[Mostrar]</span><span class="actual-message" style="display:none;">$1</span>`);
 
+    if (String(message).includes(':') ) {
+        fetch("/img/emoji")
+    .then((response) => response.json())
+    .then((data) => {
+        data.forEach((emoji) => {
+            const emojiUrl = emoji.url;
+            const emojiName = emoji.name;
+
+            if (String(message).includes(`:${emojiName}:`)) {
+                console.log(String(message).search(`:${emojiName}:`))
+                console.log(message[String(message).search(`:${emojiName}:`) ])
+            }
+        });
+    });
+    }
+
     const unorderedListItems = message.match(/^- (.*?)(?=\n|$)/gm);
     const orderedListItems = message.match(/^\d+\.\s(.*?)(?=\n|$)/gm);
 
