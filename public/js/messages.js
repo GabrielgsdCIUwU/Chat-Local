@@ -5,12 +5,13 @@ socket.on("connect", () => {
     socket.emit("requestHistory");
 });
 
-socket.on("messageHistory", (history) => {
+socket.on("messageHistory", async (history) => {
     history.sort((a, b) => b.timestamp - a.timestamp);
-    history.forEach(msg => {
+    for (const msg of history) {
         msg.user = msg.user || msg.name;
-        loadmessages(msg, true);
-    });
+        await loadmessages(msg, true);
+    }
+    await formatAllMessages();
 });
 
 let userNames = [];
@@ -153,7 +154,7 @@ function adjustHeight() {
     }
 }
 
-function loadmessages(msg, isHistory) {
+async function loadmessages(msg, isHistory) {
     const mensajes = document.getElementById("mensajes");
     const gridItem = document.createElement("div");
     const userName = document.createElement("p");
@@ -168,7 +169,7 @@ function loadmessages(msg, isHistory) {
     userName.textContent = msg.user;
 
     messageText.classList.add("text-white", "text-lg");
-    messageText.innerHTML = formatMessage(msg.message);
+    messageText.innerHTML = msg.message;
 
     const mentionRegex = /@([^\s]+)/g;
     messageText.innerHTML = messageText.innerHTML.replace(mentionRegex, (match, username) => {
@@ -188,50 +189,32 @@ function loadmessages(msg, isHistory) {
     gridItem.appendChild(userName);
     gridItem.appendChild(messageText);
     gridItem.appendChild(timeText);
-
+    
     if (isHistory) {
-        const allMessages = Array.from(mensajes.children);
-        let inserted = false;
-
-        for (let i = 0; i < allMessages.length; i++) {
-            const currentMsg = allMessages[i];
-            const currentTimestamp = parseInt(currentMsg.dataset.timestamp, 10);
-
-            if (msg.timestamp > currentTimestamp) {
-                mensajes.insertBefore(gridItem, currentMsg);
-                inserted = true;
-                break;
-            }
-        }
-
-        if (!inserted) {
-            mensajes.appendChild(gridItem);
-        }
+       mensajes.appendChild(gridItem);
     } else {
         mensajes.prepend(gridItem);
     }
+    gridItem.dataset.timestamp = msg.timestamp; 
 }
 
-function formatMessage(message) {
+async function formatMessage(message) {
     message = message.trim();
     message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     message = message.replace(/\*(.*?)\*/g, '<em>$1</em>');
     message = message.replace(/\|\| (.*?) \|\|/g, `<span class="hidden-message" style="cursor: pointer; color: blue;">[Mostrar]</span><span class="actual-message" style="display:none;">$1</span>`);
+    if (message.includes(':')) {
+        const response = await fetch("/img/emoji");
+        const data = await response.json();
 
-    if (String(message).includes(':') ) {
-        fetch("/img/emoji")
-    .then((response) => response.json())
-    .then((data) => {
         data.forEach((emoji) => {
             const emojiUrl = emoji.url;
             const emojiName = emoji.name;
-
-            if (String(message).includes(`:${emojiName}:`)) {
-                console.log(String(message).search(`:${emojiName}:`))
-                console.log(message[String(message).search(`:${emojiName}:`) ])
+            const emojiPattern = new RegExp(`:${emojiName}:`, 'g');
+            if (emojiPattern.test(message)) {
+                message = message.replace(emojiPattern, `<img src="${emojiUrl}" width="50px" style="display: inline;">`);
             }
         });
-    });
     }
 
     const unorderedListItems = message.match(/^- (.*?)(?=\n|$)/gm);
@@ -266,6 +249,16 @@ document.addEventListener("click", function (e) {
     }
 });
 
+async function formatAllMessages() {
+    const mensajes = document.getElementById("mensajes");
+    const messageTexts = mensajes.querySelectorAll(".text-lg");
+
+    for (const messageText of messageTexts) {
+        const originalMessage = messageText.textContent;
+        const formattedMessage = await formatMessage(originalMessage);
+        messageText.innerHTML = formattedMessage; 
+    }
+}
 
 function clearmsg() {
     mensajes.innerHTML = "";

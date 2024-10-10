@@ -45,7 +45,7 @@ router.get("/emoji", isAuthenticated, (req, res) => {
         
         const dimensions = sizeOf(fullPath);
         images.push({
-            name: path.basename(file),
+            name: path.parse(file).name,
             width: dimensions.width,
             height: dimensions.height,
             url: `/resources/emojis/${file}`
@@ -53,8 +53,6 @@ router.get("/emoji", isAuthenticated, (req, res) => {
     });
 
     res.json(images)
-
-    //TODO: añadir en msg un boton que luego muestre una lista de todos los emojis ya cargados
 });
 
 router.post(
