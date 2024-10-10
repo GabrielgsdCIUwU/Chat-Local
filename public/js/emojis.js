@@ -35,14 +35,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     .then((response) => response.json())
     .then((data) => {
         data.forEach((emoji) => {
-            console.log(emoji)
             const img = document.createElement('img');
                 img.src = emoji.url;
                 img.alt = emoji.name;
                 img.classList.add('w-10', 'h-10', 'cursor-pointer', 'hover:opacity-75'); // Clases Tailwind para estilo
                 img.addEventListener('click', () => {
                     // Aquí puedes añadir lógica para insertar el emoji en el mensaje
-                    console.log(`Seleccionado emoji: ${emoji.name}`);
                     const messageValue = inputMessage.value;
                     inputMessage.value = messageValue + ' ' + `:${emoji.name}:`
                 });

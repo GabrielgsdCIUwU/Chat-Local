@@ -90,7 +90,7 @@ function getUserNames() {
         });
     });
 }
-
+const connectedUsers = new Set();
 io.on("connection", (socket) => {
     isAuthenticated(socket, (err) => {
         if (err) {
@@ -99,6 +99,7 @@ io.on("connection", (socket) => {
         }
 
         const user = socket.request.session.user;
+        connectedUsers.add(user.name)
 
         socket.on("sendmsg", (msg) => {
             const timestamp = new Date().getTime();
@@ -148,7 +149,7 @@ io.on("connection", (socket) => {
                     return socket.emit("error", { message: "Error al parsear los mensajes" });
                 }
 
-                io.emit("messageHistory", messagesData);
+                socket.emit("messageHistory", messagesData);
             });
         });
 
@@ -156,7 +157,9 @@ io.on("connection", (socket) => {
             socket.emit("userNames", userNames);
         })
 
-        socket.on("disconnect", () => {});
+        socket.on("disconnect", () => {
+            connectedUsers.delete(user.name)
+        });
     });
 });
 
