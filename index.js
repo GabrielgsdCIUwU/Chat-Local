@@ -12,6 +12,7 @@ import fs from "fs";
 import webrouter from "./router/paginas.js";
 import admin from "./router/admin.js";
 import chat from "./router/chat.js";
+import img from "./router/img.js"
 
 
 
@@ -49,10 +50,12 @@ const server = http.createServer(app);
 const io = new SocketIOServer(server);
 
 app.use("/public", express.static(path.join(__dirname, "public")));
+app.use("/resources", express.static(path.join(__dirname, "resources")));
 
 app.use(webrouter);
 app.use(admin);
 app.use(chat);
+app.use("/img", img)
 
 function isAuthenticated(socket, next) {
     if (socket.request.session && socket.request.session.user) {

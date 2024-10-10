@@ -12,11 +12,11 @@ router.get("/", (req, res) => {
 });
 
 router.get("/login", (req, res) => {
-    res.sendFile(path.join(__dirname, "../public/views/login.html"))
+    res.sendFile(path.join(__dirname, "../public/views/login.html"));
 });
 
 router.get("/register", (req, res) => {
-    res.sendFile(path.join(__dirname, "../public/views/register.html"))
-})
+    res.sendFile(path.join(__dirname, "../public/views/register.html"));
+});
 
 export default router;
