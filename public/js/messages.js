@@ -19,7 +19,13 @@ async function fetchAndCacheEmojis() {
         }
     }
 }
+const clearCacheButton = document.getElementById("clearcache");
 
+clearCacheButton.addEventListener("click", async () => {
+    sessionStorage.removeItem("emojiCache");
+    alert("Se ha vaciado la cache de emojis");
+    await fetchAndCacheEmojis();
+});
 socket.on("connect", async () => {
     socket.emit("requestHistory");
     await fetchAndCacheEmojis();
