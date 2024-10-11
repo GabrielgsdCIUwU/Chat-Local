@@ -1,6 +1,7 @@
 const socket = io();
 mensajes.innerHTML = "";
 
+//region cache emojis
 let emojiCache = [];
 
 async function fetchAndCacheEmojis() {
@@ -26,6 +27,10 @@ clearCacheButton.addEventListener("click", async () => {
     alert("Se ha vaciado la cache de emojis");
     await fetchAndCacheEmojis();
 });
+
+//endregion cache emojis
+
+//region sockets
 socket.on("connect", async () => {
     socket.emit("requestHistory");
     await fetchAndCacheEmojis();
@@ -57,6 +62,7 @@ socket.on("sendmsg", (msg) => {
 const sendbutton = document.getElementById("enviar");
 const userList = document.getElementById("userList");
 const inputMessage = document.getElementById("mensaje");
+const clearbutton = document.getElementById("clear");
 
 let filteredUsers = [];
 let selectedUserIndex = -1;
@@ -86,6 +92,25 @@ inputMessage.addEventListener("input", function () {
     }
 });
 
+
+clearbutton.addEventListener("click", () => {
+    clearmsg();
+});
+
+document.addEventListener("click", function (e) {
+    if (e.target.classList.contains("hidden-message")) {
+        const actualMessage = e.target.nextElementSibling;
+        if (actualMessage && actualMessage.style.display === "none") {
+            actualMessage.style.display = "inline";
+            e.target.style.display = "none";
+        }
+    }
+});
+
+
+//endregion messages buttons
+
+//region messages functions
 function showUserList(users) {
     userList.innerHTML = "";
     users.forEach(user => {
@@ -161,10 +186,7 @@ function highlightUser(index) {
     }
 }
 
-const clearbutton = document.getElementById("clear");
-clearbutton.addEventListener("click", () => {
-    clearmsg();
-});
+
 
 function adjustHeight() {
     this.style.height = 'auto';
@@ -268,15 +290,7 @@ async function formatMessage(message) {
 }
 
 
-document.addEventListener("click", function (e) {
-    if (e.target.classList.contains("hidden-message")) {
-        const actualMessage = e.target.nextElementSibling;
-        if (actualMessage && actualMessage.style.display === "none") {
-            actualMessage.style.display = "inline";
-            e.target.style.display = "none";
-        }
-    }
-});
+
 
 async function formatAllMessages() {
     const mensajes = document.getElementById("mensajes");
@@ -292,3 +306,5 @@ async function formatAllMessages() {
 function clearmsg() {
     mensajes.innerHTML = "";
 }
+//endregion messages functions
+//endregion logic messages
