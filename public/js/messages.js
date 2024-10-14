@@ -45,6 +45,10 @@ socket.on("messageHistory", async (history) => {
     await formatAllMessages();
 });
 
+socket.on("reload", () => {
+    window.location.reload();
+});
+
 let userNames = [];
 socket.on("userNames", (names) => {
     userNames = names;
@@ -55,8 +59,10 @@ socket.on("error", (err) => {
     alert("Hubo un error en el servidor: " + err.message);
 });
 
+let unreadCount = 0;
 socket.on("sendmsg", (msg) => {
     loadmessages(msg, false);
+    updateUnreadCount();
 });
 
 const sendbutton = document.getElementById("enviar");
@@ -173,6 +179,7 @@ function sendMessage() {
         socket.emit("sendmsg", message);
         inputMessage.value = "";
         userList.classList.add("hidden");
+        removeUnreadMarker();
     }
 }
 
@@ -202,6 +209,7 @@ function adjustHeight() {
     }
 }
 
+let unreadMarkerExists = false;
 async function loadmessages(msg, isHistory) {
     const mensajes = document.getElementById("mensajes");
     const gridItem = document.createElement("div");
@@ -218,11 +226,10 @@ async function loadmessages(msg, isHistory) {
 
     messageText.classList.add("text-white", "text-lg");
     if (isHistory) {
-        messageText.innerHTML = msg.message
+        messageText.innerHTML = msg.message;
     } else {
         messageText.innerHTML = await formatMessage(msg.message);
     }
-
 
     const mentionRegex = /@([^\s]+)/g;
     messageText.innerHTML = messageText.innerHTML.replace(mentionRegex, (match, username) => {
@@ -246,7 +253,27 @@ async function loadmessages(msg, isHistory) {
     if (isHistory) {
         mensajes.appendChild(gridItem);
     } else {
-        mensajes.prepend(gridItem);
+        let isTabActive = document.visibilityState === 'visible';
+
+        if (!isTabActive) {
+            if (!unreadMarkerExists) {
+                const marker = document.createElement("div");
+                marker.classList.add("bg-yellow-500", "text-center", "py-2", "text-black", "font-bold", "rounded-lg", "mb-3");
+                marker.textContent = "---- Mensajes no leídos ----";
+                mensajes.prepend(marker);
+                unreadMarkerExists = true; // Marcar que el marcador ha sido añadido
+                console.log("Marcador de mensajes no leídos añadido.");
+            }
+            mensajes.prepend(gridItem); // Agregar el mensaje a la parte superior
+            setTimeout(() => {
+                const marker = mensajes.querySelector(".bg-yellow-500");
+                if (marker) {
+                    marker.scrollIntoView({ behavior: "smooth" });
+                }
+            }, 100);
+        } else {
+            mensajes.prepend(gridItem); // Si la pestaña está activa, solo agregar el mensaje
+        }
     }
     gridItem.dataset.timestamp = msg.timestamp;
 }
@@ -307,4 +334,30 @@ function clearmsg() {
     mensajes.innerHTML = "";
 }
 //endregion messages functions
+
+//region unread msg fuctions
+function removeUnreadMarker() {
+    const mensajes = document.getElementById("mensajes");
+    const marker = mensajes.querySelector(".bg-yellow-500");
+    if (marker) {
+        mensajes.removeChild(marker);
+        unreadMarkerExists = false; // Restablecer la variable
+        console.log("Marcador de mensajes no leídos eliminado.");
+    }
+}
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === 'visible') {
+        document.title = "Chat";
+        unreadCount = 0;
+    }
+});
+function updateUnreadCount() {
+    if (document.visibilityState === 'hidden') {
+        unreadCount++;
+        document.title = `(${unreadCount}) Nuevos msg`;
+    } else {
+        document.title = "Chat";
+        unreadCount = 0;
+    }
+}
 //endregion logic messages

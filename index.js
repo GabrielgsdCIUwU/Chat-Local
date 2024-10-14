@@ -89,6 +89,9 @@ io.on("connection", (socket) => {
 
         const user = socket.request.session.user;
         connectedUsers.add(user.name)
+        getUserNames().then(userNames => {
+            socket.emit("userNames", userNames);
+        });
 
         socket.on("sendmsg", (msg) => {
             const timestamp = new Date().getTime();
@@ -117,7 +120,7 @@ io.on("connection", (socket) => {
                         return socket.emit("error", { message: "Error al escribir el mensaje" });
                     }
 
-                    io.emit("sendmsg", { user: user.name, message: msg });
+                    io.emit("sendmsg", { user: user.name, message: msg, timestamp: timestamp });
                 });
             });
         });
@@ -129,7 +132,7 @@ io.on("connection", (socket) => {
                     console.error("Error al leer el archivo de mensajes:", err);
                     return socket.emit("error", { message: "Error al leer los mensajes" });
                 }
-                
+
                 let messagesData = [];
                 try {
                     messagesData = JSON.parse(data);
@@ -142,12 +145,19 @@ io.on("connection", (socket) => {
             });
         });
 
-        getUserNames().then( userNames => {
-            socket.emit("userNames", userNames);
-        })
 
         socket.on("disconnect", () => {
             connectedUsers.delete(user.name)
+            getUserNames().then(userNames => {
+                io.emit("userNames", userNames);
+            });
+        });
+
+        app.get("/private/reload", (req, res) => {
+            if (req.ip == "::1" || req.ip == "::ffff:127.0.0.1") {
+                io.emit("reload");
+                res.sendFile(path.join(__dirname, "../public/views/reload.html"))
+            }
         });
     });
 });
