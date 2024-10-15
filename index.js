@@ -1,5 +1,5 @@
 import express, { json } from "express";
-import path, { resolve } from "path";
+import path from "path";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import http from "http";
@@ -90,7 +90,7 @@ io.on("connection", (socket) => {
         const user = socket.request.session.user;
         connectedUsers.add(user.name)
         getUserNames().then(userNames => {
-            io.emit("userNames", userNames);
+            socket.emit("userNames", userNames);
         });
 
         socket.on("sendmsg", (msg) => {
@@ -145,17 +145,6 @@ io.on("connection", (socket) => {
             });
         });
 
-        socket.on("emojisNames", () => {
-            const emojisNames = new Set();
-            const imgDir = path.join(__dirname, "./resources/emojis");
-
-            const files = fs.readdirSync(imgDir);
-            files.forEach((file) => {
-                emojisNames.add(path.parse(file).name)
-            });
-            socket.emit("emojisNames", emojisNames);
-        });
-
 
         socket.on("disconnect", () => {
             connectedUsers.delete(user.name)
@@ -167,7 +156,7 @@ io.on("connection", (socket) => {
         app.get("/private/reload", (req, res) => {
             if (req.ip == "::1" || req.ip == "::ffff:127.0.0.1") {
                 io.emit("reload");
-                res.sendFile(path.join(__dirname, "./public/views/reload.html"))
+                res.sendFile(path.join(__dirname, "../public/views/reload.html"))
             }
         });
     });
