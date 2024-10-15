@@ -163,5 +163,30 @@
     "name": "bruh",
     "passwd": "javilol5",
     "location": "::ffff:192.168.8.25"
+  },
+  {
+    "name": "PabloP",
+    "passwd": "0101",
+    "location": "::ffff:192.168.8.4"
+  },
+  {
+    "name": "xurxoperillon",
+    "passwd": "123",
+    "location": "::ffff:192.168.8.10"
+  },
+  {
+    "name": "10alex10",
+    "passwd": "123",
+    "location": "::ffff:192.168.8.10"
+  },
+  {
+    "name": "Lx_Alberto",
+    "passwd": "123",
+    "location": "::ffff:192.168.8.10"
+  },
+  {
+    "name": "lx_albert",
+    "passwd": "eaeaea",
+    "location": "::ffff:192.168.8.5"
   }
 ]

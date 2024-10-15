@@ -1,16 +1,52 @@
 const socket = io();
 mensajes.innerHTML = "";
 
-socket.on("connect", () => {
-    socket.emit("requestHistory");
+//region cache emojis
+let emojiCache = [];
+
+async function fetchAndCacheEmojis() {
+    if (sessionStorage.getItem("emojiCache")) {
+        emojiCache = JSON.parse(sessionStorage.getItem("emojiCache"));
+        console.log("Emojis loaded from cache");
+    } else {
+        try {
+            const response = await fetch("/img/emoji");
+            emojiCache = await response.json();
+            sessionStorage.setItem("emojiCache", JSON.stringify(emojiCache));
+            console.log("Emojis downloaded and cached");
+            window.location.reload();
+        } catch (error) {
+            console.error("Error al cargar los emojis:", error);
+        }
+    }
+}
+const clearCacheButton = document.getElementById("clearcache");
+
+clearCacheButton.addEventListener("click", async () => {
+    sessionStorage.removeItem("emojiCache");
+    alert("Se ha vaciado la cache de emojis");
+    await fetchAndCacheEmojis();
 });
 
-socket.on("messageHistory", (history) => {
+//endregion cache emojis
+
+//region sockets
+socket.on("connect", async () => {
+    socket.emit("requestHistory");
+    await fetchAndCacheEmojis();
+});
+
+socket.on("messageHistory", async (history) => {
     history.sort((a, b) => b.timestamp - a.timestamp);
-    history.forEach(msg => {
+    for (const msg of history) {
         msg.user = msg.user || msg.name;
-        loadmessages(msg, true);
-    });
+        await loadmessages(msg, true);
+    }
+    await formatAllMessages();
+});
+
+socket.on("reload", () => {
+    window.location.reload();
 });
 
 let userNames = [];
@@ -23,13 +59,16 @@ socket.on("error", (err) => {
     alert("Hubo un error en el servidor: " + err.message);
 });
 
+let unreadCount = 0;
 socket.on("sendmsg", (msg) => {
     loadmessages(msg, false);
+    updateUnreadCount();
 });
 
 const sendbutton = document.getElementById("enviar");
 const userList = document.getElementById("userList");
 const inputMessage = document.getElementById("mensaje");
+const clearbutton = document.getElementById("clear");
 
 let filteredUsers = [];
 let selectedUserIndex = -1;
@@ -59,6 +98,25 @@ inputMessage.addEventListener("input", function () {
     }
 });
 
+
+clearbutton.addEventListener("click", () => {
+    clearmsg();
+});
+
+document.addEventListener("click", function (e) {
+    if (e.target.classList.contains("hidden-message")) {
+        const actualMessage = e.target.nextElementSibling;
+        if (actualMessage && actualMessage.style.display === "none") {
+            actualMessage.style.display = "inline";
+            e.target.style.display = "none";
+        }
+    }
+});
+
+
+//endregion messages buttons
+
+//region messages functions
 function showUserList(users) {
     userList.innerHTML = "";
     users.forEach(user => {
@@ -121,6 +179,7 @@ function sendMessage() {
         socket.emit("sendmsg", message);
         inputMessage.value = "";
         userList.classList.add("hidden");
+        removeUnreadMarker();
     }
 }
 
@@ -134,10 +193,7 @@ function highlightUser(index) {
     }
 }
 
-const clearbutton = document.getElementById("clear");
-clearbutton.addEventListener("click", () => {
-    clearmsg();
-});
+
 
 function adjustHeight() {
     this.style.height = 'auto';
@@ -153,7 +209,8 @@ function adjustHeight() {
     }
 }
 
-function loadmessages(msg, isHistory) {
+let unreadMarkerExists = false;
+async function loadmessages(msg, isHistory) {
     const mensajes = document.getElementById("mensajes");
     const gridItem = document.createElement("div");
     const userName = document.createElement("p");
@@ -168,7 +225,11 @@ function loadmessages(msg, isHistory) {
     userName.textContent = msg.user;
 
     messageText.classList.add("text-white", "text-lg");
-    messageText.innerHTML = formatMessage(msg.message);
+    if (isHistory) {
+        messageText.innerHTML = msg.message;
+    } else {
+        messageText.innerHTML = await formatMessage(msg.message);
+    }
 
     const mentionRegex = /@([^\s]+)/g;
     messageText.innerHTML = messageText.innerHTML.replace(mentionRegex, (match, username) => {
@@ -190,48 +251,51 @@ function loadmessages(msg, isHistory) {
     gridItem.appendChild(timeText);
 
     if (isHistory) {
-        const allMessages = Array.from(mensajes.children);
-        let inserted = false;
-
-        for (let i = 0; i < allMessages.length; i++) {
-            const currentMsg = allMessages[i];
-            const currentTimestamp = parseInt(currentMsg.dataset.timestamp, 10);
-
-            if (msg.timestamp > currentTimestamp) {
-                mensajes.insertBefore(gridItem, currentMsg);
-                inserted = true;
-                break;
-            }
-        }
-
-        if (!inserted) {
-            mensajes.appendChild(gridItem);
-        }
+        mensajes.appendChild(gridItem);
     } else {
-        mensajes.prepend(gridItem);
+        let isTabActive = document.visibilityState === 'visible';
+
+        if (!isTabActive) {
+            if (!unreadMarkerExists) {
+                const marker = document.createElement("div");
+                marker.classList.add("bg-yellow-500", "text-center", "py-2", "text-black", "font-bold", "rounded-lg", "mb-3");
+                marker.textContent = "---- Mensajes no leídos ----";
+                marker.addEventListener("dblclick", () => {
+                    removeUnreadMarker();
+                });
+                mensajes.prepend(marker);
+                unreadMarkerExists = true; // Marcar que el marcador ha sido añadido
+                console.log("Marcador de mensajes no leídos añadido.");
+            }
+            mensajes.prepend(gridItem); // Agregar el mensaje a la parte superior
+            setTimeout(() => {
+                const marker = mensajes.querySelector(".bg-yellow-500");
+                if (marker) {
+                    marker.scrollIntoView({ behavior: "smooth" });
+                }
+            }, 100);
+        } else {
+            mensajes.prepend(gridItem); // Si la pestaña está activa, solo agregar el mensaje
+        }
     }
+    gridItem.dataset.timestamp = msg.timestamp;
 }
 
-function formatMessage(message) {
+async function formatMessage(message) {
     message = message.trim();
     message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     message = message.replace(/\*(.*?)\*/g, '<em>$1</em>');
     message = message.replace(/\|\| (.*?) \|\|/g, `<span class="hidden-message" style="cursor: pointer; color: blue;">[Mostrar]</span><span class="actual-message" style="display:none;">$1</span>`);
+    if (message.includes(':')) {
 
-    if (String(message).includes(':') ) {
-        fetch("/img/emoji")
-    .then((response) => response.json())
-    .then((data) => {
-        data.forEach((emoji) => {
+        emojiCache.forEach((emoji) => {
             const emojiUrl = emoji.url;
             const emojiName = emoji.name;
-
-            if (String(message).includes(`:${emojiName}:`)) {
-                console.log(String(message).search(`:${emojiName}:`))
-                console.log(message[String(message).search(`:${emojiName}:`) ])
+            const emojiPattern = new RegExp(`:${emojiName}:`, 'g');
+            if (emojiPattern.test(message)) {
+                message = message.replace(emojiPattern, `<img src="${emojiUrl}" width="50px" style="display: inline;">`);
             }
         });
-    });
     }
 
     const unorderedListItems = message.match(/^- (.*?)(?=\n|$)/gm);
@@ -256,17 +320,47 @@ function formatMessage(message) {
 }
 
 
-document.addEventListener("click", function (e) {
-    if (e.target.classList.contains("hidden-message")) {
-        const actualMessage = e.target.nextElementSibling;
-        if (actualMessage && actualMessage.style.display === "none") {
-            actualMessage.style.display = "inline";
-            e.target.style.display = "none";
-        }
-    }
-});
 
+
+async function formatAllMessages() {
+    const mensajes = document.getElementById("mensajes");
+    const messageTexts = mensajes.querySelectorAll(".text-lg");
+
+    for (const messageText of messageTexts) {
+        const originalMessage = messageText.textContent;
+        const formattedMessage = await formatMessage(originalMessage);
+        messageText.innerHTML = formattedMessage;
+    }
+}
 
 function clearmsg() {
     mensajes.innerHTML = "";
 }
+//endregion messages functions
+
+//region unread msg fuctions
+function removeUnreadMarker() {
+    const mensajes = document.getElementById("mensajes");
+    const marker = mensajes.querySelector(".bg-yellow-500");
+    if (marker) {
+        mensajes.removeChild(marker);
+        unreadMarkerExists = false; // Restablecer la variable
+        console.log("Marcador de mensajes no leídos eliminado.");
+    }
+}
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === 'visible') {
+        document.title = "Chat";
+        unreadCount = 0;
+    }
+});
+function updateUnreadCount() {
+    if (document.visibilityState === 'hidden') {
+        unreadCount++;
+        document.title = `(${unreadCount}) Nuevos msg`;
+    } else {
+        document.title = "Chat";
+        unreadCount = 0;
+    }
+}
+//endregion logic messages
