@@ -1,0 +1,16 @@
+{
+    "version": "1.0.0",
+    "tasks": [
+        {
+      "type": "npm",
+      "script": "server",
+      "problemMatcher": [],
+      "isBackground": true,
+      "label": "Server",
+      "detail": "node index.js",
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+        }
+    ]
+}

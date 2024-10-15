@@ -35,14 +35,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     .then((response) => response.json())
     .then((data) => {
         data.forEach((emoji) => {
-            console.log(emoji)
             const img = document.createElement('img');
                 img.src = emoji.url;
                 img.alt = emoji.name;
                 img.classList.add('w-10', 'h-10', 'cursor-pointer', 'hover:opacity-75'); // Clases Tailwind para estilo
                 img.addEventListener('click', () => {
                     // Aquí puedes añadir lógica para insertar el emoji en el mensaje
-                    console.log(`Seleccionado emoji: ${emoji.name}`);
                     const messageValue = inputMessage.value;
                     inputMessage.value = messageValue + ' ' + `:${emoji.name}:`
                 });
@@ -51,6 +49,32 @@ document.addEventListener("DOMContentLoaded", async function () {
          modal.classList.remove('hidden');
     });
 }
+
+    document.getElementById('emojiUpload').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const formData = new FormData();
+            formData.append('emoji', file);
+            
+            fetch('/img/emoji', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert("Imagen subido con éxito, ahora está en la waitlist")
+                    window.location.reload();
+                } else {
+                    alert("Hubo un error al subir la imagen")
+                    console.error('Error al subir la imagen');
+                }
+            })
+            .catch(error => {
+                alert("Hubo un error al subir la imagen")
+                console.error('Error de red:', error);
+            });
+        }
+    });
 });
 
 

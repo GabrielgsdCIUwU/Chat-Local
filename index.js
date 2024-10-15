@@ -1,5 +1,5 @@
 import express, { json } from "express";
-import path from "path";
+import path, { resolve } from "path";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import http from "http";
@@ -72,22 +72,11 @@ io.use((socket, next) => {
         next();
     });
 });
-
+const connectedUsers = new Set();
 function getUserNames() {
-    return new Promise((resolve, reject) => {
-        fs.readFile(usersFilePath, 'utf-8', (err, data) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            try {
-                const users = JSON.parse(data);
-                const userNames = users.map(user => user.name);
-                resolve(userNames);
-            } catch (parseError) {
-                reject(parseError);
-            }
-        });
+    return new Promise((resolve) => {
+        const userNames = Array.from(connectedUsers);
+        resolve(userNames);
     });
 }
 
@@ -99,6 +88,10 @@ io.on("connection", (socket) => {
         }
 
         const user = socket.request.session.user;
+        connectedUsers.add(user.name)
+        getUserNames().then(userNames => {
+            io.emit("userNames", userNames);
+        });
 
         socket.on("sendmsg", (msg) => {
             const timestamp = new Date().getTime();
@@ -127,7 +120,7 @@ io.on("connection", (socket) => {
                         return socket.emit("error", { message: "Error al escribir el mensaje" });
                     }
 
-                    io.emit("sendmsg", { user: user.name, message: msg });
+                    io.emit("sendmsg", { user: user.name, message: msg, timestamp: timestamp });
                 });
             });
         });
@@ -139,7 +132,7 @@ io.on("connection", (socket) => {
                     console.error("Error al leer el archivo de mensajes:", err);
                     return socket.emit("error", { message: "Error al leer los mensajes" });
                 }
-                
+
                 let messagesData = [];
                 try {
                     messagesData = JSON.parse(data);
@@ -148,15 +141,35 @@ io.on("connection", (socket) => {
                     return socket.emit("error", { message: "Error al parsear los mensajes" });
                 }
 
-                io.emit("messageHistory", messagesData);
+                socket.emit("messageHistory", messagesData);
             });
         });
 
-        getUserNames().then( userNames => {
-            socket.emit("userNames", userNames);
-        })
+        socket.on("emojisNames", () => {
+            const emojisNames = new Set();
+            const imgDir = path.join(__dirname, "./resources/emojis");
 
-        socket.on("disconnect", () => {});
+            const files = fs.readdirSync(imgDir);
+            files.forEach((file) => {
+                emojisNames.add(path.parse(file).name)
+            });
+            socket.emit("emojisNames", emojisNames);
+        });
+
+
+        socket.on("disconnect", () => {
+            connectedUsers.delete(user.name)
+            getUserNames().then(userNames => {
+                io.emit("userNames", userNames);
+            });
+        });
+
+        app.get("/private/reload", (req, res) => {
+            if (req.ip == "::1" || req.ip == "::ffff:127.0.0.1") {
+                io.emit("reload");
+                res.sendFile(path.join(__dirname, "./public/views/reload.html"))
+            }
+        });
     });
 });
 
