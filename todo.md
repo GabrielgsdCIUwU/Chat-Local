@@ -4,4 +4,4 @@
 
 - MDs como discord
 - responder como en discord
-- maybe añadir noti en el logo (num)
+- añadir font: [menu bar](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css)

@@ -188,5 +188,20 @@
     "name": "lx_albert",
     "passwd": "eaeaea",
     "location": "::ffff:192.168.8.5"
+  },
+  {
+    "name": "Desteveco",
+    "passwd": "amIf$Os2",
+    "location": "::ffff:192.168.8.6"
+  },
+  {
+    "name": "Seleccion_Natural",
+    "passwd": "e",
+    "location": "::ffff:192.168.8.6"
+  },
+  {
+    "name": "Xurxo",
+    "passwd": "eaeaea",
+    "location": "::ffff:192.168.8.5"
   }
 ]

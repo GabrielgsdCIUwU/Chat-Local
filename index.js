@@ -145,6 +145,17 @@ io.on("connection", (socket) => {
             });
         });
 
+        socket.on("emojisNames", () => {
+            const emojisNames = new Set();
+            const imgDir = path.join(__dirname, "./resources/emojis");
+
+            const files = fs.readdirSync(imgDir);
+            files.forEach((file) => {
+                emojisNames.add(path.parse(file).name)
+            });
+            socket.emit("emojisNames", emojisNames);
+        });
+
 
         socket.on("disconnect", () => {
             connectedUsers.delete(user.name)
@@ -156,7 +167,17 @@ io.on("connection", (socket) => {
         app.get("/private/reload", (req, res) => {
             if (req.ip == "::1" || req.ip == "::ffff:127.0.0.1") {
                 io.emit("reload");
-                res.sendFile(path.join(__dirname, "../public/views/reload.html"))
+                res.sendFile(path.join(__dirname, "./public/views/reload.html"))
+            }
+        });
+        app.get("/private/testing", (req, res) => {
+            if (req.ip == "::1" || req.ip == "::ffff:127.0.0.1") {
+                res.sendFile(path.join(__dirname, "./public/views/testing.html"))
+            }
+        });
+        app.get("/private/md", (req, res) => {
+            if (req.ip == "::1" || req.ip == "::ffff:127.0.0.1") {
+                res.sendFile(path.join(__dirname, "./public/views/testing-md.html"))
             }
         });
     });
