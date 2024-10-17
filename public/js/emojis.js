@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const closeModalButton = document.getElementById('closeModal');
     const emojiContainer = document.getElementById('emojiContainer');
     const inputMessage = document.getElementById('mensaje');
+    const stickerMode = document.getElementById('stickermode');
     // Función para abrir el modal y cargar los emojis
     buttonEmoji.addEventListener('click', async () => {
         // Vaciar el contenedor de emojis
@@ -30,6 +31,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
+    var stickerModeValue = false;
+    stickerMode.addEventListener("click", () => {
+        stickerModeValue = true;
+    });
+
     function loadEmojis() {
     fetch("/img/emoji")
     .then((response) => response.json())
@@ -38,11 +44,17 @@ document.addEventListener("DOMContentLoaded", async function () {
             const img = document.createElement('img');
                 img.src = emoji.url;
                 img.alt = emoji.name;
-                img.classList.add('w-10', 'h-10', 'cursor-pointer', 'hover:opacity-75'); // Clases Tailwind para estilo
+                img.classList.add('w-10', 'h-10', 'cursor-pointer', 'hover:opacity-75','mr-4', 'mb-4'); // Clases Tailwind para estilo
                 img.addEventListener('click', () => {
                     // Aquí puedes añadir lógica para insertar el emoji en el mensaje
                     const messageValue = inputMessage.value;
-                    inputMessage.value = messageValue + ' ' + `:${emoji.name}:`
+                    if (stickerModeValue == true) {
+                        inputMessage.value = messageValue + ' ' + `;${emoji.name};`
+                        stickerModeValue = false;
+                    }else {
+                        inputMessage.value = messageValue + ' ' + `:${emoji.name}:`
+                    }
+                    
                 });
                 emojiContainer.appendChild(img);
         });

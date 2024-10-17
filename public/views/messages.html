@@ -46,13 +46,13 @@
     <div id="mensajes" class="flex-1 bg-gray-800 p-4 rounded-t-lg shadow-inner overflow-y-auto text-white"></div>
 
     <!-- Modal de Emojis -->
-    <div id="emojiModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-      <div class="bg-gray-800 rounded-lg p-6 w-3/4 max-w-lg">
+    <div id="emojiModal" class="fixed inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-start hidden">
+      <div class="bg-gray-800 rounded-lg p-6 w-full max-w-lg mt-4 overflow-y-auto">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-lg font-bold text-white">Selecciona un Emoji</h2>
           <button id="closeModal" class="text-gray-400 hover:text-gray-200">&times;</button>
         </div>
-        <div id="emojiContainer" class="grid grid-cols-5 gap-4 mb-4"></div>
+        <div id="emojiContainer" class="flex flex-wrap mb-4"></div>
         <div class="mt-4">
           <label for="emojiUpload" class="block text-white text-sm mb-2">Sube tu propio emoji:</label>
           <input
@@ -61,9 +61,14 @@
             accept="image/*"
             class="bg-gray-700 text-white rounded border border-gray-600 p-2 w-full" />
           <button
-            class="bg-red-600 text-white rounded-full py-2 px-4 border border-transparent text-sm transition-all shadow-lg hover:bg-red-500 hover:shadow-md active:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400"
+            class="bg-red-600 text-white rounded-full py-2 px-4 border border-transparent text-sm transition-all shadow-lg hover:bg-red-500 hover:shadow-md active:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400 mt-2"
             id="clearcache">
             Limpiar caché
+          </button>
+          <button
+            class="bg-blue-600 text-white rounded-full py-2 px-4 border border-transparent text-sm transition-all shadow-lg hover:bg-blue-500 hover:shadow-md active:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400 mt-2"
+            id="stickermode">
+            Sticker mode
           </button>
         </div>
       </div>

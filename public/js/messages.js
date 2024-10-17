@@ -260,6 +260,9 @@ async function loadmessages(msg, isHistory) {
                 const marker = document.createElement("div");
                 marker.classList.add("bg-yellow-500", "text-center", "py-2", "text-black", "font-bold", "rounded-lg", "mb-3");
                 marker.textContent = "---- Mensajes no leídos ----";
+                marker.addEventListener("dblclick", () => {
+                    removeUnreadMarker();
+                });
                 mensajes.prepend(marker);
                 unreadMarkerExists = true; // Marcar que el marcador ha sido añadido
                 console.log("Marcador de mensajes no leídos añadido.");
@@ -291,6 +294,17 @@ async function formatMessage(message) {
             const emojiPattern = new RegExp(`:${emojiName}:`, 'g');
             if (emojiPattern.test(message)) {
                 message = message.replace(emojiPattern, `<img src="${emojiUrl}" width="50px" style="display: inline;">`);
+            }
+        });
+    }
+    if (message.includes(';')) {
+
+        emojiCache.forEach((emoji) => {
+            const emojiUrl = emoji.url;
+            const emojiName = emoji.name;
+            const emojiPattern = new RegExp(`;${emojiName};`, 'g');
+            if (emojiPattern.test(message)) {
+                message = message.replace(emojiPattern, `<img src="${emojiUrl}" width="200px" style="display: inline;">`);
             }
         });
     }
