@@ -65,6 +65,8 @@ socket.on("sendmsg", (msg) => {
     updateUnreadCount();
 });
 
+//endregion buttons
+
 const sendbutton = document.getElementById("enviar");
 const userList = document.getElementById("userList");
 const inputMessage = document.getElementById("mensaje");

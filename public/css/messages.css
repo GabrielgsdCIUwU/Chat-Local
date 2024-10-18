@@ -39,3 +39,15 @@ h1 {
     width: 100%; 
     z-index: 10;
 }
+
+#main-content {
+  transition: margin-left 0.3s ease-in-out;
+}
+
+#mdbar {
+  transition: margin-left 0.3s ease-in-out;
+}
+
+#sidebar {
+  transition: transform 0.3s ease-in-out;
+}
