@@ -1,8 +1,9 @@
+// messages.js
 const socket = io();
 mensajes.innerHTML = "";
 
-//region cache emojis
 let emojiCache = [];
+let selectedUser = null; // Nuevo: almacenar el usuario seleccionado
 
 async function fetchAndCacheEmojis() {
     if (sessionStorage.getItem("emojiCache")) {
@@ -20,17 +21,14 @@ async function fetchAndCacheEmojis() {
         }
     }
 }
-const clearCacheButton = document.getElementById("clearcache");
 
+const clearCacheButton = document.getElementById("clearcache");
 clearCacheButton.addEventListener("click", async () => {
     sessionStorage.removeItem("emojiCache");
     alert("Se ha vaciado la cache de emojis");
     await fetchAndCacheEmojis();
 });
 
-//endregion cache emojis
-
-//region sockets
 socket.on("connect", async () => {
     socket.emit("requestHistory");
     await fetchAndCacheEmojis();
@@ -52,6 +50,7 @@ socket.on("reload", () => {
 let userNames = [];
 socket.on("userNames", (names) => {
     userNames = names;
+    loadUserMessages(); // Nuevo: cargar usuarios al inicio
 });
 
 socket.on("error", (err) => {
@@ -65,8 +64,6 @@ socket.on("sendmsg", (msg) => {
     updateUnreadCount();
 });
 
-//endregion buttons
-
 const sendbutton = document.getElementById("enviar");
 const userList = document.getElementById("userList");
 const inputMessage = document.getElementById("mensaje");
@@ -77,11 +74,10 @@ let selectedUserIndex = -1;
 
 sendbutton.addEventListener("click", (event) => {
     event.preventDefault();
-    sendMessage();
+    sendMessage(); // Enviar mensaje al usuario seleccionado
 });
 
 inputMessage.addEventListener("input", adjustHeight);
-
 inputMessage.addEventListener("input", function () {
     const value = inputMessage.value;
     const atIndex = value.lastIndexOf('@');
@@ -100,7 +96,6 @@ inputMessage.addEventListener("input", function () {
     }
 });
 
-
 clearbutton.addEventListener("click", () => {
     clearmsg();
 });
@@ -115,28 +110,26 @@ document.addEventListener("click", function (e) {
     }
 });
 
-
-//endregion messages buttons
-
-//region messages functions
-function showUserList(users) {
-    userList.innerHTML = "";
-    users.forEach(user => {
+// Función para cargar usuarios
+function loadUserMessages() {
+    const userMessages = document.getElementById("userMessages"); // Elemento donde se mostrarán los usuarios
+    userNames.forEach(user => {
         const item = document.createElement("div");
         item.textContent = user;
         item.classList.add("p-2", "cursor-pointer", "hover:bg-gray-600");
         item.onclick = () => selectUser(user);
-        userList.appendChild(item);
+        userMessages.appendChild(item);
     });
-    userList.classList.remove("hidden");
 }
 
+// Seleccionar usuario para chatear
 function selectUser(userName) {
     const atIndex = inputMessage.value.lastIndexOf('@');
     inputMessage.value = inputMessage.value.slice(0, atIndex + 1) + userName + ' ';
     userList.classList.add("hidden");
     inputMessage.focus();
     selectedUserIndex = -1;
+    selectedUser = userName; // Guardar usuario seleccionado
 }
 
 inputMessage.addEventListener("keydown", (event) => {
@@ -165,20 +158,21 @@ inputMessage.addEventListener("keydown", (event) => {
             if (selectedUserIndex >= 0) {
                 selectUser(filteredUsers[selectedUserIndex]);
             } else {
-                sendMessage();
+                sendMessage(); // Enviar mensaje solo al usuario seleccionado
                 inputMessage.value = "";
             }
         }
     } else if (event.key === 'Enter') {
         event.preventDefault();
-        sendMessage();
+        sendMessage(); // Enviar mensaje solo al usuario seleccionado
         inputMessage.value = "";
     }
 });
+
 function sendMessage() {
     const message = inputMessage.value.trim();
-    if (message) {
-        socket.emit("sendmsg", message);
+    if (message && selectedUser) { // Comprobar si hay mensaje y usuario seleccionado
+        socket.emit("sendmsg", { message, to: selectedUser }); // Enviar mensaje a un usuario específico
         inputMessage.value = "";
         userList.classList.add("hidden");
         removeUnreadMarker();
@@ -195,8 +189,6 @@ function highlightUser(index) {
     }
 }
 
-
-
 function adjustHeight() {
     this.style.height = 'auto';
     this.style.height = `${Math.min(this.scrollHeight, 150)}px`;
@@ -211,7 +203,6 @@ function adjustHeight() {
     }
 }
 
-let unreadMarkerExists = false;
 async function loadmessages(msg, isHistory) {
     const mensajes = document.getElementById("mensajes");
     const gridItem = document.createElement("div");
@@ -242,138 +233,19 @@ async function loadmessages(msg, isHistory) {
     });
 
     const time = msg.timestamp || Date.now();
-    const date = new Date(time);
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    timeText.classList.add("text-gray-400", "mt-1", "text-small");
-    timeText.textContent = `${hours}:${minutes}`;
+    const date = new Date(time).toLocaleString();
+    timeText.classList.add("text-gray-400", "text-sm", "mt-2");
+    timeText.textContent = date;
 
     gridItem.appendChild(userName);
     gridItem.appendChild(messageText);
     gridItem.appendChild(timeText);
+    mensajes.appendChild(gridItem);
 
-    if (isHistory) {
-        mensajes.appendChild(gridItem);
-    } else {
-        let isTabActive = document.visibilityState === 'visible';
-
-        if (!isTabActive) {
-            if (!unreadMarkerExists) {
-                const marker = document.createElement("div");
-                marker.classList.add("bg-yellow-500", "text-center", "py-2", "text-black", "font-bold", "rounded-lg", "mb-3");
-                marker.textContent = "---- Mensajes no leídos ----";
-                marker.addEventListener("dblclick", () => {
-                    removeUnreadMarker();
-                });
-                mensajes.prepend(marker);
-                unreadMarkerExists = true; // Marcar que el marcador ha sido añadido
-                console.log("Marcador de mensajes no leídos añadido.");
-            }
-            mensajes.prepend(gridItem); // Agregar el mensaje a la parte superior
-            setTimeout(() => {
-                const marker = mensajes.querySelector(".bg-yellow-500");
-                if (marker) {
-                    marker.scrollIntoView({ behavior: "smooth" });
-                }
-            }, 100);
-        } else {
-            mensajes.prepend(gridItem); // Si la pestaña está activa, solo agregar el mensaje
-        }
-    }
-    gridItem.dataset.timestamp = msg.timestamp;
-}
-
-async function formatMessage(message) {
-    message = message.trim();
-    message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    message = message.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    message = message.replace(/\|\| (.*?) \|\|/g, `<span class="hidden-message" style="cursor: pointer; color: blue;">[Mostrar]</span><span class="actual-message" style="display:none;">$1</span>`);
-    if (message.includes(':')) {
-
-        emojiCache.forEach((emoji) => {
-            const emojiUrl = emoji.url;
-            const emojiName = emoji.name;
-            const emojiPattern = new RegExp(`:${emojiName}:`, 'g');
-            if (emojiPattern.test(message)) {
-                message = message.replace(emojiPattern, `<img src="${emojiUrl}" width="50px" style="display: inline;">`);
-            }
-        });
-    }
-    if (message.includes(';')) {
-
-        emojiCache.forEach((emoji) => {
-            const emojiUrl = emoji.url;
-            const emojiName = emoji.name;
-            const emojiPattern = new RegExp(`;${emojiName};`, 'g');
-            if (emojiPattern.test(message)) {
-                message = message.replace(emojiPattern, `<img src="${emojiUrl}" width="200px" style="display: inline;">`);
-            }
-        });
-    }
-
-    const unorderedListItems = message.match(/^- (.*?)(?=\n|$)/gm);
-    const orderedListItems = message.match(/^\d+\.\s(.*?)(?=\n|$)/gm);
-
-    if (unorderedListItems) {
-        const listItems = unorderedListItems.map(item => `<li>${item.slice(2)}</li>`).join('');
-        message = message.replace(/^- (.*?)(?=\n|$)/gm, '');
-        message += `<ul class="list-disc pl-5">${listItems}</ul>`;
-    }
-
-    if (orderedListItems) {
-        const listItems = orderedListItems.map(item => `<li>${item.slice(3)}</li>`).join('');
-        message = message.replace(/^\d+\.\s(.*?)(?=\n|$)/gm, '');
-        message += `<ol class="list-decimal pl-5">${listItems}</ol>`;
-    }
-
-    if (!unorderedListItems && !orderedListItems) {
-        message = message.replace(/\n/g, '<br>');
-    }
-    return message;
-}
-
-
-
-
-async function formatAllMessages() {
-    const mensajes = document.getElementById("mensajes");
-    const messageTexts = mensajes.querySelectorAll(".text-lg");
-
-    for (const messageText of messageTexts) {
-        const originalMessage = messageText.textContent;
-        const formattedMessage = await formatMessage(originalMessage);
-        messageText.innerHTML = formattedMessage;
-    }
+    const messageList = document.getElementById("messagesList");
+    messageList.scrollTop = messageList.scrollHeight;
 }
 
 function clearmsg() {
     mensajes.innerHTML = "";
 }
-//endregion messages functions
-
-//region unread msg fuctions
-function removeUnreadMarker() {
-    const mensajes = document.getElementById("mensajes");
-    const marker = mensajes.querySelector(".bg-yellow-500");
-    if (marker) {
-        mensajes.removeChild(marker);
-        unreadMarkerExists = false; // Restablecer la variable
-        console.log("Marcador de mensajes no leídos eliminado.");
-    }
-}
-document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === 'visible') {
-        document.title = "Chat";
-        unreadCount = 0;
-    }
-});
-function updateUnreadCount() {
-    if (document.visibilityState === 'hidden') {
-        unreadCount++;
-        document.title = `(${unreadCount}) Nuevos msg`;
-    } else {
-        document.title = "Chat";
-        unreadCount = 0;
-    }
-}
-//endregion logic messages
