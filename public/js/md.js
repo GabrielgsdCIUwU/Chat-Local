@@ -1,34 +1,61 @@
-const io = require('socket.io')(server);
-const messageHistory = [];
+const socket = io();
+let currentRecipient = null; // Usuario actual con el que estamos chateando
+let currentUser;
 
-io.on('connection', (socket) => {
-    console.log('A user connected:', socket.id);
+ socket.on("currentUser", (userName) => {
+    console.log(userName)
+    currentUser = userName;
+    console.log("Usuario actual:", currentUser);
+  });
 
-    socket.on('sendmsg', (data) => {
-        const { message, to } = data;
-        const msg = {
-            from: socket.id,
-            message: message,
-            timestamp: Date.now(),
-            to: to
-        };
-        messageHistory.push(msg);
-        socket.to(to).emit("sendmsg", msg);
-    });
+// Escuchar evento "userNames" para obtener lista de usuarios activos
+socket.on("userNames", (users) => {
+  const mdList = document.getElementById("mdlist");
+  mdList.innerHTML = '<li class="text-xl font-bold text-white mb-4">Usuarios Activos</li>';
 
-    socket.on('requestHistory', (to) => {
-        const privateMessages = messageHistory.filter(msg => 
-            (msg.from === socket.id && msg.to === to) || (msg.to === socket.id && msg.from === to)
-        );
-        socket.emit('messageHistory', privateMessages);
-    });
+  users.forEach((user) => {
 
-    socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
-    });
+    if (user === currentUser) return;
+    const li = document.createElement("li");
+    li.classList.add("menu-item", "text-center");
+    li.innerHTML = `
+        <a href="#" class="block p-4 text-white hover:bg-blue-600 hover:text-white transition-colors duration-300">${user}</a>
+      `;
+    li.addEventListener("click", () => startPrivateChat(user));
+    mdList.appendChild(li);
+  });
 });
 
-function getUserNames() {
-    return ['User1', 'User2', 'User3'];
+// Función para iniciar un chat privado
+  function startPrivateChat(user) {
+    // Lógica para iniciar un chat privado con el usuario seleccionado
+    console.log("Iniciando chat privado con", user);
+  }
+
+// Cambiar al chat privado seleccionado
+function switchChat(user) {
+  currentRecipient = user;
+  document.getElementById("mensajes").innerHTML = `<h2>Chat con ${user}</h2>`;
 }
 
+// Enviar mensaje privado al usuario seleccionado
+document.getElementById("enviar").addEventListener("click", () => {
+  const mensaje = document.getElementById("mensaje").value;
+  if (currentRecipient) {
+    socket.emit("sendPrivateMsg", { recipient: currentRecipient, message: mensaje });
+    document.getElementById("mensaje").value = "";
+  } else {
+    alert("Seleccione un usuario para enviar el mensaje privado.");
+  }
+});
+
+// Recibir y mostrar mensajes privados
+socket.on("privateMessage", ({ sender, message }) => {
+  if (sender === currentRecipient) {
+    const mensajesDiv = document.getElementById("mensajes");
+    const msgElement = document.createElement("div");
+    msgElement.classList.add("message");
+    msgElement.innerHTML = `<strong>${sender}:</strong> ${message}`;
+    mensajesDiv.appendChild(msgElement);
+  }
+});

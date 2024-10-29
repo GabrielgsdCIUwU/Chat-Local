@@ -92,6 +92,8 @@ io.on("connection", (socket) => {
             socket.emit("userNames", userNames);
         });
 
+        socket.emit("currentUser", user.name);
+
         socket.on("sendmsg", (msg) => {
             const timestamp = new Date().getTime();
             const messagesFilePath = path.join(__dirname, "./public/json/messages.json");
@@ -181,6 +183,30 @@ io.on("connection", (socket) => {
         });
         app.get("/login", (req, res) => {
             res.redirect("/msg")
+        });
+        
+        socket.on("sendPrivateMsg", ({recipient, message}) => {
+            const timestamp = new Date().getTime();
+
+            const recipientSocket = Array.from(io.sockets.sockets.values()).find(
+                (s) => s.request.session.user && s.request.session.user.name === recipient
+            );
+
+            if(recipientSocket) {
+                recipientSocket.emit("privateMessage", {
+                    sender: user.name,
+                    message,
+                    timestamp,
+                });
+
+                socket.emit("privateMessage", {
+                    sender: user.name,
+                    message,
+                    timestamp,
+                });
+            } else {
+                socket.emit("error", { message: `Usuario ${recipient} no está conectado.`})
+            }
         });
     });
 });
