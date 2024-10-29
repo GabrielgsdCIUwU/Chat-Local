@@ -18,11 +18,11 @@ router.post("/login", (req, res) => {
     if (!location) {
         return res.status(400).json({ message: "Se ha producido un error al obtener tu IP local" });
     }
+    const bannedIPs = JSON.parse(fs.readFileSync('./backend/json/usersban.json'));
+    const blockedIP = bannedIPs.find(banned => banned.ip === location);
+    if (blockedIP) return res.status(403).json({ message: `Lo siento pero has sido baneado por: ${blockedIP.motivo}`})
 
-    const ipBan = []
-    if (ipBan.includes(location)) return res.status(400).json({ message: "Lo siento pero has sido baneado por tu comportamiento!"})
-
-    const usersFilePath = path.join(__dirname, "../public/json/users.json");
+    const usersFilePath = path.join(__dirname, "../backend/json/users.json");
 
     fs.readFile(usersFilePath, "utf-8", (err, data) => {
         if (err) {
@@ -49,7 +49,7 @@ router.post("/login", (req, res) => {
 router.post("/register", (req, res) => {
     try {
         const {name, passwd } = req.body;
-        const usersFilePath = path.join(__dirname, "../public/json/users.json");
+        const usersFilePath = path.join(__dirname, "../backend/json/users.json");
         if (!name || !passwd) {
             return res.status(400).json({ message: "Debes poner usuario y contraseña!" });
         }

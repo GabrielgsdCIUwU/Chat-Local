@@ -1,7 +1,5 @@
 - poder editar el ultimo mensaje
 - poder eliminar ultimo mensaje
-
-
 - MDs como discord
 - responder como en discord
 - añadir font: [menu bar](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css)
