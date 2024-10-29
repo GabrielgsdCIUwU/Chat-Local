@@ -23,7 +23,6 @@ const __dirname = path.dirname(__filename);
 const envFilePath = path.join(__dirname, ".env");
 dotenv.config({ path: envFilePath });
 
-const usersFilePath = path.join(__dirname, './public/json/users.json');
 
 const app = express();
 
@@ -33,10 +32,10 @@ app.disable("x-powered-by");
 const sessionMiddleware = session({
     store: new FileStore({
         path: "./sessions",
-        ttl: 86400,
+        ttl: 432000,
     }),
     secret: process.env.sessionSecret,
-    resave: false,
+    resave: false,  
     saveUninitialized: false,
 });
 
@@ -179,6 +178,9 @@ io.on("connection", (socket) => {
             if (req.ip == "::1" || req.ip == "::ffff:127.0.0.1") {
                 res.sendFile(path.join(__dirname, "./public/views/testing-md.html"))
             }
+        });
+        app.get("/login", (req, res) => {
+            res.redirect("/msg")
         });
     });
 });
