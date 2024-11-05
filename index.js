@@ -88,11 +88,40 @@ io.on("connection", (socket) => {
         }
 
         const user = socket.request.session.user;
-        connectedUsers.add(user.name)
+        connectedUsers.add(user.name);
+
+        // Emite la lista de usuarios conectados a todos los usuarios
         getUserNames().then(userNames => {
             socket.emit("userNames", userNames);
         });
 
+        // Escuchar la solicitud de inicio de chat privado
+        socket.on("startPrivateChat", (recipientName) => {
+            const recipientSocket = Array.from(io.sockets.sockets).find(([id, s]) => s.request.session.user.name === recipientName);
+
+            if (recipientSocket) {
+                const privateRoom = `${user.name}-${recipientName}`; // Nombre de la sala privada
+                socket.join(privateRoom);  // El usuario que inició se une a la sala
+                recipientSocket[1].join(privateRoom);  // El destinatario se une a la sala
+
+                // Notificar a ambos usuarios que el chat privado ha comenzado
+                socket.emit("privateChatStarted", { room: privateRoom, recipient: recipientName });
+                recipientSocket[1].emit("privateChatStarted", { room: privateRoom, recipient: user.name });
+            } else {
+                socket.emit("error", { message: "El usuario no está disponible." });
+            }
+        });
+
+        // Enviar mensajes dentro de una sala privada
+        socket.on("privateMessage", ({ room, message }) => {
+            const timestamp = new Date().getTime();
+            const newMessage = { name: user.name, message, timestamp };
+
+            // Emitir solo a los usuarios en la sala privada
+            io.to(room).emit("privateMessage", newMessage);
+        });
+
+        // Chat público (ya existente)
         socket.on("sendmsg", (msg) => {
             const timestamp = new Date().getTime();
             const messagesFilePath = path.join(__dirname, "./public/json/messages.json");
@@ -125,6 +154,7 @@ io.on("connection", (socket) => {
             });
         });
 
+        // Solicitar historial de mensajes
         socket.on("requestHistory", () => {
             const messagesFilePath = path.join(__dirname, "./public/json/messages.json");
             fs.readFile(messagesFilePath, "utf-8", (err, data) => {

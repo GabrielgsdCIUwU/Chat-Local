@@ -44,22 +44,9 @@
       <main id="main-content" class="flex-1 flex flex-row bg-gray-800 transition-all duration-300">
         <!-- Sidebar de Chats privados (MDs) -->
         <aside id="mdbar" class="bg-gray-600 text-white w-64 h-full transition-all duration-300">
-          <ul id="mdlist" class="space-y-2 mt-4 p-4">
+          <ul id="userMessages" class="space-y-2 mt-4 p-4">
             <li class="text-xl font-bold text-white mb-4">Chats privados</li>
-            <li class="menu-item text-center">
-              <a
-                href="/msg"
-                class="block p-4 text-white hover:bg-blue-600 hover:text-white transition-colors duration-300">
-                Testing 1
-              </a>
-            </li>
-            <li class="menu-item text-center">
-              <a
-                href="/mds"
-                class="block p-4 text-white hover:bg-blue-600 hover:text-white transition-colors duration-300">
-                Testing 2
-              </a>
-            </li>
+            <!-- Aquí se agregarán dinámicamente los usuarios de los chats -->
           </ul>
         </aside>
 
@@ -139,6 +126,5 @@
     <script src="/public/js/emojis.js"></script>
     <script src="/public/js/md.js"></script>
     <script src="/public/js/sidebar.js"></script>
-
   </body>
 </html>

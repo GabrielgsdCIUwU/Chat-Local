@@ -122,6 +122,66 @@ function loadUserMessages() {
     });
 }
 
+async function formatAllMessages() {
+    const mensajes = document.getElementById("mensajes");
+    const messageTexts = mensajes.querySelectorAll(".text-lg");
+
+    for (const messageText of messageTexts) {
+        const originalMessage = messageText.textContent;
+        const formattedMessage = await formatMessage(originalMessage);
+        messageText.innerHTML = formattedMessage;
+    }
+}
+
+async function formatMessage(message) {
+    message = message.trim();
+    message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    message = message.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    message = message.replace(/\|\| (.*?) \|\|/g, `<span class="hidden-message" style="cursor: pointer; color: blue;">[Mostrar]</span><span class="actual-message" style="display:none;">$1</span>`);
+    if (message.includes(':')) {
+
+        emojiCache.forEach((emoji) => {
+            const emojiUrl = emoji.url;
+            const emojiName = emoji.name;
+            const emojiPattern = new RegExp(`:${emojiName}:`, 'g');
+            if (emojiPattern.test(message)) {
+                message = message.replace(emojiPattern, `<img src="${emojiUrl}" width="50px" style="display: inline;">`);
+            }
+        });
+    }
+    if (message.includes(';')) {
+
+        emojiCache.forEach((emoji) => {
+            const emojiUrl = emoji.url;
+            const emojiName = emoji.name;
+            const emojiPattern = new RegExp(`;${emojiName};`, 'g');
+            if (emojiPattern.test(message)) {
+                message = message.replace(emojiPattern, `<img src="${emojiUrl}" width="200px" style="display: inline;">`);
+            }
+        });
+    }
+
+    const unorderedListItems = message.match(/^- (.*?)(?=\n|$)/gm);
+    const orderedListItems = message.match(/^\d+\.\s(.*?)(?=\n|$)/gm);
+
+    if (unorderedListItems) {
+        const listItems = unorderedListItems.map(item => `<li>${item.slice(2)}</li>`).join('');
+        message = message.replace(/^- (.*?)(?=\n|$)/gm, '');
+        message += `<ul class="list-disc pl-5">${listItems}</ul>`;
+    }
+
+    if (orderedListItems) {
+        const listItems = orderedListItems.map(item => `<li>${item.slice(3)}</li>`).join('');
+        message = message.replace(/^\d+\.\s(.*?)(?=\n|$)/gm, '');
+        message += `<ol class="list-decimal pl-5">${listItems}</ol>`;
+    }
+
+    if (!unorderedListItems && !orderedListItems) {
+        message = message.replace(/\n/g, '<br>');
+    }
+    return message;
+}
+
 // Seleccionar usuario para chatear
 function selectUser(userName) {
     const atIndex = inputMessage.value.lastIndexOf('@');
@@ -242,10 +302,116 @@ async function loadmessages(msg, isHistory) {
     gridItem.appendChild(timeText);
     mensajes.appendChild(gridItem);
 
-    const messageList = document.getElementById("messagesList");
+    const messageList = document.getElementById("mensajes");
     messageList.scrollTop = messageList.scrollHeight;
 }
 
 function clearmsg() {
     mensajes.innerHTML = "";
+}
+
+
+
+
+//region md section
+
+let selectedMDUser = null; // Variable global para almacenar el usuario seleccionado
+
+function selectMDUser(user) {
+    selectedMDUser = user; // Guardar el usuario seleccionado
+    document.getElementById("mensajes").innerHTML = ""; // Limpiar el área de mensajes
+
+    // Solicitar la historia de mensajes del usuario seleccionado al servidor
+    socket.emit("requestMDHistory", { user });
+}
+
+// Recibir la historia de mensajes del MD seleccionado
+socket.on("mdMessageHistory", (history) => {
+    history.forEach(msg => {
+        loadmessages(msg, true);  // Mostrar los mensajes históricos
+    });
+});
+
+
+function loadMDUsers(userListMD) {
+    const mdList = document.getElementById("mdlist");
+    mdList.innerHTML = ""; // Limpiar la lista antes de cargar los usuarios
+
+    userListMD.forEach(user => {
+        const userItem = document.createElement("li");
+        userItem.classList.add("menu-item", "text-center");
+        
+        const userLink = document.createElement("a");
+        userLink.href = "#";  // La acción para cargar la conversación estará en un evento
+        userLink.classList.add("block", "p-4", "text-white", "hover:bg-blue-600", "hover:text-white", "transition-colors", "duration-300");
+        userLink.textContent = user;
+
+        // Al hacer clic en un usuario, se cargará su conversación
+        userLink.addEventListener("click", () => {
+            selectMDUser(user);  // Llamar a la nueva función selectMDUser
+        });
+
+        userItem.appendChild(userLink);
+        mdList.appendChild(userItem);
+    });
+}
+
+
+// Socket event para recibir lista de usuarios de MD
+socket.on("mdUsers", (userListMD) => {
+    loadMDUsers(userListMD); // Cargar los usuarios de MD al inicio
+});
+
+
+function sendMessage() {
+    const message = inputMessage.value.trim();
+    if (message && selectedMDUser) { // Comprobar si hay mensaje y usuario de MD seleccionado
+        socket.emit("sendmdmsg", { message, to: selectedMDUser }); // Enviar mensaje al usuario seleccionado
+        inputMessage.value = "";
+        removeUnreadMarker();
+    } else if (!selectedMDUser) {
+        alert("Por favor, selecciona un usuario para enviar el mensaje.");
+    }
+}
+
+
+socket.on("sendmdmsg", (msg) => {
+    if (msg.from === selectedMDUser) {
+        loadmessages(msg, false);  // Mostrar el mensaje si es para el usuario seleccionado
+    } else {
+        // Aquí puedes manejar el caso de mensajes no leídos para otros usuarios
+        updateUnreadCount();
+    }
+});
+
+
+// Recibir la historia de mensajes del MD seleccionado
+socket.on("mdMessageHistory", (history) => {
+    history.forEach(msg => {
+        loadmessages(msg, true);  // Mostrar los mensajes históricos
+    });
+});
+
+socket.on("sendmdmsg", ({ message, to }) => {
+    // Enviar el mensaje al destinatario específico
+    sendMessageToUser(message, to);
+});
+
+
+
+
+// Selección de usuario para mensajes directos (MD)
+function selectMDUser(userName) {
+    selectedMDUser = userName; // Guardar el usuario seleccionado para MD
+    clearmsg(); // Limpiar el área de mensajes
+
+    // Mostrar un aviso de que estás chateando con el usuario seleccionado
+    const mensajes = document.getElementById("mensajes");
+    const aviso = document.createElement("p");
+    aviso.textContent = `Estás chateando con ${userName}`;
+    aviso.classList.add("text-yellow-400", "text-center", "my-2");
+    mensajes.appendChild(aviso);
+
+    // Solicitar la historia de mensajes del usuario seleccionado al servidor
+    socket.emit("requestMDHistory", { user: userName });
 }
