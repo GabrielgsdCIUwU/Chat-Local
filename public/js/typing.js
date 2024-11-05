@@ -18,6 +18,14 @@ inputMessage.addEventListener("input", () => {
     }, 4000);
 });
 
+inputMessage.addEventListener("keydown", (event) => {
+  if(event.key === 'Enter') {
+    event.preventDefault();
+    typing = false;
+    socket.emit("typing", false); 
+  }
+});
+
 // Escuchar los usuarios que están escribiendo desde el servidor
 socket.on("usersTyping", (users) => {
     const typingDisplay = document.getElementById("typingDisplay");

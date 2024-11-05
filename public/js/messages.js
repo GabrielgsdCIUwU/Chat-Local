@@ -119,6 +119,8 @@ document.addEventListener("click", function (e) {
 //endregion messages buttons
 
 //region messages functions
+
+//region Show User List
 function showUserList(users) {
     userList.innerHTML = "";
     users.forEach(user => {
@@ -131,6 +133,7 @@ function showUserList(users) {
     userList.classList.remove("hidden");
 }
 
+//region Select User
 function selectUser(userName) {
     const atIndex = inputMessage.value.lastIndexOf('@');
     inputMessage.value = inputMessage.value.slice(0, atIndex + 1) + userName + ' ';
@@ -139,6 +142,7 @@ function selectUser(userName) {
     selectedUserIndex = -1;
 }
 
+//region Text Input
 inputMessage.addEventListener("keydown", (event) => {
     const atIndex = inputMessage.value.lastIndexOf('@');
 
@@ -175,6 +179,8 @@ inputMessage.addEventListener("keydown", (event) => {
         inputMessage.value = "";
     }
 });
+
+//region Send Message
 function sendMessage() {
     const message = inputMessage.value.trim();
     if (message) {
@@ -185,6 +191,7 @@ function sendMessage() {
     }
 }
 
+//region Hightlight User
 function highlightUser(index) {
     const items = userList.children;
     for (let i = 0; i < items.length; i++) {
@@ -196,7 +203,7 @@ function highlightUser(index) {
 }
 
 
-
+//region Adjust Height
 function adjustHeight() {
     this.style.height = 'auto';
     this.style.height = `${Math.min(this.scrollHeight, 150)}px`;
@@ -211,6 +218,7 @@ function adjustHeight() {
     }
 }
 
+//region Load Messages
 let unreadMarkerExists = false;
 async function loadmessages(msg, isHistory) {
     const mensajes = document.getElementById("mensajes");
@@ -218,9 +226,12 @@ async function loadmessages(msg, isHistory) {
     const userName = document.createElement("p");
     const messageText = document.createElement("p");
     const timeText = document.createElement("p");
+    const optionsButton = document.createElement("button");
+    const optionsMenu = document.createElement("div");
 
     gridItem.classList.add("bg-gray-700", "rounded-lg", "shadow-md", "p-4", "mb-3", "transition-all", "duration-300", "ease-in-out");
     gridItem.style.marginBottom = "1rem";
+    gridItem.style.position = "relative";
     gridItem.classList.add("opacity-100");
 
     userName.classList.add("text-white", "font-bold", "text-xl", "mb-1");
@@ -248,9 +259,41 @@ async function loadmessages(msg, isHistory) {
     timeText.classList.add("text-gray-400", "mt-1", "text-small");
     timeText.textContent = `${hours}:${minutes}`;
 
+
+
+     optionsButton.textContent = "⋮";
+    optionsButton.classList.add("options-button");
+    optionsButton.style.position = "absolute";
+    optionsButton.style.top = "10px";
+    optionsButton.style.right = "10px";
+    optionsButton.onclick = (event) => {
+        event.stopPropagation();
+        optionsMenu.classList.toggle("hidden");
+        optionsMenu.style.position = 'absolute';
+        optionsMenu.style.backgroundColor = '#2c2f33';
+        optionsMenu.style.padding = '10px';
+        optionsMenu.style.borderRadius = '5px';
+        optionsMenu.style.top = '30px';
+        optionsMenu.style.right = '0';
+
+        const replyOption = document.createElement("div");
+        replyOption.textContent = "Responder";
+        replyOption.classList.add("menu-option");
+        replyOption.onclick = () => {
+            inputMessage.value = `@${msg.user} `;
+            inputMessage.focus();
+            optionsMenu.classList.add("hidden");
+        };
+
+        optionsMenu.innerHTML = ""; // Limpiar opciones anteriores
+        optionsMenu.appendChild(replyOption);
+        gridItem.appendChild(optionsMenu);
+    };
+
     gridItem.appendChild(userName);
     gridItem.appendChild(messageText);
     gridItem.appendChild(timeText);
+    gridItem.appendChild(optionsButton);
 
     if (isHistory) {
         mensajes.appendChild(gridItem);
@@ -281,8 +324,14 @@ async function loadmessages(msg, isHistory) {
         }
     }
     gridItem.dataset.timestamp = msg.timestamp;
-}
 
+    document.addEventListener("click", (event) => {
+        if(!optionsButton.contains(event.target) && !optionsMenu.contains(event.target)) {
+            optionsMenu.classList.add("hidden");
+        }
+    });
+}
+//region Format Message
 async function formatMessage(message) {
     message = message.trim();
     message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -334,7 +383,7 @@ async function formatMessage(message) {
 
 
 
-
+//region Format All Messages
 async function formatAllMessages() {
     const mensajes = document.getElementById("mensajes");
     const messageTexts = mensajes.querySelectorAll(".text-lg");
