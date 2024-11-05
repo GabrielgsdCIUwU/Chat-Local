@@ -11,13 +11,13 @@
     <header class="text-white flex justify-between items-center p-4 relative z-10">
       <div class="flex items-center space-x-4">
         <button id="menu-toggle" class="focus:outline-none" aria-label="Menú">
-          <img src="/public/img/Gabri.png" alt="Gabri" width="50px" />
+          <img src="/public/svg/menu.svg" alt="menu">
         </button>
       </div>
     </header>
 
     <div class="flex flex-row flex-1 overflow-hidden">
-      <!-- Sidebar de Usuarios Activos -->
+      <!-- Sidebar izquierdo -->
       <nav
         id="sidebar"
         class="bg-gray-600 text-white w-48 h-full fixed transform -translate-x-full transition-transform duration-300 z-20">
@@ -42,18 +42,34 @@
 
       <!-- Main content -->
       <main id="main-content" class="flex-1 flex flex-row bg-gray-800 transition-all duration-300">
-        <!-- Sidebar de Chats Privados (Usuarios Activos) -->
+        <!-- Sidebar de Chats privados (MDs) -->
         <aside id="mdbar" class="bg-gray-600 text-white w-64 h-full transition-all duration-300">
           <ul id="mdlist" class="space-y-2 mt-4 p-4">
-            <li class="text-xl font-bold text-white mb-4">Usuarios Activos</li>
-            <!-- Aquí se cargarán los usuarios activos en tiempo real -->
+            <li class="text-xl font-bold text-white mb-4">Chats privados</li>
+            <li class="menu-item text-center">
+              <a
+                href="/msg"
+                class="block p-4 text-white hover:bg-blue-600 hover:text-white transition-colors duration-300">
+                Testing 1
+              </a>
+            </li>
+            <li class="menu-item text-center">
+              <a
+                href="/mds"
+                class="block p-4 text-white hover:bg-blue-600 hover:text-white transition-colors duration-300">
+                Testing 2
+              </a>
+            </li>
           </ul>
         </aside>
 
         <!-- Contenido principal -->
         <div id="content" class="flex-1 p-4 shadow-lg overflow-auto">
           <div class="w-full p-4 bg-gray-800 shadow-lg">
-            <h2 class="text-2xl font-bold text-center text-gray-200 mb-4">Chat Privado</h2>
+            <h1 class="text-2xl font-bold text-center text-gray-200 mb-4">Chat</h1>
+            <h2 class="text-2xl font-bold text-center text-red-500 mb-4">
+              Si se detecta que uno de tus mensajes molesta la interfaz de la web, quedarás baneado!
+            </h2>
 
             <div class="relative mb-2">
               <textarea
@@ -82,11 +98,9 @@
                 Emojis
               </button>
             </div>
-
-            <div
-              id="mensajes"
-              class="flex-1 bg-gray-800 p-4 rounded-t-lg shadow-inner overflow-y-auto text-white"></div>
           </div>
+
+          <div id="mensajes" class="flex-1 bg-gray-800 p-4 rounded-t-lg shadow-inner overflow-y-auto text-white"></div>
         </div>
       </main>
     </div>
@@ -121,12 +135,10 @@
     </div>
 
     <script src="/jquery.js"></script>
-    <!--
     <script src="/public/js/messages-md.js"></script>
-    
-    -->
     <script src="/public/js/emojis.js"></script>
     <script src="/public/js/md.js"></script>
     <script src="/public/js/sidebar.js"></script>
+
   </body>
 </html>

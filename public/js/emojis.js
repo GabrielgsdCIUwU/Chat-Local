@@ -5,13 +5,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     const emojiContainer = document.getElementById('emojiContainer');
     const inputMessage = document.getElementById('mensaje');
     const stickerMode = document.getElementById('stickermode');
-    const emojiSearch = document.createElement('input');
+    const emojiSearch = document.getElementById('emojiSearch');
     let emojiCache = [];
-
-    emojiSearch.type = 'text';
-    emojiSearch.placeholder = 'Buscar emojis...';
-    emojiSearch.classList.add('w-full', 'p-2', 'mb-4', 'bg-gray-700', 'text-white', 'rounded');
-    emojiContainer.parentElement.insertBefore(emojiSearch, emojiContainer);
 
     buttonEmoji.addEventListener('click', async () => {
         emojiContainer.innerHTML = "";

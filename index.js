@@ -32,7 +32,7 @@ app.disable("x-powered-by");
 const sessionMiddleware = session({
     store: new FileStore({
         path: "./sessions",
-        ttl: 432000,
+        ttl: 86400,
     }),
     secret: process.env.sessionSecret,
     resave: false,  
@@ -79,6 +79,7 @@ function getUserNames() {
     });
 }
 
+const typingUsers = new Set();
 io.on("connection", (socket) => {
     isAuthenticated(socket, (err) => {
         if (err) {
@@ -154,15 +155,27 @@ io.on("connection", (socket) => {
             });
             socket.emit("emojisNames", emojisNames);
         });
+        
 
+        socket.on("typing", (isTyping) => {
+            if(isTyping) {
+                typingUsers.add(user.name);
+            } else {
+                typingUsers.delete(user.name);
+            }
+            io.emit("usersTyping", Array.from(typingUsers));
+        });
 
         socket.on("disconnect", () => {
-            connectedUsers.delete(user.name)
+            connectedUsers.delete(user.name);
+            typingUsers.delete(user.name);
+            io.emit("usersTyping", Array.from(typingUsers));
             getUserNames().then(userNames => {
                 io.emit("userNames", userNames);
             });
         });
 
+        //region private
         app.get("/private/reload", (req, res) => {
             if (req.ip == "::1" || req.ip == "::ffff:127.0.0.1") {
                 io.emit("reload");
