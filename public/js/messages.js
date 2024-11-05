@@ -226,8 +226,7 @@ async function loadmessages(msg, isHistory) {
     const userName = document.createElement("p");
     const messageText = document.createElement("p");
     const timeText = document.createElement("p");
-    const optionsButton = document.createElement("button");
-    const optionsMenu = document.createElement("div");
+
 
     gridItem.classList.add("bg-gray-700", "rounded-lg", "shadow-md", "p-4", "mb-3", "transition-all", "duration-300", "ease-in-out");
     gridItem.style.marginBottom = "1rem";
@@ -259,36 +258,9 @@ async function loadmessages(msg, isHistory) {
     timeText.classList.add("text-gray-400", "mt-1", "text-small");
     timeText.textContent = `${hours}:${minutes}`;
 
+    //procesamiento menu mensajes
+    let [optionsButton, optionsMenu] = messageMenu(gridItem, msg)
 
-
-     optionsButton.textContent = "⋮";
-    optionsButton.classList.add("options-button");
-    optionsButton.style.position = "absolute";
-    optionsButton.style.top = "10px";
-    optionsButton.style.right = "10px";
-    optionsButton.onclick = (event) => {
-        event.stopPropagation();
-        optionsMenu.classList.toggle("hidden");
-        optionsMenu.style.position = 'absolute';
-        optionsMenu.style.backgroundColor = '#2c2f33';
-        optionsMenu.style.padding = '10px';
-        optionsMenu.style.borderRadius = '5px';
-        optionsMenu.style.top = '30px';
-        optionsMenu.style.right = '0';
-
-        const replyOption = document.createElement("div");
-        replyOption.textContent = "Responder";
-        replyOption.classList.add("menu-option");
-        replyOption.onclick = () => {
-            inputMessage.value = `@${msg.user} `;
-            inputMessage.focus();
-            optionsMenu.classList.add("hidden");
-        };
-
-        optionsMenu.innerHTML = ""; // Limpiar opciones anteriores
-        optionsMenu.appendChild(replyOption);
-        gridItem.appendChild(optionsMenu);
-    };
 
     gridItem.appendChild(userName);
     gridItem.appendChild(messageText);
@@ -326,11 +298,80 @@ async function loadmessages(msg, isHistory) {
     gridItem.dataset.timestamp = msg.timestamp;
 
     document.addEventListener("click", (event) => {
-        if(!optionsButton.contains(event.target) && !optionsMenu.contains(event.target)) {
+        if (!optionsButton.contains(event.target) && !optionsMenu.contains(event.target)) {
             optionsMenu.classList.add("hidden");
         }
     });
 }
+
+//region options msg menu
+function messageMenu(gridItem, msg) {
+    const optionsButton = document.createElement("button");
+    const optionsMenu = document.createElement("div");
+
+    optionsButton.textContent = "⋮";
+    optionsButton.classList.add("options-button");
+    optionsButton.style.position = "absolute";
+    optionsButton.style.top = "10px";
+    optionsButton.style.right = "10px";
+    optionsButton.onclick = (event) => {
+        event.stopPropagation();
+        optionsMenu.classList.toggle("hidden");
+        optionsMenu.style.position = 'absolute';
+        optionsMenu.style.backgroundColor = '#2c2f33';
+        optionsMenu.style.padding = '10px';
+        optionsMenu.style.borderRadius = '5px';
+        optionsMenu.style.top = '30px';
+        optionsMenu.style.right = '0';
+
+        const replyOption = document.createElement("div");
+        replyOption.textContent = "Responder";
+        replyOption.classList.add("menu-option");
+        replyOption.onclick = () => {
+            inputMessage.value = `@${msg.user} ${inputMessage.value || ''}`;
+            inputMessage.focus();
+            optionsMenu.classList.add("hidden");
+        };
+
+        const markUnreadOption = document.createElement("div");
+        markUnreadOption.textContent = "Marcar como no leído";
+        markUnreadOption.classList.add("menu-option");
+        markUnreadOption.onclick = () => {
+            addUnreadMarker(gridItem);
+            optionsMenu.classList.add("hidden");
+        };
+
+        optionsMenu.innerHTML = "";
+        optionsMenu.appendChild(replyOption);
+        optionsMenu.appendChild(markUnreadOption);
+        gridItem.appendChild(optionsMenu);
+    };
+    return [optionsButton, optionsMenu];
+}
+
+
+
+function toggleUnreadMarker(gridItem) {
+    let marker = gridItem.querySelector(".unread-marker");
+
+    if (gridItem.classList.contains("unread")) {
+        if (!marker) {
+            marker = document.createElement("div");
+            marker.classList.add("unread-marker");
+            marker.style.position = "absolute";
+            marker.style.top = "10px";
+            marker.style.left = "10px";
+            marker.style.width = "10px";
+            marker.style.height = "10px";
+            marker.style.backgroundColor = "red";
+            marker.style.borderRadius = "50%";
+            gridItem.appendChild(marker);
+        }
+    } else if (marker) {
+        gridItem.removeChild(marker);
+    }
+}
+
 //region Format Message
 async function formatMessage(message) {
     message = message.trim();
@@ -425,4 +466,27 @@ function updateUnreadCount() {
         unreadCount = 0;
     }
 }
+
+function addUnreadMarker(gridItem) {
+    const mensajes = document.getElementById("mensajes");
+
+    // Eliminar marcador existente si lo hubiera
+    removeUnreadMarker();
+
+    // Crear un nuevo marcador de "Mensajes no leídos"
+    const marker = document.createElement("div");
+    marker.classList.add("bg-yellow-500", "text-center", "py-2", "text-black", "font-bold", "rounded-lg", "mb-3");
+    marker.textContent = "---- Mensajes no leídos ----";
+    marker.addEventListener("dblclick", () => {
+        removeUnreadMarker();
+    });
+
+    // Insertar el marcador justo antes del mensaje seleccionado
+    mensajes.insertBefore(marker, gridItem);
+
+    // Marcar que el marcador ha sido añadido
+    unreadMarkerExists = true;
+}
+
+
 //endregion logic messages
