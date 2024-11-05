@@ -107,7 +107,7 @@
 }
 
 /*
-! tailwindcss v3.4.13 | MIT License | https://tailwindcss.com
+! tailwindcss v3.4.14 | MIT License | https://tailwindcss.com
 */
 
 /*
@@ -550,7 +550,7 @@ video {
 
 /* Make elements with the HTML hidden attribute stay hidden by default */
 
-[hidden] {
+[hidden]:where(:not([hidden="until-found"])) {
   display: none;
 }
 
@@ -648,6 +648,10 @@ video {
 
 .h-10 {
   height: 2.5rem;
+}
+
+.h-4 {
+  height: 1rem;
 }
 
 .h-full {
@@ -873,6 +877,10 @@ video {
   padding-right: 6rem;
 }
 
+.pr-3 {
+  padding-right: 0.75rem;
+}
+
 .text-center {
   text-align: center;
 }
@@ -923,6 +931,11 @@ video {
 .text-gray-400 {
   --tw-text-opacity: 1;
   color: rgb(156 163 175 / var(--tw-text-opacity));
+}
+
+.text-gray-500 {
+  --tw-text-opacity: 1;
+  color: rgb(107 114 128 / var(--tw-text-opacity));
 }
 
 .text-red-500 {

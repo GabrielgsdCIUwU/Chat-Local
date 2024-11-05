@@ -27,6 +27,7 @@
           Enviar
         </button>
       </div>
+      <div id="typingDisplay" class="text-sm text-white-500 mt-2 h-4"></div>
 
       <div id="userList" class="absolute bg-gray-700 text-gray-200 rounded-lg shadow-lg z-10 hidden"></div>
 
@@ -58,8 +59,7 @@
             type="text"
             id="emojiSearch"
             class="w-full bg-gray-700 placeholder-gray-400 text-white text-sm border border-gray-600 rounded-full pl-5 pr-3 py-2"
-            placeholder="Buscar emoji..."
-          />
+            placeholder="Buscar emoji..." />
         </div>
         <div id="emojiContainer" class="flex flex-wrap mb-4">
           <!-- Se inserta aquí los emojis -->
@@ -88,5 +88,6 @@
     <script src="/jquery.js"></script>
     <script src="/public/js/messages.js"></script>
     <script src="/public/js/emojis.js"></script>
+    <script src="/public/js/typing.js"></script>
   </body>
 </html>
