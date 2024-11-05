@@ -1,6 +1,7 @@
 const socket = io();
 mensajes.innerHTML = "";
-
+let replyMessage = null;
+const replyMessageDisplay = document.getElementById("replyMessageDisplay");
 //region cache emojis
 let emojiCache = [];
 
@@ -179,12 +180,24 @@ inputMessage.addEventListener("keydown", (event) => {
         inputMessage.value = "";
     }
 });
-
+let replyPreview;
 //region Send Message
 function sendMessage() {
     const message = inputMessage.value.trim();
     if (message) {
-        socket.emit("sendmsg", message);
+        let finalMessage = message;
+
+        if (replyMessage) {
+            replyMessage.message = replyMessage.message.replace(/\[reply:.*?\]/g, '');
+            const shortReplyMessage = replyMessage.message.slice(0, 20);
+            const replyPreview = shortReplyMessage.length < 20 ? shortReplyMessage : `${shortReplyMessage}...`;
+            finalMessage = `[reply: ${replyMessage.user}: ${replyPreview}] ${finalMessage}`;
+            replyMessageDisplay.classList.add("hidden");
+            replyMessage = null;
+            sendbutton.style.top = "";
+        }
+
+        socket.emit("sendmsg", finalMessage);
         inputMessage.value = "";
         userList.classList.add("hidden");
         removeUnreadMarker();
@@ -328,9 +341,22 @@ function messageMenu(gridItem, msg) {
         replyOption.textContent = "Responder";
         replyOption.classList.add("menu-option");
         replyOption.onclick = () => {
-            inputMessage.value = `@${msg.user} ${inputMessage.value || ''}`;
-            inputMessage.focus();
+            const replyPattern = /^\[reply: (.*?): (.*?)\] (.*)$/;
+            const match = msg.message.match(replyPattern);
+            let displayMessage;
+
+            if (match) {
+                displayMessage = match[3];
+            } else {
+                const shortMessage = msg.message.slice(0, 20);
+                displayMessage = shortMessage.length < 20 ? shortMessage : `${shortMessage}...`;
+            }
+
+            replyMessageDisplay.textContent = `Respondiendo a: ${msg.user}: ${displayMessage}`;
+            replyMessageDisplay.classList.remove("hidden");
+            replyMessage = msg;
             optionsMenu.classList.add("hidden");
+            sendbutton.style.top = '28px';
         };
 
         const markUnreadOption = document.createElement("div");
@@ -375,6 +401,18 @@ function toggleUnreadMarker(gridItem) {
 //region Format Message
 async function formatMessage(message) {
     message = message.trim();
+
+    if (message.startsWith("[reply:")) {
+        const replyInfo = message.match(/\[reply: (.*?): (.*?)\] (.*)/);
+        if (replyInfo) {
+            const replyUser = replyInfo[1];
+            const replyText = replyInfo[2];
+            const replyPreview = replyText.length < 20 ? replyText : `${replyText.slice(0, 20)}...`;
+            message = `<div class="reply-info">Respondiendo a: ${replyUser}: ${replyPreview}</div>` + replyInfo[3];
+        }
+    }
+
+
     message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     message = message.replace(/\*(.*?)\*/g, '<em>$1</em>');
     message = message.replace(/\|\| (.*?) \|\|/g, `<span class="hidden-message" style="cursor: pointer; color: blue;">[Mostrar]</span><span class="actual-message" style="display:none;">$1</span>`);
@@ -489,4 +527,20 @@ function addUnreadMarker(gridItem) {
 }
 
 
+
+function createReplyOption(msg) {
+    const replyOption = document.createElement("div");
+    replyOption.textContent = "Responder";
+    replyOption.classList.add("menu-option");
+    replyOption.onclick = () => {
+        replyMessageDisplay.textContent = `Respondiendo a: ${msg.user}: ${msg.message.slice(0, 20)}...`;
+        replyMessageDisplay.classList.remove("hidden");
+        inputMessage.value = ""; // Limpiar el textarea
+        inputMessage.focus();
+        optionsMenu.classList.add("hidden");
+        replyMessage = msg; // Guardamos el mensaje original para referencia
+    };
+
+    optionsMenu.appendChild(replyOption);
+}
 //endregion logic messages
