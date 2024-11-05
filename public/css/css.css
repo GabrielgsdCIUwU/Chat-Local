@@ -1,67 +1,69 @@
-body{
+body {
   height: 100vh;
   margin: 0;
   padding: 0;
-  background-color: #1F2937;
+  background-color: #1f2937;
   align-items: center;
   box-sizing: border-box;
-  background-size: cover;  
-  background-position: center; 
+  background-size: cover;
+  background-position: center;
 }
 .inicio {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    transform: translateY(+100px);
-  }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateY(+100px);
+}
 
 .input_nombre {
-    border-radius: 7px;
-    font-family: Verdana, Arial, Helvetica, sans-serif;
+  border-radius: 7px;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
 }
 .input_pass {
-    border-radius: 7px;
-    font-family: Verdana, Arial, Helvetica, sans-serif;
-
+  border-radius: 7px;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
 }
 .td_button {
-    text-align: center;
+  text-align: center;
 }
-.td_button_register{
-    text-align: center;
+.td_button_register {
+  text-align: center;
 }
 
 /* Opcional: ajustes para el botón */
 .button_login {
-    border-radius: 7px;
-    background-color: transparent;
-    margin: 10px 0; /* Ajuste de margen para espacio vertical */
-    padding: 5px 10px; /* Ajuste de padding para un mejor tamaño */
-    font-family: Verdana, Arial, Helvetica, sans-serif;
-    font-weight: bold;
-    color: white;
-    width: 70px;
-    text-align: center;
+  border-radius: 7px;
+  background-color: transparent;
+  margin: 10px 0; /* Ajuste de margen para espacio vertical */
+  padding: 5px 10px; /* Ajuste de padding para un mejor tamaño */
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+  font-weight: bold;
+  color: white;
+  width: 70px;
+  text-align: center;
 }
 .button_login_register {
-    border-radius: 7px;
-    background-color: transparent;
-    margin: 10px 0; /* Ajuste de margen para espacio vertical */
-    padding: 5px 10px; /* Ajuste de padding para un mejor tamaño */
-    font-family: Verdana, Arial, Helvetica, sans-serif;
-    font-weight: bold;
-    color: white;
-    width: px;
-    text-align: center;
+  border-radius: 7px;
+  background-color: transparent;
+  margin: 10px 0; /* Ajuste de margen para espacio vertical */
+  padding: 5px 10px; /* Ajuste de padding para un mejor tamaño */
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+  font-weight: bold;
+  color: white;
+  width: px;
+  text-align: center;
 }
 .reg {
-    font-weight: bold;
-    color:white
-  }
-  h1{
-    text-align: center;
-    color: white;
-  }
-  
-  
-  
+  font-weight: bold;
+  color: white;
+}
+h1 {
+  text-align: center;
+  color: white;
+}
+
+.reply-info {
+  font-size: 0.9em;
+  color: #bbb;
+  margin-bottom: 4px;
+}
