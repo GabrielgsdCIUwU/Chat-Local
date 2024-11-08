@@ -352,7 +352,7 @@ function messageMenu(gridItem, msg) {
                 displayMessage = shortMessage.length < 20 ? shortMessage : `${shortMessage}...`;
             }
 
-            replyMessageDisplay.textContent = `Respondiendo a: ${msg.user}: ${displayMessage}`;
+            replyMessageDisplay.textContent = `Respondiendo a ${msg.user}: ${displayMessage}`;
             replyMessageDisplay.classList.remove("hidden");
             replyMessage = msg;
             optionsMenu.classList.add("hidden");
@@ -408,7 +408,7 @@ async function formatMessage(message) {
             const replyUser = replyInfo[1];
             const replyText = replyInfo[2];
             const replyPreview = replyText.length < 20 ? replyText : `${replyText.slice(0, 20)}...`;
-            message = `<div class="reply-info">Respondiendo a: ${replyUser}: ${replyPreview}</div>` + replyInfo[3];
+            message = `<div class="reply-info">Respondiendo a ${replyUser}: ${replyPreview}</div>` + replyInfo[3];
         }
     }
 
@@ -533,7 +533,7 @@ function createReplyOption(msg) {
     replyOption.textContent = "Responder";
     replyOption.classList.add("menu-option");
     replyOption.onclick = () => {
-        replyMessageDisplay.textContent = `Respondiendo a: ${msg.user}: ${msg.message.slice(0, 20)}...`;
+        replyMessageDisplay.textContent = `Respondiendo a ${msg.user}: ${msg.message.slice(0, 20)}...`;
         replyMessageDisplay.classList.remove("hidden");
         inputMessage.value = ""; // Limpiar el textarea
         inputMessage.focus();
