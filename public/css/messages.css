@@ -51,3 +51,9 @@ h1 {
 #sidebar {
   transition: transform 0.3s ease-in-out;
 }
+
+.reply-info {
+  font-size: 0.9em;
+  color: #bbb;
+  margin-bottom: 4px;
+}
