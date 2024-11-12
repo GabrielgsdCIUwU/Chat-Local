@@ -189,8 +189,8 @@ function sendMessage() {
 
         if (replyMessage) {
             replyMessage.message = replyMessage.message.replace(/\[reply:.*?\]/g, '');
-            const shortReplyMessage = replyMessage.message.slice(0, 20);
-            const replyPreview = shortReplyMessage.length < 20 ? shortReplyMessage : `${shortReplyMessage}...`;
+            const shortReplyMessage = replyMessage.message.slice(0, 40);
+            const replyPreview = shortReplyMessage.length < 40 ? shortReplyMessage : `${shortReplyMessage}...`;
             finalMessage = `[reply: ${replyMessage.user}: ${replyPreview}] ${finalMessage}`;
             replyMessageDisplay.classList.add("hidden");
             replyMessage = null;
@@ -348,8 +348,8 @@ function messageMenu(gridItem, msg) {
             if (match) {
                 displayMessage = match[3];
             } else {
-                const shortMessage = msg.message.slice(0, 20);
-                displayMessage = shortMessage.length < 20 ? shortMessage : `${shortMessage}...`;
+                const shortMessage = msg.message.slice(0, 40);
+                displayMessage = shortMessage.length < 40 ? shortMessage : `${shortMessage}...`;
             }
 
             replyMessageDisplay.textContent = `Respondiendo a ${msg.user}: ${displayMessage}`;
@@ -407,7 +407,7 @@ async function formatMessage(message) {
         if (replyInfo) {
             const replyUser = replyInfo[1];
             const replyText = replyInfo[2];
-            const replyPreview = replyText.length < 20 ? replyText : `${replyText.slice(0, 20)}...`;
+            const replyPreview = replyText.length < 40 ? replyText : `${replyText.slice(0, 40)}...`;
             message = `<div class="reply-info">Respondiendo a ${replyUser}: ${replyPreview}</div>` + replyInfo[3];
         }
     }
@@ -533,7 +533,7 @@ function createReplyOption(msg) {
     replyOption.textContent = "Responder";
     replyOption.classList.add("menu-option");
     replyOption.onclick = () => {
-        replyMessageDisplay.textContent = `Respondiendo a ${msg.user}: ${msg.message.slice(0, 20)}...`;
+        replyMessageDisplay.textContent = `Respondiendo a ${msg.user}: ${msg.message.slice(0, 40)}...`;
         replyMessageDisplay.classList.remove("hidden");
         inputMessage.value = ""; // Limpiar el textarea
         inputMessage.focus();
