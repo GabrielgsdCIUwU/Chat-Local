@@ -1,6 +1,8 @@
 const socket = io();
 mensajes.innerHTML = "";
 let replyMessage = null;
+let isEditingMessage = false;
+let editingMessageId;
 const replyMessageDisplay = document.getElementById("replyMessageDisplay");
 //region cache emojis
 let emojiCache = [];
@@ -34,7 +36,15 @@ clearCacheButton.addEventListener("click", async () => {
 //region sockets
 socket.on("connect", async () => {
     socket.emit("requestHistory");
+    socket.emit("whoami")
     await fetchAndCacheEmojis();
+});
+
+let actualUserName;
+
+socket.on("iam", async (name) => {
+    actualUserName = name;
+    console.log(actualUserName);
 });
 
 socket.on("messageHistory", async (history) => {
@@ -45,6 +55,30 @@ socket.on("messageHistory", async (history) => {
     }
     await formatAllMessages();
 });
+
+socket.on("messageUpdated", (data) => {
+    const { timestamp, message, edited } = data;
+
+    const messageElement = document.querySelector(`[data-timestamp="${timestamp}"]`);
+    if(messageElement) {
+        const messageText = messageElement.querySelector("p");
+        messageText.textContent = message;
+
+        if (edited) {
+            const editedMark = messageElement.querySelector(".edited-mark");
+
+            if(!editedMark) {
+                const editedLabel = document.createElement("span");
+                editedLabel.classList.add("edited-mark");
+                editedLabel.style.color = "gray";
+                editedLabel.style.fontSize = "0.8em";
+                editedLabel.textContent = " (editado)";
+                messageText.appendChild(editedLabel);
+            }
+        }
+    }
+    
+})
 
 socket.on("reload", () => {
     window.location.reload();
@@ -197,7 +231,17 @@ function sendMessage() {
             sendbutton.style.top = "";
         }
 
-        socket.emit("sendmsg", finalMessage);
+        if (isEditingMessage) {
+            // TODO: Hacer backend para editar mensajes
+            socket.emit("editmsg", {message: finalMessage, id: editingMessageId});
+            isEditingMessage = false;
+            editingMessageId = null;
+            replyMessageDisplay.textContent = "";
+        } else {
+            socket.emit("sendmsg", finalMessage);
+        }
+
+
         inputMessage.value = "";
         userList.classList.add("hidden");
         removeUnreadMarker();
@@ -366,6 +410,22 @@ function messageMenu(gridItem, msg) {
             addUnreadMarker(gridItem);
             optionsMenu.classList.add("hidden");
         };
+
+        const editMessageOption = document.createElement("div");
+        if (msg.name === actualUserName) {
+            editMessageOption.textContent = "Editar mensaje";
+            editMessageOption.classList.add("menu-option");
+            editMessageOption.onclick = () => {
+                replyMessageDisplay.textContent = "Editando mensaje...";
+                replyMessageDisplay.classList.remove("hidden");
+                inputMessage.value = msg.message;
+                isEditingMessage = true;
+                editingMessageId = msg.timestamp;
+                optionsMenu.classList.add("hidden");
+            };
+
+            optionsMenu.appendChild(editMessageOption);
+        }
 
         optionsMenu.innerHTML = "";
         optionsMenu.appendChild(replyOption);

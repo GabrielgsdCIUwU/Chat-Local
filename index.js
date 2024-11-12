@@ -35,7 +35,7 @@ const sessionMiddleware = session({
         ttl: 86400,
     }),
     secret: process.env.sessionSecret,
-    resave: false,  
+    resave: false,
     saveUninitialized: false,
 });
 
@@ -121,6 +121,11 @@ io.on("connection", (socket) => {
             io.to(room).emit("privateMessage", newMessage);
         });
 
+        // Emite el nombre del usuario
+        socket.on("whoami", () => {
+            socket.emit("iam", user.name);
+        });
+
         // Chat público (ya existente)
         socket.on("sendmsg", (msg) => {
             const timestamp = new Date().getTime();
@@ -185,15 +190,44 @@ io.on("connection", (socket) => {
             });
             socket.emit("emojisNames", emojisNames);
         });
-        
+
 
         socket.on("typing", (isTyping) => {
-            if(isTyping) {
+            if (isTyping) {
                 typingUsers.add(user.name);
             } else {
                 typingUsers.delete(user.name);
             }
             io.emit("usersTyping", Array.from(typingUsers));
+        });
+
+        //Editar mensaje
+
+        socket.on("editmsg", (data) => {
+            const { message, id: timestamp } = data;
+            console.log(message, timestamp)
+            const messagesFilePath = path.join(__dirname, "public/json/messages.json");
+            let messages = JSON.parse(fs.readFileSync(messagesFilePath, "utf-8"));
+
+            const messageIndex = messages.findIndex((msg) => msg.timestamp === timestamp);
+
+            if(messageIndex !== -1) {
+                console.log("usuario:", user.name, "usuarioMessage:", messages[messageIndex].name)
+                if(messages[messageIndex].name === user.name) {
+                    messages[messageIndex].message = message;
+                    messages[messageIndex].edited = true;
+
+                    fs.writeFile(messagesFilePath, JSON.stringify(messages, null, 2), (err) => {
+                        if (err) {
+                            console.error("Error al guardar el archivo JSON:", err);
+                            return;
+                        }
+                        console.log("Mensaje editado y guardado en el archivo JSON");
+                        io.emit("messageUpdated", { timestamp, message, edited: true});
+                    })
+                }
+            }
+
         });
 
         socket.on("disconnect", () => {
