@@ -1,6 +1,8 @@
 const socket = io();
 mensajes.innerHTML = "";
 let replyMessage = null;
+let isEditingMessage = false;
+let editingMessageId;
 const replyMessageDisplay = document.getElementById("replyMessageDisplay");
 //region cache emojis
 let emojiCache = [];
@@ -34,7 +36,15 @@ clearCacheButton.addEventListener("click", async () => {
 //region sockets
 socket.on("connect", async () => {
     socket.emit("requestHistory");
+    socket.emit("whoami")
     await fetchAndCacheEmojis();
+});
+
+let actualUserName;
+
+socket.on("iam", async (name) => {
+    actualUserName = name;
+    console.log(actualUserName);
 });
 
 socket.on("messageHistory", async (history) => {
@@ -45,6 +55,30 @@ socket.on("messageHistory", async (history) => {
     }
     await formatAllMessages();
 });
+
+socket.on("messageUpdated", (data) => {
+    const { timestamp, message, edited } = data;
+
+    const messageElement = document.querySelector(`[data-timestamp="${timestamp}"]`);
+    if (messageElement) {
+        const messageText = messageElement.querySelectorAll("p")[1];
+        messageText.textContent = message;
+
+        if (edited) {
+            const editedMark = messageElement.querySelector(".edited-mark");
+
+            if (!editedMark) {
+                const editedLabel = document.createElement("span");
+                editedLabel.classList.add("edited-mark");
+                editedLabel.style.color = "gray";
+                editedLabel.style.fontSize = "0.8em";
+                editedLabel.textContent = " (editado)";
+                messageText.appendChild(editedLabel);
+            }
+        }
+    }
+
+})
 
 socket.on("reload", () => {
     window.location.reload();
@@ -189,15 +223,25 @@ function sendMessage() {
 
         if (replyMessage) {
             replyMessage.message = replyMessage.message.replace(/\[reply:.*?\]/g, '');
-            const shortReplyMessage = replyMessage.message.slice(0, 20);
-            const replyPreview = shortReplyMessage.length < 20 ? shortReplyMessage : `${shortReplyMessage}...`;
+            const shortReplyMessage = replyMessage.message.slice(0, 40);
+            const replyPreview = shortReplyMessage.length < 40 ? shortReplyMessage : `${shortReplyMessage}...`;
             finalMessage = `[reply: ${replyMessage.user}: ${replyPreview}] ${finalMessage}`;
             replyMessageDisplay.classList.add("hidden");
             replyMessage = null;
             sendbutton.style.top = "";
         }
 
-        socket.emit("sendmsg", finalMessage);
+        if (isEditingMessage) {
+            // TODO: Hacer backend para editar mensajes
+            socket.emit("editmsg", { message: finalMessage, id: editingMessageId });
+            isEditingMessage = false;
+            editingMessageId = null;
+            replyMessageDisplay.textContent = "";
+        } else {
+            socket.emit("sendmsg", finalMessage);
+        }
+
+
         inputMessage.value = "";
         userList.classList.add("hidden");
         removeUnreadMarker();
@@ -248,6 +292,14 @@ async function loadmessages(msg, isHistory) {
 
     userName.classList.add("text-white", "font-bold", "text-xl", "mb-1");
     userName.textContent = msg.user;
+    if (msg.edited) {
+        const editedLabel = document.createElement("span");
+        editedLabel.classList.add("edited-mark");
+        editedLabel.style.color = "gray";
+        editedLabel.style.fontSize = "0.8em";
+        editedLabel.textContent = " (editado)";
+        userName.appendChild(editedLabel);
+    }
 
     messageText.classList.add("text-white", "text-lg");
     if (isHistory) {
@@ -348,8 +400,8 @@ function messageMenu(gridItem, msg) {
             if (match) {
                 displayMessage = match[3];
             } else {
-                const shortMessage = msg.message.slice(0, 20);
-                displayMessage = shortMessage.length < 20 ? shortMessage : `${shortMessage}...`;
+                const shortMessage = msg.message.slice(0, 40);
+                displayMessage = shortMessage.length < 40 ? shortMessage : `${shortMessage}...`;
             }
 
             replyMessageDisplay.textContent = `Respondiendo a ${msg.user}: ${displayMessage}`;
@@ -366,8 +418,24 @@ function messageMenu(gridItem, msg) {
             addUnreadMarker(gridItem);
             optionsMenu.classList.add("hidden");
         };
-
         optionsMenu.innerHTML = "";
+        const editMessageOption = document.createElement("div");
+        if (msg.name === actualUserName) {
+            editMessageOption.textContent = "Editar mensaje";
+            editMessageOption.classList.add("menu-option");
+            editMessageOption.onclick = () => {
+                replyMessageDisplay.textContent = "Editando mensaje...";
+                replyMessageDisplay.classList.remove("hidden");
+                inputMessage.value = msg.message;
+                isEditingMessage = true;
+                editingMessageId = msg.timestamp;
+                optionsMenu.classList.add("hidden");
+            };
+
+            optionsMenu.appendChild(editMessageOption);
+        }
+
+
         optionsMenu.appendChild(replyOption);
         optionsMenu.appendChild(markUnreadOption);
         gridItem.appendChild(optionsMenu);
@@ -407,7 +475,7 @@ async function formatMessage(message) {
         if (replyInfo) {
             const replyUser = replyInfo[1];
             const replyText = replyInfo[2];
-            const replyPreview = replyText.length < 20 ? replyText : `${replyText.slice(0, 20)}...`;
+            const replyPreview = replyText.length < 40 ? replyText : `${replyText.slice(0, 40)}...`;
             message = `<div class="reply-info">Respondiendo a ${replyUser}: ${replyPreview}</div>` + replyInfo[3];
         }
     }
@@ -533,7 +601,7 @@ function createReplyOption(msg) {
     replyOption.textContent = "Responder";
     replyOption.classList.add("menu-option");
     replyOption.onclick = () => {
-        replyMessageDisplay.textContent = `Respondiendo a ${msg.user}: ${msg.message.slice(0, 20)}...`;
+        replyMessageDisplay.textContent = `Respondiendo a ${msg.user}: ${msg.message.slice(0, 40)}...`;
         replyMessageDisplay.classList.remove("hidden");
         inputMessage.value = ""; // Limpiar el textarea
         inputMessage.focus();
