@@ -205,7 +205,6 @@ io.on("connection", (socket) => {
 
         socket.on("editmsg", (data) => {
             const { message, id: timestamp } = data;
-            console.log(message, timestamp)
             const messagesFilePath = path.join(__dirname, "public/json/messages.json");
             let messages = JSON.parse(fs.readFileSync(messagesFilePath, "utf-8"));
 

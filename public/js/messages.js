@@ -60,14 +60,14 @@ socket.on("messageUpdated", (data) => {
     const { timestamp, message, edited } = data;
 
     const messageElement = document.querySelector(`[data-timestamp="${timestamp}"]`);
-    if(messageElement) {
-        const messageText = messageElement.querySelector("p");
+    if (messageElement) {
+        const messageText = messageElement.querySelectorAll("p")[1];
         messageText.textContent = message;
 
         if (edited) {
             const editedMark = messageElement.querySelector(".edited-mark");
 
-            if(!editedMark) {
+            if (!editedMark) {
                 const editedLabel = document.createElement("span");
                 editedLabel.classList.add("edited-mark");
                 editedLabel.style.color = "gray";
@@ -77,7 +77,7 @@ socket.on("messageUpdated", (data) => {
             }
         }
     }
-    
+
 })
 
 socket.on("reload", () => {
@@ -233,7 +233,7 @@ function sendMessage() {
 
         if (isEditingMessage) {
             // TODO: Hacer backend para editar mensajes
-            socket.emit("editmsg", {message: finalMessage, id: editingMessageId});
+            socket.emit("editmsg", { message: finalMessage, id: editingMessageId });
             isEditingMessage = false;
             editingMessageId = null;
             replyMessageDisplay.textContent = "";
@@ -292,6 +292,14 @@ async function loadmessages(msg, isHistory) {
 
     userName.classList.add("text-white", "font-bold", "text-xl", "mb-1");
     userName.textContent = msg.user;
+    if (msg.edited) {
+        const editedLabel = document.createElement("span");
+        editedLabel.classList.add("edited-mark");
+        editedLabel.style.color = "gray";
+        editedLabel.style.fontSize = "0.8em";
+        editedLabel.textContent = " (editado)";
+        userName.appendChild(editedLabel);
+    }
 
     messageText.classList.add("text-white", "text-lg");
     if (isHistory) {
@@ -410,7 +418,7 @@ function messageMenu(gridItem, msg) {
             addUnreadMarker(gridItem);
             optionsMenu.classList.add("hidden");
         };
-
+        optionsMenu.innerHTML = "";
         const editMessageOption = document.createElement("div");
         if (msg.name === actualUserName) {
             editMessageOption.textContent = "Editar mensaje";
@@ -427,7 +435,7 @@ function messageMenu(gridItem, msg) {
             optionsMenu.appendChild(editMessageOption);
         }
 
-        optionsMenu.innerHTML = "";
+
         optionsMenu.appendChild(replyOption);
         optionsMenu.appendChild(markUnreadOption);
         gridItem.appendChild(optionsMenu);
