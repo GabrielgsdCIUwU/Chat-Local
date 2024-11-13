@@ -56,13 +56,13 @@ socket.on("messageHistory", async (history) => {
     await formatAllMessages();
 });
 
-socket.on("messageUpdated", (data) => {
+socket.on("messageUpdated", async (data) => {
     const { timestamp, message, edited } = data;
 
     const messageElement = document.querySelector(`[data-timestamp="${timestamp}"]`);
     if (messageElement) {
         const messageText = messageElement.querySelectorAll("p")[1];
-        messageText.textContent = message;
+        messageText.innerHTML = await formatMessage(message);
 
         if (edited) {
             const editedMark = messageElement.querySelector(".edited-mark");
@@ -230,9 +230,7 @@ function sendMessage() {
             replyMessage = null;
             sendbutton.style.top = "";
         }
-
         if (isEditingMessage) {
-            // TODO: Hacer backend para editar mensajes
             socket.emit("editmsg", { message: finalMessage, id: editingMessageId });
             isEditingMessage = false;
             editingMessageId = null;
@@ -420,7 +418,7 @@ function messageMenu(gridItem, msg) {
         };
         optionsMenu.innerHTML = "";
         const editMessageOption = document.createElement("div");
-        if (msg.name === actualUserName) {
+        if (msg.name || msg.user === actualUserName) {
             editMessageOption.textContent = "Editar mensaje";
             editMessageOption.classList.add("menu-option");
             editMessageOption.onclick = () => {
@@ -430,6 +428,7 @@ function messageMenu(gridItem, msg) {
                 isEditingMessage = true;
                 editingMessageId = msg.timestamp;
                 optionsMenu.classList.add("hidden");
+                sendbutton.style.top = '28px';
             };
 
             optionsMenu.appendChild(editMessageOption);
