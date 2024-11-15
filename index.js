@@ -210,9 +210,9 @@ io.on("connection", (socket) => {
 
             const messageIndex = messages.findIndex((msg) => msg.timestamp === timestamp);
 
-            if(messageIndex !== -1) {
+            if (messageIndex !== -1) {
                 console.log("usuario:", user.name, "usuarioMessage:", messages[messageIndex].name)
-                if(messages[messageIndex].name === user.name) {
+                if (messages[messageIndex].name === user.name) {
                     messages[messageIndex].message = message;
                     messages[messageIndex].edited = true;
 
@@ -222,11 +222,31 @@ io.on("connection", (socket) => {
                             return;
                         }
                         console.log("Mensaje editado y guardado en el archivo JSON");
-                        io.emit("messageUpdated", { timestamp, message, edited: true});
+                        io.emit("messageUpdated", { timestamp, message, edited: true });
                     })
                 }
             }
 
+        });
+
+        // borar mensaje
+        socket.on("deletemsg", (data) => {
+            const { id: timestamp } = data;
+            const messagesFilePath = path.join(__dirname, "public/json/messages.json");
+            let messages = JSON.parse(fs.readFileSync(messagesFilePath, "utf-8"));
+
+            const messageIndex = messages.findIndex((msg) => msg.timestamp === timestamp);
+            if (messageIndex !== -1) {
+                if (messages[messageIndex].name === user.name) {
+                    messages.splice(messageIndex, 1);
+                    fs.writeFileSync(messagesFilePath, JSON.stringify(messages, null, 2), "utf-8", (err) => {
+                        if (err) {
+                            return console.error("Error al guardar el archivo JSON, al borrar el mensaje:", err);
+                        }
+                    });
+                    io.emit("messageDeleted", { timestamp });
+                }
+            }
         });
 
         socket.on("disconnect", () => {
