@@ -1,3 +1,2 @@
-- poder editar el ultimo mensaje
-- poder eliminar ultimo mensaje
+- Añadir reacciones
 - MDs como discord

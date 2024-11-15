@@ -20,7 +20,7 @@ router.post("/login", (req, res) => {
     }
     const bannedIPs = JSON.parse(fs.readFileSync('./backend/json/usersban.json'));
     const blockedIP = bannedIPs.find(banned => banned.ip === location);
-    if (blockedIP) return res.status(403).json({ message: `Lo siento pero has sido baneado por: ${blockedIP.motivo}`})
+    if (blockedIP) return res.status(403).json({ message: `Lo siento pero has sido baneado por: ${blockedIP.motivo}` })
 
     const usersFilePath = path.join(__dirname, "../backend/json/users.json");
 
@@ -37,9 +37,23 @@ router.post("/login", (req, res) => {
         }
 
         if (currenData[userIndex].passwd === passwd) {
-            if (currenData[userIndex].location !== location) return res.status(400).json({message: "Tienes que iniciar sesión en el mismo sitio que has creado la cuenta!!"})
-            req.session.user = { name: currenData[userIndex].name };
-            return res.status(200).json({ message: "Login exitoso!" });
+            console.log(currenData[userIndex].location);
+            if (typeof currenData[userIndex].location === "object") {
+                const allLocations = currenData[userIndex].location
+                allLocations.forEach(ip => {
+                    if (`${ip}` === location) {
+                        req.session.user = { name: currenData[userIndex].name };
+                        return res.status(200).json({ message: "Login exitoso!" });
+                    }
+                });
+
+            } else {
+                if (currenData[userIndex].location !== location) return res.status(400).json({ message: "Tienes que iniciar sesión en el mismo sitio que has creado la cuenta!!" })
+                req.session.user = { name: currenData[userIndex].name };
+                return res.status(200).json({ message: "Login exitoso!" });
+            }
+
+
         } else {
             return res.status(401).json({ message: "Usuario o contraseña incorrecta!" });
         }
@@ -48,7 +62,7 @@ router.post("/login", (req, res) => {
 
 router.post("/register", (req, res) => {
     try {
-        const {name, passwd } = req.body;
+        const { name, passwd } = req.body;
         const usersFilePath = path.join(__dirname, "../backend/json/users.json");
         if (!name || !passwd) {
             return res.status(400).json({ message: "Debes poner usuario y contraseña!" });

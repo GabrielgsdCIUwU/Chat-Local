@@ -78,7 +78,18 @@ socket.on("messageUpdated", async (data) => {
         }
     }
 
-})
+});
+
+socket.on("messageDeleted", (data) => {
+    const { timestamp } = data;
+    const messageElement = document.querySelector(`[data-timestamp="${timestamp}"]`);
+
+    if (messageElement) {
+        messageElement.remove();
+    } else {
+        console.log(`No se encontró un mensaje con el timestamp ${timestamp}`);
+    }
+});
 
 socket.on("reload", () => {
     window.location.reload();
@@ -417,8 +428,12 @@ function messageMenu(gridItem, msg) {
             optionsMenu.classList.add("hidden");
         };
         optionsMenu.innerHTML = "";
+
+        //opciones cuando el mensaje es del autor
         const editMessageOption = document.createElement("div");
-        if (msg.name || msg.user === actualUserName) {
+        const deleteMessageOption = document.createElement("div");
+        if ((msg.name || msg.user) === actualUserName) {
+            //editar mensaje
             editMessageOption.textContent = "Editar mensaje";
             editMessageOption.classList.add("menu-option");
             editMessageOption.onclick = () => {
@@ -431,7 +446,14 @@ function messageMenu(gridItem, msg) {
                 sendbutton.style.top = '28px';
             };
 
+            deleteMessageOption.textContent = "Borrar mensaje";
+            deleteMessageOption.classList.add("menu-option");
+            deleteMessageOption.onclick = () => {
+                socket.emit("deletemsg", { id: msg.timestamp });
+                optionsMenu.classList.add("hidden");
+            };
             optionsMenu.appendChild(editMessageOption);
+            optionsMenu.appendChild(deleteMessageOption);
         }
 
 
