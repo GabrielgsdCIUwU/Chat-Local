@@ -635,12 +635,20 @@ video {
   display: block;
 }
 
+.inline-block {
+  display: inline-block;
+}
+
 .inline {
   display: inline;
 }
 
 .flex {
   display: flex;
+}
+
+.inline-flex {
+  display: inline-flex;
 }
 
 .table {
@@ -693,10 +701,6 @@ video {
 
 .flex-1 {
   flex: 1 1 0%;
-}
-
-.table-auto {
-  table-layout: auto;
 }
 
 .-translate-x-full {
@@ -916,6 +920,11 @@ video {
 .text-xl {
   font-size: 1.25rem;
   line-height: 1.75rem;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
 }
 
 .font-bold {

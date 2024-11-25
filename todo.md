@@ -1,2 +1,3 @@
 - Añadir reacciones
 - MDs como discord
+- Modo Blanco/Oscuro

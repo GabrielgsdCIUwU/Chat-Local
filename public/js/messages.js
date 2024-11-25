@@ -3,6 +3,8 @@ mensajes.innerHTML = "";
 let replyMessage = null;
 let isEditingMessage = false;
 let editingMessageId;
+const emojiSearch = document.getElementById('emojiSearch');
+const reactionsMap = new Map();
 const replyMessageDisplay = document.getElementById("replyMessageDisplay");
 //region cache emojis
 let emojiCache = [];
@@ -49,10 +51,26 @@ socket.on("iam", async (name) => {
 
 socket.on("messageHistory", async (history) => {
     history.sort((a, b) => b.timestamp - a.timestamp);
+
     for (const msg of history) {
         msg.user = msg.user || msg.name;
         await loadmessages(msg, true);
+
+        if (msg.emojis && Array.isArray(msg.emojis)) {
+            msg.emojis.forEach((emoji) => {
+                if (emoji.users && Array.isArray(emoji.users)) {
+                    emoji.users.forEach((user) => {
+                        // Buscar el emoji en la cache
+                        const matchedEmoji = emojiCache.find((cache) => cache.name === emoji.name);
+                        if (matchedEmoji) {
+                            renderReactions(msg.timestamp, matchedEmoji.name, matchedEmoji.url, user);
+                        }
+                    });
+                }
+            });
+        }
     }
+
     await formatAllMessages();
 });
 
@@ -89,6 +107,11 @@ socket.on("messageDeleted", (data) => {
     } else {
         console.log(`No se encontró un mensaje con el timestamp ${timestamp}`);
     }
+});
+
+socket.on("newReaction", (data) => {
+    const { messageId, emojiName, emojiUrl, userName } = data;
+    renderReactions(messageId, emojiName, emojiUrl, userName);
 });
 
 socket.on("reload", () => {
@@ -427,6 +450,15 @@ function messageMenu(gridItem, msg) {
             addUnreadMarker(gridItem);
             optionsMenu.classList.add("hidden");
         };
+
+        const reactOption = document.createElement("div");
+        reactOption.textContent = "Reaccionar";
+        reactOption.classList.add("menu-option");
+        reactOption.onclick = () => {
+            showEmojiModal(msg);
+            optionsMenu.classList.add("hidden");
+        };
+
         optionsMenu.innerHTML = "";
 
         //opciones cuando el mensaje es del autor
@@ -459,6 +491,7 @@ function messageMenu(gridItem, msg) {
 
         optionsMenu.appendChild(replyOption);
         optionsMenu.appendChild(markUnreadOption);
+        optionsMenu.appendChild(reactOption);
         gridItem.appendChild(optionsMenu);
     };
     return [optionsButton, optionsMenu];
@@ -633,3 +666,118 @@ function createReplyOption(msg) {
     optionsMenu.appendChild(replyOption);
 }
 //endregion logic messages
+
+//region Reaction Messages
+
+function showEmojiModal(msg) {
+    const emojiModal = document.getElementById("emojiModal");
+    const emojiContainer = document.getElementById("emojiContainer");
+    const closeModal = document.getElementById("closeModal");
+
+    emojiModal.classList.remove("hidden");
+    emojiContainer.innerHTML = "";
+
+    emojiSearch.addEventListener('input', () => {
+        const searchTerm = emojiSearch.value.toLowerCase();
+        const filteredEmojis = emojiCache.filter((emoji) =>
+            emoji.name.toLowerCase().includes(searchTerm)
+        );
+        renderEmojis(filteredEmojis, msg);
+    });
+
+    emojiCache.forEach((emoji) => {
+        const emojiElement = document.createElement("img");
+        emojiElement.src = emoji.url;
+        emojiElement.alt = emoji.name;
+        emojiElement.classList.add('w-10', 'h-10', 'cursor-pointer', 'hover:opacity-75', 'mr-4', 'mb-4');
+
+        emojiElement.onclick = () => {
+            socket.emit("addReaction", { messageId: msg.timestamp, emojiName: emoji.name, emojiUrl: emoji.url });
+            emojiModal.classList.add("hidden");
+        };
+        emojiContainer.appendChild(emojiElement);
+    });
+
+    closeModal.onclick = () => {
+        emojiModal.classList.add("hidden");
+    };
+}
+
+function renderEmojis(emojis, msg) {
+        emojiContainer.innerHTML = "";
+        emojis.forEach((emoji) => {
+            const img = document.createElement('img');
+            img.src = emoji.url;
+            img.alt = emoji.name;
+            img.classList.add('w-10', 'h-10', 'cursor-pointer', 'hover:opacity-75', 'mr-4', 'mb-4');
+            img.addEventListener('click', () => {
+                socket.emit("addReaction", { messageId: msg.timestamp, emojiName: emoji.name, emojiUrl: emoji.url });
+                emojiModal.classList.add("hidden");
+            });
+            emojiContainer.appendChild(img);
+        });
+    }
+
+function renderReactions(messageId, emojiName, emojiUrl, userName) {
+    const messageElement = document.querySelector(`[data-timestamp="${messageId}"]`);
+
+    if (messageElement) {
+        if (!reactionsMap.has(messageId)) {
+            reactionsMap.set(messageId, new Map());
+        }
+
+        const emojiMap = reactionsMap.get(messageId);
+        if (!emojiMap.has(emojiName)) {
+            emojiMap.set(emojiName, new Set());
+        }
+
+        const userSet = emojiMap.get(emojiName);
+        userSet.add(userName);
+
+        const timeElement = messageElement.querySelector("p.text-gray-400");
+        if (timeElement) {
+            let emojiContainer = messageElement.querySelectorAll("p")[3];
+            if (!emojiContainer) {
+                emojiContainer = document.createElement("p");
+                emojiContainer.className = "emoji-container text-white text-sm mt-2";
+                emojiContainer.style.fontSize = "30px";
+                timeElement.insertAdjacentElement("afterend", emojiContainer);
+            }
+
+            let divContainerEmojis = emojiContainer.querySelector("div");
+            if (!divContainerEmojis) {
+                divContainerEmojis = document.createElement("div");
+                divContainerEmojis.style.display = "inline-flex";
+                emojiContainer.appendChild(divContainerEmojis);
+            }
+
+            let emojiElement = divContainerEmojis.querySelector(`img[alt="${emojiName}"]`);
+            if (!emojiElement) {
+                emojiElement = document.createElement("img");
+                emojiElement.src = emojiUrl;
+                emojiElement.alt = emojiName;
+                emojiElement.title = emojiName;
+                emojiElement.style.width = "30px";
+                emojiElement.style.height = "30px";
+                emojiElement.style.marginRight = "5px";
+                emojiElement.onclick = () => {
+                    socket.emit("addReaction", { messageId, emojiName, emojiUrl });
+                };
+                divContainerEmojis.appendChild(emojiElement);
+
+                const emojiCount = document.createElement("span");
+                emojiCount.className = "reaction-count text-gray-300 text-xs mt-1";
+                emojiCount.textContent = "1";
+                emojiCount.style.marginRight = "15px";
+                emojiElement.insertAdjacentElement("afterend", emojiCount);
+            } else {
+                const emojiCount = emojiElement.nextElementSibling;
+                if (emojiCount && emojiCount.classList.contains("reaction-count")) {
+                    emojiCount.textContent = `${userSet.size}`;
+                }
+            }
+        }
+    } else {
+        console.log(`No se encontró un mensaje para añadir reacción con el timestamp ${messageId}`);
+    }
+}
