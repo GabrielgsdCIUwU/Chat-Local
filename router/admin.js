@@ -37,7 +37,6 @@ router.post("/login", (req, res) => {
         }
 
         if (currenData[userIndex].passwd === passwd) {
-            console.log(currenData[userIndex].location);
             if (typeof currenData[userIndex].location === "object") {
                 const allLocations = currenData[userIndex].location
                 allLocations.forEach(ip => {

@@ -1,4 +1,4 @@
-import express, { json } from "express";
+import express from "express";
 import path from "path";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
@@ -229,7 +229,7 @@ io.on("connection", (socket) => {
 
         });
 
-        // borar mensaje
+        // borrar mensaje
         socket.on("deletemsg", (data) => {
             const { id: timestamp } = data;
             const messagesFilePath = path.join(__dirname, "public/json/messages.json");
@@ -248,6 +248,40 @@ io.on("connection", (socket) => {
                 }
             }
         });
+
+        //Reaction handler
+        socket.on("addReaction", (data) => {
+    const { messageId, emojiName, emojiUrl } = data;
+    const messagesFilePath = path.join(__dirname, "public/json/messages.json");
+    const userName = user.name
+    let messages = JSON.parse(fs.readFileSync(messagesFilePath, "utf-8"));
+
+    const messageIndex = messages.findIndex((msg) => msg.timestamp === messageId);
+
+    if (messageIndex !== -1) {
+        const message = messages[messageIndex];
+
+        if (!message.emojis) {
+            message.emojis = [];
+        }
+
+        let emojiEntry = message.emojis.find((emoji) => emoji.name === emojiName);
+
+        if (!emojiEntry) {
+            emojiEntry = { name: emojiName, users: [] };
+            message.emojis.push(emojiEntry);
+        }
+
+        if (!emojiEntry.users.includes(userName)) {
+            emojiEntry.users.push(userName);
+        }
+
+        fs.writeFileSync(messagesFilePath, JSON.stringify(messages, null, 2), "utf-8");
+
+        io.emit("newReaction", { messageId, emojiName, emojiUrl, userName });
+    }
+});
+
 
         socket.on("disconnect", () => {
             connectedUsers.delete(user.name);
