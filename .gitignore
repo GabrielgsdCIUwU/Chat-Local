@@ -5,3 +5,4 @@ public/json/users.json
 backend/json/users.json
 sessions
 public/json/messages.json
+.vscode/settings.json

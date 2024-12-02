@@ -1,4 +1,4 @@
-import express, { json } from "express";
+import express from "express";
 import path from "path";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
@@ -210,9 +210,9 @@ io.on("connection", (socket) => {
 
             const messageIndex = messages.findIndex((msg) => msg.timestamp === timestamp);
 
-            if(messageIndex !== -1) {
+            if (messageIndex !== -1) {
                 console.log("usuario:", user.name, "usuarioMessage:", messages[messageIndex].name)
-                if(messages[messageIndex].name === user.name) {
+                if (messages[messageIndex].name === user.name) {
                     messages[messageIndex].message = message;
                     messages[messageIndex].edited = true;
 
@@ -222,12 +222,66 @@ io.on("connection", (socket) => {
                             return;
                         }
                         console.log("Mensaje editado y guardado en el archivo JSON");
-                        io.emit("messageUpdated", { timestamp, message, edited: true});
+                        io.emit("messageUpdated", { timestamp, message, edited: true });
                     })
                 }
             }
 
         });
+
+        // borrar mensaje
+        socket.on("deletemsg", (data) => {
+            const { id: timestamp } = data;
+            const messagesFilePath = path.join(__dirname, "public/json/messages.json");
+            let messages = JSON.parse(fs.readFileSync(messagesFilePath, "utf-8"));
+
+            const messageIndex = messages.findIndex((msg) => msg.timestamp === timestamp);
+            if (messageIndex !== -1) {
+                if (messages[messageIndex].name === user.name) {
+                    messages.splice(messageIndex, 1);
+                    fs.writeFileSync(messagesFilePath, JSON.stringify(messages, null, 2), "utf-8", (err) => {
+                        if (err) {
+                            return console.error("Error al guardar el archivo JSON, al borrar el mensaje:", err);
+                        }
+                    });
+                    io.emit("messageDeleted", { timestamp });
+                }
+            }
+        });
+
+        //Reaction handler
+        socket.on("addReaction", (data) => {
+    const { messageId, emojiName, emojiUrl } = data;
+    const messagesFilePath = path.join(__dirname, "public/json/messages.json");
+    const userName = user.name
+    let messages = JSON.parse(fs.readFileSync(messagesFilePath, "utf-8"));
+
+    const messageIndex = messages.findIndex((msg) => msg.timestamp === messageId);
+
+    if (messageIndex !== -1) {
+        const message = messages[messageIndex];
+
+        if (!message.emojis) {
+            message.emojis = [];
+        }
+
+        let emojiEntry = message.emojis.find((emoji) => emoji.name === emojiName);
+
+        if (!emojiEntry) {
+            emojiEntry = { name: emojiName, users: [] };
+            message.emojis.push(emojiEntry);
+        }
+
+        if (!emojiEntry.users.includes(userName)) {
+            emojiEntry.users.push(userName);
+        }
+
+        fs.writeFileSync(messagesFilePath, JSON.stringify(messages, null, 2), "utf-8");
+
+        io.emit("newReaction", { messageId, emojiName, emojiUrl, userName });
+    }
+});
+
 
         socket.on("disconnect", () => {
             connectedUsers.delete(user.name);
