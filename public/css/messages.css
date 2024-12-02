@@ -20,10 +20,19 @@ h1 {
   font-size: 0.875rem;
   line-height: 1.25rem;
 }
+#mensajes {
+  overflow-y: auto;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
 #mensaje {
   overflow-y: auto;
+  overflow-x: hidden;
   max-height: 150px;
   resize: none;
+  word-wrap: break-word;
+  white-space: normal;
 }
 .button-send {
   transition: margin-right 0.2s ease;

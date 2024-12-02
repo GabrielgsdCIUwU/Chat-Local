@@ -358,7 +358,10 @@ async function loadmessages(msg, isHistory) {
     //procesamiento menu mensajes
     let [optionsButton, optionsMenu] = messageMenu(gridItem, msg)
 
-
+    messageText.style.wordWrap = "break-word";
+    messageText.style.whiteSpace = "pre-wrap";
+    messageText.style.overflowWrap = "break-word";
+    
     gridItem.appendChild(userName);
     gridItem.appendChild(messageText);
     gridItem.appendChild(timeText);
