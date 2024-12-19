@@ -8,6 +8,7 @@ import session from "express-session";
 import passport from "passport";
 import FileStoreFactory from "session-file-store";
 import fs from "fs";
+import botHandler from "./bot/index.js";
 
 import webrouter from "./router/paginas.js";
 import admin from "./router/admin.js";
@@ -152,6 +153,11 @@ io.on("connection", (socket) => {
         socket.on("sendmsg", (msg) => {
             const timestamp = new Date().getTime();
             const messagesFilePath = path.join(__dirname, "./public/json/messages.json");
+
+            if (msg.startsWith("/bot")) {
+                botHandler.handleCommand({ msg, socket, io });
+                return;
+            }
 
             fs.readFile(messagesFilePath, "utf-8", (err, data) => {
                 if (err) {
@@ -304,12 +310,12 @@ io.on("connection", (socket) => {
             }
         });
 
-        
+
         socket.on('votar', async (data) => {
             try {
                 // Si el usuario ya ha votado, no le permitimos votar nuevamente
                 console.log(voteduser, voteduser.has(user.name))
-                if(voteduser.has(user.name)) {
+                if (voteduser.has(user.name)) {
                     console.log("dentro")
                     return;
                 }
@@ -333,7 +339,7 @@ io.on("connection", (socket) => {
                 console.error('Error al procesar el voto:', error);
                 socket.emit('error', 'Hubo un error al procesar tu voto.');
             }
-        }); 
+        });
 
 
         socket.on("disconnect", () => {
