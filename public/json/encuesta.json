@@ -1,0 +1,14 @@
+{
+  "pregunta": "Ejemplo pregunta",
+  "opciones": [
+    {
+      "texto": "opcion 1",
+      "votos": 0
+    },
+    {
+      "texto": "opcion 2",
+      "votos": 0
+    }
+  ],
+  "hiden": "True"
+}
