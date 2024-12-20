@@ -5,6 +5,8 @@ export function execute({ args, socket, io }) {
     - ping \n          **Uso:** /bot ping
     - 8ball \n          **Uso:** /bot 8ball (pregunta)
     - chiste \n         **Uso:** /bot chiste
+    - horoscopo \n         **Uso:** /bot horoscopo
+    - rate \n           **Uso:** /bot rate (algo)
     `
 
     // Emitir mensaje del bot al cliente
