@@ -18,13 +18,13 @@ async function loadCommand(commandName) {
     }
 }
 
-export async function handleCommand({ msg, socket, io }) {
+export async function handleCommand({ msg, socket, io, username }) {
     const args = msg.split(" ").slice(1); // Obtener argumentos del comando
     const commandName = args[0]; // Nombre del comando
     const command = await loadCommand(commandName);
 
     if (command && command.execute) {
-        command.execute({ args: args.slice(1), socket, io }); // Ejecutar lógica del comando
+        command.execute({ args: args.slice(1), socket, io, username, msg }); // Ejecutar lógica del comando
     } else {
         socket.emit("error", { message: "Comando no encontrado" });
     }
