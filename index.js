@@ -155,7 +155,7 @@ io.on("connection", (socket) => {
             const messagesFilePath = path.join(__dirname, "./public/json/messages.json");
 
             if (msg.startsWith("/bot")) {
-                botHandler.handleCommand({ msg, socket, io });
+                botHandler.handleCommand({ msg, socket, io, username: user.name });
                 return;
             }
 
