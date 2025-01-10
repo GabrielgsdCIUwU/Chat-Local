@@ -183,6 +183,30 @@ io.on("connection", (socket) => {
                     }
 
                     io.emit("sendmsg", { user: user.name, message: msg, timestamp: timestamp });
+
+                    if (msg.includes("https://ko-fi.com/gabrielgsd") || msg.includes("https://www.paypal.com/paypalme/gabrielgsd") || msg.includes("https://paypal.me/gabrielgsd")) {
+                        const spamerFilePath = path.join(__dirname, "./public/json/spamer.json");
+                        fs.readFile(spamerFilePath, "utf-8", (err, data) => {
+                            if (err) {
+                                return console.error("Error al leer el archivo de spam:", err);
+                            }
+
+                            let spamCount = JSON.parse(data);
+                            if (!Array.isArray(spamCount) || spamCount.length === 0) {
+                                spamCount = [0];
+                            }
+
+                            spamCount[0] += 1;
+
+                            fs.writeFile(spamerFilePath, JSON.stringify(spamCount), (err) => {
+                                if (err) {
+                                    return console.error("Error al escribir el archivo de spam:", err);
+                                }
+                                console.log("El contador de spam ha sido actualizado:", spamCount[0]);
+                                io.emit("sendmsg", {user: "🤖 Bot", message: `${user.name} ha contribuido a mi creador el contador sube a ${spamCount[0]} veces.`, timestamp: timestamp})
+                            });
+                        });
+                    }
                 });
             });
         });
