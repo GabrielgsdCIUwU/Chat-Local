@@ -10,9 +10,15 @@
 
     <div class="w-full p-4 bg-gray-800 shadow-lg">
       <h1 class="text-2xl font-bold text-center text-gray-200 mb-4">Chat</h1>
-      <h2 class="text-2xl font-bold text-center text-red-500 mb-4">
-        Si se detecta que uno de tus mensajes molesta la interfaz de la web, quedarás baneado!
-      </h2>
+      
+
+      <div id="Encuesta" class="bg-gray-800 p-6 rounded-lg shadow-lg max-w-md mx-auto text-center">
+        <h2 id="EncuestaTitle" class="text-2xl font-bold text-gray-100 mb-4">Resultados de la encuesta</h2>
+        <div id="EncuestaOpciones" class="space-y-4"></div>
+        <div class="mt-6 text-right">
+          <span id="total-votos" class="text-sm font-medium text-gray-400">Total de votos: 0</span>
+        </div>
+      </div>
 
       <div class="relative mb-2">
         <div id="replyMessageDisplay" class="text-sm text-gray-300 mb-1 hidden"></div>
@@ -85,7 +91,7 @@
       </div>
     </div>
 
-    <script src="/jquery.js"></script>
+    <script src="/public/js/encuesta.js"></script>
     <script src="/public/js/messages.js"></script>
     <script src="/public/js/emojis.js"></script>
     <script src="/public/js/typing.js"></script>

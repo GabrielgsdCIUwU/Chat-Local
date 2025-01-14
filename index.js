@@ -8,6 +8,7 @@ import session from "express-session";
 import passport from "passport";
 import FileStoreFactory from "session-file-store";
 import fs from "fs";
+import botHandler from "./bot/index.js";
 
 import webrouter from "./router/paginas.js";
 import admin from "./router/admin.js";
@@ -71,6 +72,27 @@ io.use((socket, next) => {
         next();
     });
 });
+
+
+const leerEncuesta = () => {
+    return new Promise((resolve, reject) => {
+        fs.readFile(path.join(__dirname, 'public/json/encuesta.json'), 'utf8', (err, data) => {
+            if (err) return reject(err);
+            resolve(JSON.parse(data));
+        });
+    });
+};
+
+const guardarEncuesta = (encuestaData) => {
+    return new Promise((resolve, reject) => {
+        fs.writeFile(path.join(__dirname, 'public/json/encuesta.json'), JSON.stringify(encuestaData, null, 2), 'utf8', (err) => {
+            if (err) return reject(err);
+            resolve();
+        });
+    });
+};
+
+
 const connectedUsers = new Set();
 function getUserNames() {
     return new Promise((resolve) => {
@@ -80,6 +102,7 @@ function getUserNames() {
 }
 
 const typingUsers = new Set();
+const voteduser = new Set();
 io.on("connection", (socket) => {
     isAuthenticated(socket, (err) => {
         if (err) {
@@ -131,6 +154,11 @@ io.on("connection", (socket) => {
             const timestamp = new Date().getTime();
             const messagesFilePath = path.join(__dirname, "./public/json/messages.json");
 
+            if (msg.startsWith("/bot")) {
+                botHandler.handleCommand({ msg, socket, io, username: user.name });
+                return;
+            }
+
             fs.readFile(messagesFilePath, "utf-8", (err, data) => {
                 if (err) {
                     console.error("Error al leer el archivo de mensajes:", err);
@@ -155,6 +183,30 @@ io.on("connection", (socket) => {
                     }
 
                     io.emit("sendmsg", { user: user.name, message: msg, timestamp: timestamp });
+
+                    if (msg.includes("https://ko-fi.com/gabrielgsd") || msg.includes("https://www.paypal.com/paypalme/gabrielgsd") || msg.includes("https://paypal.me/gabrielgsd")) {
+                        const spamerFilePath = path.join(__dirname, "./public/json/spamer.json");
+                        fs.readFile(spamerFilePath, "utf-8", (err, data) => {
+                            if (err) {
+                                return console.error("Error al leer el archivo de spam:", err);
+                            }
+
+                            let spamCount = JSON.parse(data);
+                            if (!Array.isArray(spamCount) || spamCount.length === 0) {
+                                spamCount = [0];
+                            }
+
+                            spamCount[0] += 1;
+
+                            fs.writeFile(spamerFilePath, JSON.stringify(spamCount), (err) => {
+                                if (err) {
+                                    return console.error("Error al escribir el archivo de spam:", err);
+                                }
+                                console.log("El contador de spam ha sido actualizado:", spamCount[0]);
+                                io.emit("sendmsg", {user: "🤖 Bot", message: `${user.name} ha contribuido a mi creador el contador sube a ${spamCount[0]} veces.`, timestamp: timestamp})
+                            });
+                        });
+                    }
                 });
             });
         });
@@ -251,36 +303,67 @@ io.on("connection", (socket) => {
 
         //Reaction handler
         socket.on("addReaction", (data) => {
-    const { messageId, emojiName, emojiUrl } = data;
-    const messagesFilePath = path.join(__dirname, "public/json/messages.json");
-    const userName = user.name
-    let messages = JSON.parse(fs.readFileSync(messagesFilePath, "utf-8"));
+            const { messageId, emojiName, emojiUrl } = data;
+            const messagesFilePath = path.join(__dirname, "public/json/messages.json");
+            const userName = user.name
+            let messages = JSON.parse(fs.readFileSync(messagesFilePath, "utf-8"));
 
-    const messageIndex = messages.findIndex((msg) => msg.timestamp === messageId);
+            const messageIndex = messages.findIndex((msg) => msg.timestamp === messageId);
 
-    if (messageIndex !== -1) {
-        const message = messages[messageIndex];
+            if (messageIndex !== -1) {
+                const message = messages[messageIndex];
 
-        if (!message.emojis) {
-            message.emojis = [];
-        }
+                if (!message.emojis) {
+                    message.emojis = [];
+                }
 
-        let emojiEntry = message.emojis.find((emoji) => emoji.name === emojiName);
+                let emojiEntry = message.emojis.find((emoji) => emoji.name === emojiName);
 
-        if (!emojiEntry) {
-            emojiEntry = { name: emojiName, users: [] };
-            message.emojis.push(emojiEntry);
-        }
+                if (!emojiEntry) {
+                    emojiEntry = { name: emojiName, users: [] };
+                    message.emojis.push(emojiEntry);
+                }
 
-        if (!emojiEntry.users.includes(userName)) {
-            emojiEntry.users.push(userName);
-        }
+                if (!emojiEntry.users.includes(userName)) {
+                    emojiEntry.users.push(userName);
+                }
 
-        fs.writeFileSync(messagesFilePath, JSON.stringify(messages, null, 2), "utf-8");
+                fs.writeFileSync(messagesFilePath, JSON.stringify(messages, null, 2), "utf-8");
 
-        io.emit("newReaction", { messageId, emojiName, emojiUrl, userName });
-    }
-});
+                io.emit("newReaction", { messageId, emojiName, emojiUrl, userName });
+            }
+        });
+
+
+        socket.on('votar', async (data) => {
+            try {
+                // Si el usuario ya ha votado, no le permitimos votar nuevamente
+                console.log(voteduser, voteduser.has(user.name))
+                if (voteduser.has(user.name)) {
+                    console.log("dentro")
+                    return;
+                }
+
+                voteduser.add(user.name);
+                console.log(voteduser)
+
+                // Cargar los datos de la encuesta
+                const encuestaData = await leerEncuesta();
+
+                // Sumar 1 voto a la opción seleccionada
+                encuestaData.opciones[data.opcion].votos++;
+
+                // Guardar los datos actualizados en el archivo JSON
+                await guardarEncuesta(encuestaData);
+
+                // Emitir los nuevos resultados a todos los usuarios conectados
+                io.emit('actualizarVotos', encuestaData.opciones);
+
+            } catch (error) {
+                console.error('Error al procesar el voto:', error);
+                socket.emit('error', 'Hubo un error al procesar tu voto.');
+            }
+        });
 
 
         socket.on("disconnect", () => {

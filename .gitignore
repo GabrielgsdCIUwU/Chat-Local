@@ -4,5 +4,7 @@
 public/json/users.json
 backend/json/users.json
 sessions
-public/json/messages.json
+public/json/*
 .vscode/settings.json
+resources/*
+public/css/output.css
