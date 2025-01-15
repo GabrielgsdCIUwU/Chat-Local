@@ -4,7 +4,7 @@ Este es un proyecto de chat local que utiliza `Node.js`, `Express` y `Socket.IO`
 
 ## Requisitos
 
-- [Node.js v20.17.0](https://nodejs.org/es/blog/release/v20.17.0)
+- [Node.js v20.17.0](https://nodejs.org/en/download)
 - npm (Node Package Manager)
 
 ## Instalación
