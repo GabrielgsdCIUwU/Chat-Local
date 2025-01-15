@@ -4,8 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "server": "cls; node index.js",
-    "css": "npx tailwindcss -i ./public/css/messages.css -o ./public/css/output.css --watch",
+    "server": "node index.js",
+    "css": "npx tailwindcss -i ./public/css/messages.css -o ./public/css/output.css",
     "init": "node init.js"
   },
   "type": "module",
