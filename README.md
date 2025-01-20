@@ -1,4 +1,4 @@
-# Chat-Local
+# Chat-Local [![wakatime](https://wakatime.com/badge/user/0de54a75-ef87-45cb-8941-d36c72181f10/project/d8da0672-8156-41ef-8c87-551269088f41.svg)](https://wakatime.com/badge/user/0de54a75-ef87-45cb-8941-d36c72181f10/project/d8da0672-8156-41ef-8c87-551269088f41)
 
 Este es un proyecto de chat local que utiliza `Node.js`, `Express` y `Socket.IO` para proporcionar una experiencia de chat en tiempo real. El proyecto incluye características como autenticación de usuarios, emojis personalizados y más.
 
