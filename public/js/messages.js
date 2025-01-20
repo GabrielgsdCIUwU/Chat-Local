@@ -257,7 +257,8 @@ function sendMessage() {
 
         if (replyMessage) {
             replyMessage.message = replyMessage.message.replace(/\[reply:.*?\]/g, '');
-            const shortReplyMessage = replyMessage.message.slice(0, 40);
+            let shortReplyMessage = replyMessage.message.slice(0, 40);
+            shortReplyMessage = shortReplyMessage.replace(/\n/g, ' ');
             const replyPreview = shortReplyMessage.length < 40 ? shortReplyMessage : `${shortReplyMessage}...`;
             finalMessage = `[reply: ${replyMessage.user}: ${replyPreview}] ${finalMessage}`;
             replyMessageDisplay.classList.add("hidden");
