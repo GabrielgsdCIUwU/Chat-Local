@@ -151,6 +151,24 @@ io.on("connection", (socket) => {
             socket.emit("iam", user.name);
         });
 
+        socket.on("whoDonate", () => {
+            const usersFilePath = path.join(__dirname, "./backend/json/users.json");
+            fs.readFile(usersFilePath, "utf8", (err, data) => {
+                if (err) {
+                    console.error("Error al leer el archivo de usuarios:", err);
+                    return;
+                }
+                try {
+                    const users = JSON.parse(data);
+                    const donators = users.filter(user => user.role === "Donador" || user.role === "Admin").map(user => ({name: user.name, color: user.color, img: user.img ?? false}));
+                    socket.emit("donators", donators);
+
+                } catch (error) {
+                    console.error("Error al parsear los usuarios:", error);
+                }
+            });
+        });
+
         // Chat público (ya existente)
         socket.on("sendmsg", (msg) => {
             const timestamp = new Date().getTime();
@@ -205,7 +223,7 @@ io.on("connection", (socket) => {
                                     return console.error("Error al escribir el archivo de spam:", err);
                                 }
                                 console.log("El contador de spam ha sido actualizado:", spamCount[0]);
-                                io.emit("sendmsg", {user: "🤖 Bot", message: `${user.name} ha contribuido a mi creador el contador sube a ${spamCount[0]} veces.`, timestamp: timestamp})
+                                io.emit("sendmsg", { user: "🤖 Bot", message: `${user.name} ha contribuido a mi creador el contador sube a ${spamCount[0]} veces.`, timestamp: timestamp })
                             });
                         });
                     }
@@ -226,6 +244,7 @@ io.on("connection", (socket) => {
                 try {
                     messagesData = JSON.parse(data);
                 } catch (error) {
+                    messagesData = [];
                     console.error("Error al parsear los mensajes:", error);
                     return socket.emit("error", { message: "Error al parsear los mensajes" });
                 }

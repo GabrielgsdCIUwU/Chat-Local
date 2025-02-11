@@ -16,7 +16,7 @@ const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const dir = path.join(__dirname, "../resources/profiles/");
         if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, {recursive: true});
+            fs.mkdirSync(dir, { recursive: true });
         }
         cb(null, dir);
     },
@@ -77,7 +77,6 @@ router.post('/color', (req, res) => {
         let usersData = [];
         try {
             usersData = JSON.parse(data);
-            console.log(req.session.user.name)
             const user = usersData.find(user => user.name === req.session.user.name);
             if (!user) {
                 return res.status(404).json({ message: "Usuario no encontrado" });
@@ -92,7 +91,7 @@ router.post('/color', (req, res) => {
                     console.error("Error al escribir los usuarios:", err);
                     return res.status(500).json({ message: "Error al escribir los usuarios" });
                 }
-                return res.json({message: "Color actualizado correctamente", color});
+                return res.json({ message: "Color actualizado correctamente", color });
             });
         } catch (error) {
             console.error("Error al parsear los usuarios:", error);
@@ -103,10 +102,40 @@ router.post('/color', (req, res) => {
 
 //region imagen
 router.post('/img', upload.single('img'), (req, res) => {
-    if(!req.file) {
-        return res.status(400).json({message: "No se ha subido ninguna imágen válida"});
+    if (!req.file) {
+        return res.status(400).json({ message: "No se ha subido ninguna imágen válida" });
     }
-    return res.json({message: "Imagen de perfil subida correctamente", filename: req.file.filename});
+
+    fs.readFile(usersFilePath, (err, data) => {
+        if (err) {
+            console.error("Error al leer los usuarios:", err);
+            return res.status(500).json({ message: "Error al leer los usuarios" });
+        }
+
+        let usersData = [];
+        try {
+            usersData = JSON.parse(data);
+            const user = usersData.find(user => user.name === req.session.user.name);
+            if (!user) {
+                return res.status(404).json({ message: "Usuario no encontrado" });
+            }
+            if (user.role != "Donador" && user.role != "Admin") {
+                return res.status(403).json({ message: "No tienes permisos para cambiar la imágen" });
+            }
+            user.img = true;
+
+            fs.writeFile(usersFilePath, JSON.stringify(usersData, null, 2), (err) => {
+                if (err) {
+                    console.error("Error al escribir los usuarios:", err);
+                    return res.status(500).json({ message: "Error al escribir los usuarios" });
+                }
+                return res.json({ message: "Imagen de perfil subida correctamente", filename: req.file.filename });
+            });
+        } catch (error) {
+            console.error("Error al parsear los usuarios:", error);
+            return res.status(500).json({ message: "Error al parsear los usuarios" });
+        }
+    });
 });
 
 
@@ -152,7 +181,7 @@ router.post('/nombre', (req, res) => {
                     fs.renameSync(oldProfilePath, newProfilePath);
                 }
                 req.session.user.name = nombre;
-                return res.json({message: "Nombre actualizado correctamente", nombre});
+                return res.json({ message: "Nombre actualizado correctamente", nombre });
             });
         } catch (error) {
             console.error("Error al parsear los usuarios:", error);

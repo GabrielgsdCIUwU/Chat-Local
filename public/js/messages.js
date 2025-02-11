@@ -3,6 +3,7 @@ mensajes.innerHTML = "";
 let replyMessage = null;
 let isEditingMessage = false;
 let editingMessageId;
+let donators;
 const emojiSearch = document.getElementById('emojiSearch');
 const reactionsMap = new Map();
 const replyMessageDisplay = document.getElementById("replyMessageDisplay");
@@ -38,7 +39,8 @@ clearCacheButton.addEventListener("click", async () => {
 //region sockets
 socket.on("connect", async () => {
     socket.emit("requestHistory");
-    socket.emit("whoami")
+    socket.emit("whoami");
+    socket.emit("whoDonate");
     await fetchAndCacheEmojis();
 });
 
@@ -49,27 +51,35 @@ socket.on("iam", async (name) => {
     console.log(actualUserName);
 });
 
+socket.on("donators", async (listDonate) => {
+    donators = listDonate
+    console.log(donators);
+});
+
 socket.on("messageHistory", async (history) => {
     history.sort((a, b) => b.timestamp - a.timestamp);
 
-    for (const msg of history) {
-        msg.user = msg.user || msg.name;
-        await loadmessages(msg, true);
+    setTimeout(async () => {
 
-        if (msg.emojis && Array.isArray(msg.emojis)) {
-            msg.emojis.forEach((emoji) => {
-                if (emoji.users && Array.isArray(emoji.users)) {
-                    emoji.users.forEach((user) => {
-                        // Buscar el emoji en la cache
-                        const matchedEmoji = emojiCache.find((cache) => cache.name === emoji.name);
-                        if (matchedEmoji) {
-                            renderReactions(msg.timestamp, matchedEmoji.name, matchedEmoji.url, user);
-                        }
-                    });
-                }
-            });
+        for (const msg of history) {
+            msg.user = msg.user || msg.name;
+            await loadmessages(msg, true);
+
+            if (msg.emojis && Array.isArray(msg.emojis)) {
+                msg.emojis.forEach((emoji) => {
+                    if (emoji.users && Array.isArray(emoji.users)) {
+                        emoji.users.forEach((user) => {
+                            // Buscar el emoji en la cache
+                            const matchedEmoji = emojiCache.find((cache) => cache.name === emoji.name);
+                            if (matchedEmoji) {
+                                renderReactions(msg.timestamp, matchedEmoji.name, matchedEmoji.url, user);
+                            }
+                        });
+                    }
+                });
+            }
         }
-    }
+    }, 50)
 
     await formatAllMessages();
 });
@@ -325,6 +335,52 @@ async function loadmessages(msg, isHistory) {
 
     userName.classList.add("text-white", "font-bold", "text-xl", "mb-1");
     userName.textContent = msg.user;
+
+    const donator = donators.find(d => d.name === msg.user);
+
+    if (donator) {
+        if (donator.color) {
+            userName.style.color = donator.color;
+        }
+
+        if (donators.find(d => d.img === true && d.name === msg.user)) {
+            const profileImage = new Image();
+            const extensions = ["png", "jpg", "jpeg", "gif", "webm"];
+            let imageFound = false;
+            for (const ext of extensions) {
+                const imageUrl = `/resources/profiles/${msg.user}_profile.${ext}`;
+                try {
+                    const response = await fetch(imageUrl, { method: 'HEAD' });
+                    if (response.ok) {
+                        profileImage.src = imageUrl;
+                        imageFound = true;
+                        break;
+                    }
+                } catch (error) { }
+            }
+
+            if (imageFound) {
+                profileImage.style.width = "40px";
+                profileImage.style.height = "40px";
+                profileImage.style.borderRadius = "50%";
+                profileImage.style.marginRight = "10px";
+
+                const userContainer = document.createElement("div");
+                userContainer.style.display = "flex";
+                userContainer.style.alignItems = "center";
+
+                userContainer.appendChild(profileImage);
+                userContainer.appendChild(userName);
+                gridItem.appendChild(userContainer);
+            } else {
+                gridItem.appendChild(userName);
+            }
+        }
+
+    } else {
+        gridItem.appendChild(userName);
+    }
+
     if (msg.edited) {
         const editedLabel = document.createElement("span");
         editedLabel.classList.add("edited-mark");
@@ -362,7 +418,7 @@ async function loadmessages(msg, isHistory) {
     messageText.style.wordWrap = "break-word";
     messageText.style.whiteSpace = "pre-wrap";
     messageText.style.overflowWrap = "break-word";
-    
+
     gridItem.appendChild(userName);
     gridItem.appendChild(messageText);
     gridItem.appendChild(timeText);
@@ -708,19 +764,19 @@ function showEmojiModal(msg) {
 }
 
 function renderEmojis(emojis, msg) {
-        emojiContainer.innerHTML = "";
-        emojis.forEach((emoji) => {
-            const img = document.createElement('img');
-            img.src = emoji.url;
-            img.alt = emoji.name;
-            img.classList.add('w-10', 'h-10', 'cursor-pointer', 'hover:opacity-75', 'mr-4', 'mb-4');
-            img.addEventListener('click', () => {
-                socket.emit("addReaction", { messageId: msg.timestamp, emojiName: emoji.name, emojiUrl: emoji.url });
-                emojiModal.classList.add("hidden");
-            });
-            emojiContainer.appendChild(img);
+    emojiContainer.innerHTML = "";
+    emojis.forEach((emoji) => {
+        const img = document.createElement('img');
+        img.src = emoji.url;
+        img.alt = emoji.name;
+        img.classList.add('w-10', 'h-10', 'cursor-pointer', 'hover:opacity-75', 'mr-4', 'mb-4');
+        img.addEventListener('click', () => {
+            socket.emit("addReaction", { messageId: msg.timestamp, emojiName: emoji.name, emojiUrl: emoji.url });
+            emojiModal.classList.add("hidden");
         });
-    }
+        emojiContainer.appendChild(img);
+    });
+}
 
 function renderReactions(messageId, emojiName, emojiUrl, userName) {
     const messageElement = document.querySelector(`[data-timestamp="${messageId}"]`);
