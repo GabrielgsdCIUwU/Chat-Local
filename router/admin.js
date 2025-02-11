@@ -80,7 +80,7 @@ router.post("/register", (req, res) => {
                 return res.status(400).json({ message: "El usuario ya existe" });
             }
 
-            const newUser = { name, passwd, location: req.ip };
+            const newUser = { name, passwd, location: req.ip, roles: [] };
             usersData.push(newUser);
 
             fs.writeFile(usersFilePath, JSON.stringify(usersData, null, 2), "utf-8", (err) => {
@@ -94,6 +94,37 @@ router.post("/register", (req, res) => {
     } catch (error) {
         res.status(500).json({ error: "Unexpected error occurred" });
     }
+});
+
+
+function isAdmin(req, res) {
+    if (req.ip == "::1" || req.ip == "::ffff:127.0.0.1") {
+        return true;
+    }
+}
+
+router.get("/role", (req, res) => {
+    if (isAdmin) {
+        res.sendFile(path.join(__dirname, "../public/views/roles.html"));
+    }
+});
+
+router.get("/list/users", (req, res) => {
+    const usersFilePath = path.join(__dirname, "../backend/json/users.json");
+    fs.readFile(usersFilePath, "utf8", (err, data) => {
+        if (err) return res.status(500).json({message: "Se ha producido un error en el servidor."});
+        let usersData = JSON.parse(data);
+        try {
+            let names = []
+            usersData.forEach(user => {
+                names.push(user.name);
+            });
+            return res.send(names)
+        } catch (err) {
+            res.status(500).json({message: "Se ha producido un error en el servidor."});
+            console.error(err)
+        }
+    });
 });
 
 export default router;

@@ -14,6 +14,7 @@ import webrouter from "./router/paginas.js";
 import admin from "./router/admin.js";
 import chat from "./router/chat.js";
 import img from "./router/img.js"
+import perfil from "./router/perfil.js";
 
 
 
@@ -55,7 +56,8 @@ app.use("/resources", express.static(path.join(__dirname, "resources")));
 app.use(webrouter);
 app.use(admin);
 app.use(chat);
-app.use("/img", img)
+app.use("/img", img);
+app.use("/perfil", perfil);
 
 function isAuthenticated(socket, next) {
     if (socket.request.session && socket.request.session.user) {
