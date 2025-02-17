@@ -327,7 +327,6 @@ async function loadmessages(msg, isHistory) {
     const messageText = document.createElement("p");
     const timeText = document.createElement("p");
 
-
     gridItem.classList.add("bg-gray-700", "rounded-lg", "shadow-md", "p-4", "mb-3", "transition-all", "duration-300", "ease-in-out");
     gridItem.style.marginBottom = "1rem";
     gridItem.style.position = "relative";
@@ -338,49 +337,33 @@ async function loadmessages(msg, isHistory) {
 
     const donator = donators.find(d => d.name === msg.user);
 
+    const userContainer = document.createElement("div");
+    userContainer.style.display = "flex";
+    userContainer.style.alignItems = "center";
+    userContainer.style.paddingBottom = "10px";
+
     if (donator) {
         if (donator.color) {
             userName.style.color = donator.color;
         }
 
-        if (donators.find(d => d.img === true && d.name === msg.user)) {
+        if (donators.find(d => typeof d.img === 'string' && d.name === msg.user)) {
             const profileImage = new Image();
-            const extensions = ["png", "jpg", "jpeg", "gif", "webm"];
-            let imageFound = false;
-            for (const ext of extensions) {
-                const imageUrl = `/resources/profiles/${msg.user}_profile.${ext}`;
-                try {
-                    const response = await fetch(imageUrl, { method: 'HEAD' });
-                    if (response.ok) {
-                        profileImage.src = imageUrl;
-                        imageFound = true;
-                        break;
-                    }
-                } catch (error) { }
-            }
-
-            if (imageFound) {
-                profileImage.style.width = "40px";
-                profileImage.style.height = "40px";
-                profileImage.style.borderRadius = "50%";
-                profileImage.style.marginRight = "10px";
-
-                const userContainer = document.createElement("div");
-                userContainer.style.display = "flex";
-                userContainer.style.alignItems = "center";
-
-                userContainer.appendChild(profileImage);
-                userContainer.appendChild(userName);
-                gridItem.appendChild(userContainer);
-            } else {
-                gridItem.appendChild(userName);
-            }
+            const imageUrl = `/resources/profiles/${msg.user}_profile${donators.find(d => d.name === msg.user).img}`;
+            
+            profileImage.src = imageUrl;
+            profileImage.style.width = "40px";
+            profileImage.style.height = "40px";
+            profileImage.style.borderRadius = "50%";
+            profileImage.style.marginRight = "10px";
+            userContainer.appendChild(profileImage);
         }
 
-    } else {
-        gridItem.appendChild(userName);
     }
-
+    
+    userContainer.appendChild(userName);
+    gridItem.appendChild(userContainer);
+    
     if (msg.edited) {
         const editedLabel = document.createElement("span");
         editedLabel.classList.add("edited-mark");
@@ -391,12 +374,8 @@ async function loadmessages(msg, isHistory) {
     }
 
     messageText.classList.add("text-white", "text-lg");
-    if (isHistory) {
-        messageText.innerHTML = msg.message;
-    } else {
-        messageText.innerHTML = await formatMessage(msg.message);
-    }
-
+    messageText.innerHTML = await formatMessage(msg.message);
+    
     const mentionRegex = /@([^\s]+)/g;
     messageText.innerHTML = messageText.innerHTML.replace(mentionRegex, (match, username) => {
         if (userNames.includes(username)) {
@@ -412,14 +391,12 @@ async function loadmessages(msg, isHistory) {
     timeText.classList.add("text-gray-400", "mt-1", "text-small");
     timeText.textContent = `${hours}:${minutes}`;
 
-    //procesamiento menu mensajes
-    let [optionsButton, optionsMenu] = messageMenu(gridItem, msg)
+    let [optionsButton, optionsMenu] = messageMenu(gridItem, msg);
 
     messageText.style.wordWrap = "break-word";
     messageText.style.whiteSpace = "pre-wrap";
     messageText.style.overflowWrap = "break-word";
 
-    gridItem.appendChild(userName);
     gridItem.appendChild(messageText);
     gridItem.appendChild(timeText);
     gridItem.appendChild(optionsButton);
