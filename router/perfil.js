@@ -11,7 +11,7 @@ const usersFilePath = path.join(__dirname, "../backend/json/users.json");
 const profileDir = path.join(__dirname, "../resources/profiles")
 
 const router = express.Router();
-
+let extensionFile;
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const dir = path.join(__dirname, "../resources/profiles/");
@@ -22,6 +22,7 @@ const storage = multer.diskStorage({
     },
     filename: (req, file, cb) => {
         const ext = path.extname(file.originalname);
+        extensionFile = ext;
         const username = req.session.user.name;
         const filename = `${username}_profile${ext}`;
         cb(null, filename);
@@ -122,7 +123,7 @@ router.post('/img', upload.single('img'), (req, res) => {
             if (user.role != "Donador" && user.role != "Admin") {
                 return res.status(403).json({ message: "No tienes permisos para cambiar la imágen" });
             }
-            user.img = true;
+            user.img = extensionFile;
 
             fs.writeFile(usersFilePath, JSON.stringify(usersData, null, 2), (err) => {
                 if (err) {
