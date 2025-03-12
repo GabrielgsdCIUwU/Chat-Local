@@ -1,4 +1,4 @@
-export function execute({ currenData, userIndex, socket, io, args, actualEarningsPayingDebt }) {
+export function execute({ args, socket, io, username, currenData, userIndex, actualEarningsPayingDebt }) {
     const timestamp = new Date().getTime()
     let gambler = currenData[userIndex];
     const targetName = args[0];
