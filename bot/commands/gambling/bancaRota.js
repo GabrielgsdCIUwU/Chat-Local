@@ -1,4 +1,5 @@
 export function execute({ args, socket, io, username, currenData, userIndex, actualEarningsPayingDebt }) {
+    const timestamp = new Date().getTime();
     let gamblerBankRupt = currenData[userIndex];
     if (gamblerBankRupt.money == 0) {
         gamblerBankRupt.bankRupt++;

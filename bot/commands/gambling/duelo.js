@@ -1,6 +1,8 @@
 const pendingDuels = new Map();
 
 export function execute({ args, socket, io, username, currenData, userIndex, actualEarningsPayingDebt }) {
+    const timestamp = new Date().getTime();
+    
     if (args[0] === "aceptar") {
         if (!pendingDuels.has(username)) {
             return io.emit("sendmsg", { user: "🤖 Bot", message: `${username} No tienes ningún duelo pendiente`, timestamp });
