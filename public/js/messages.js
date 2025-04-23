@@ -270,8 +270,8 @@ function sendMessage() {
             sendbutton.style.top = "";
             socket.emit("sendmsg", finalMessage, replyMessage);
             replyMessage = null;
-            
-        }else if (isEditingMessage) {
+
+        } else if (isEditingMessage) {
             socket.emit("editmsg", { message: finalMessage, id: editingMessageId });
             isEditingMessage = false;
             editingMessageId = null;
@@ -576,8 +576,21 @@ async function formatMessage(msg) {
     if (msg.reply) {
         const replyUser = msg.reply.replyUser;
         const replyText = msg.reply.replyMessage;
-        const replyPreview = replyText.length < 40 ? replyText : `${replyText.slice(0, 40)}...`;
-        message = `<div class="reply-info">Respondiendo a ${replyUser}: ${replyPreview}</div>` + message;
+        let replyPreview = replyText.length < 40 ? replyText : `${replyText.slice(0, 40)}...`;
+        if (replyPreview.includes(':') || replyPreview.includes(';')) {
+            emojiCache.forEach((emoji) => {
+                const emojiUrl = emoji.url;
+                const emojiName = emoji.name;
+                const patterns = [`;${emojiName};`, `:${emojiName}:`];
+                patterns.forEach(pattern => {
+                    const regex = new RegExp(pattern, 'g');
+                    if (regex.test(replyPreview)) {
+                        replyPreview = replyPreview.replace(regex, `<img src="${emojiUrl}" width="50px" style="display: inline;">`);
+                    }
+                });
+            });
+            message = `<div class="reply-info">Respondiendo a ${replyUser}: ${replyPreview}</div>` + message;
+        }
     }
 
     message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
