@@ -160,7 +160,7 @@ io.on("connection", (socket) => {
                 }
                 try {
                     const users = JSON.parse(data);
-                    const donators = users.filter(user => user.role === "Donador" || user.role === "Admin").map(user => ({name: user.name, color: user.color, img: user.img ?? false}));
+                    const donators = users.filter(user => user.role === "Donador" || user.role === "Admin").map(user => ({ name: user.name, color: user.color, img: user.img ?? false }));
                     socket.emit("donators", donators);
 
                 } catch (error) {
@@ -170,7 +170,7 @@ io.on("connection", (socket) => {
         });
 
         // Chat público (ya existente)
-        socket.on("sendmsg", (msg) => {
+        socket.on("sendmsg", (msg, reply) => {
             const timestamp = new Date().getTime();
             const messagesFilePath = path.join(__dirname, "./public/json/messages.json");
 
@@ -193,7 +193,12 @@ io.on("connection", (socket) => {
                     return socket.emit("error", { message: "Error al parsear los mensajes" });
                 }
 
-                const newMessage = { name: user.name, message: msg, timestamp };
+                let newMessage;
+                if (reply) {
+                    newMessage = { name: user.name, message: msg, timestamp, reply: { replyUser: reply.user, replyMessage: reply.message } };
+                } else {
+                    newMessage = { name: user.name, message: msg, timestamp };
+                }
                 messagesData.push(newMessage);
 
                 fs.writeFile(messagesFilePath, JSON.stringify(messagesData, null, 2), "utf-8", (err) => {
@@ -201,8 +206,8 @@ io.on("connection", (socket) => {
                         console.error("Error al escribir el mensaje en el archivo:", err);
                         return socket.emit("error", { message: "Error al escribir el mensaje" });
                     }
+                    io.emit("newmsg", newMessage);
 
-                    io.emit("sendmsg", { user: user.name, message: msg, timestamp: timestamp });
 
                     if (msg.includes("https://ko-fi.com/gabrielgsd") || msg.includes("https://www.paypal.com/paypalme/gabrielgsd") || msg.includes("https://paypal.me/gabrielgsd")) {
                         const spamerFilePath = path.join(__dirname, "./public/json/spamer.json");
