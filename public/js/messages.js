@@ -436,91 +436,154 @@ async function loadmessages(msg, isHistory) {
 
 //region options msg menu
 function messageMenu(gridItem, msg) {
+    // Create options button with improved styling
     const optionsButton = document.createElement("button");
-    const optionsMenu = document.createElement("div");
-
-    optionsButton.textContent = "⋮";
-    optionsButton.classList.add("options-button");
+    optionsButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+      <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+    </svg>`;
+    optionsButton.classList.add("options-button", "text-gray-400", "hover:text-white", "transition-colors", "duration-200", "rounded-full", "p-1", "hover:bg-gray-700");
     optionsButton.style.position = "absolute";
     optionsButton.style.top = "10px";
     optionsButton.style.right = "10px";
+
+    const modalContainer = document.getElementById("messageOptionsModal");
+
     optionsButton.onclick = (event) => {
         event.stopPropagation();
-        optionsMenu.classList.toggle("hidden");
-        optionsMenu.style.position = 'absolute';
-        optionsMenu.style.backgroundColor = '#2c2f33';
-        optionsMenu.style.padding = '10px';
-        optionsMenu.style.borderRadius = '5px';
-        optionsMenu.style.top = '30px';
-        optionsMenu.style.right = '0';
 
-        const replyOption = document.createElement("div");
-        replyOption.textContent = "Responder";
-        replyOption.classList.add("menu-option");
-        replyOption.onclick = () => {
-            const shortMessage = msg.message.slice(0, 40);
-            const displayMessage = shortMessage.length < 40 ? shortMessage : `${shortMessage}...`;
+        // Close any open menus first
+        document.querySelectorAll('.options-menu-open').forEach(menu => {
+            if (menu !== modalContainer) {
+                menu.classList.add("hidden", "scale-95", "opacity-0");
+                menu.classList.remove("options-menu-open", "scale-100", "opacity-100");
+            }
+        });
 
+        const rect = optionsButton.getBoundingClientRect();
+        modalContainer.innerHTML = `<div class="py-1"></div>`;
+        const menuContent = modalContainer.querySelector('div');
+        
+        // Position the modal
+        modalContainer.style.top = `${rect.top + window.scrollY + 25}px`;
+        modalContainer.style.left = `${rect.left + window.scrollX - 197}px`;
+        
+        // Show the modal with animation
+        modalContainer.classList.remove("hidden", "scale-95", "opacity-0");
+        modalContainer.classList.add("options-menu-open", "scale-100", "opacity-100");
 
-            replyMessageDisplay.textContent = `Respondiendo a ${msg.user}: ${displayMessage}`;
-            replyMessageDisplay.classList.remove("hidden");
-            replyMessage = msg;
-            optionsMenu.classList.add("hidden");
-            sendbutton.style.top = '28px';
+        const createOption = (icon, text, onClick, colorClass = "") => {
+            const opt = document.createElement("div");
+            opt.classList.add(
+                "menu-option", "cursor-pointer", "hover:bg-gray-700", 
+                "px-4", "py-2", "flex", "items-center", "gap-3",
+                "transition-colors", "duration-150"
+            );
+            if (colorClass) opt.classList.add(colorClass);
+            
+            opt.innerHTML = `
+                <span class="text-gray-400">${icon}</span>
+                <span>${text}</span>
+            `;
+            
+            opt.onclick = (e) => {
+                e.stopPropagation();
+                onClick();
+                modalContainer.classList.add("hidden", "scale-95", "opacity-0");
+                modalContainer.classList.remove("options-menu-open", "scale-100", "opacity-100");
+            };
+            return opt;
         };
 
-        const markUnreadOption = document.createElement("div");
-        markUnreadOption.textContent = "Marcar como no leído";
-        markUnreadOption.classList.add("menu-option");
-        markUnreadOption.onclick = () => {
-            addUnreadMarker(gridItem);
-            optionsMenu.classList.add("hidden");
-        };
-
-        const reactOption = document.createElement("div");
-        reactOption.textContent = "Reaccionar";
-        reactOption.classList.add("menu-option");
-        reactOption.onclick = () => {
-            showEmojiModal(msg);
-            optionsMenu.classList.add("hidden");
-        };
-
-        optionsMenu.innerHTML = "";
-
-        //opciones cuando el mensaje es del autor
-        const editMessageOption = document.createElement("div");
-        const deleteMessageOption = document.createElement("div");
-        if ((msg.name || msg.user) === actualUserName) {
-            //editar mensaje
-            editMessageOption.textContent = "Editar mensaje";
-            editMessageOption.classList.add("menu-option");
-            editMessageOption.onclick = () => {
-                replyMessageDisplay.textContent = "Editando mensaje...";
+        // Reply option
+        const replyOption = createOption(
+            `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+            </svg>`,
+            "Responder",
+            () => {
+                const shortMessage = msg.message.slice(0, 40);
+                const displayMessage = shortMessage.length < 40 ? shortMessage : `${shortMessage}...`;
+                replyMessageDisplay.textContent = `Respondiendo a ${msg.user}: ${displayMessage}`;
                 replyMessageDisplay.classList.remove("hidden");
-                inputMessage.value = msg.message;
-                isEditingMessage = true;
-                editingMessageId = msg.timestamp;
-                optionsMenu.classList.add("hidden");
+                replyMessage = msg;
                 sendbutton.style.top = '28px';
-            };
+            }
+        );
 
-            deleteMessageOption.textContent = "Borrar mensaje";
-            deleteMessageOption.classList.add("menu-option");
-            deleteMessageOption.onclick = () => {
-                socket.emit("deletemsg", { id: msg.timestamp });
-                optionsMenu.classList.add("hidden");
-            };
-            optionsMenu.appendChild(editMessageOption);
-            optionsMenu.appendChild(deleteMessageOption);
+        // Mark as unread option
+        const markUnreadOption = createOption(
+            `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+            </svg>`,
+            "Marcar como no leído",
+            () => {
+                addUnreadMarker(gridItem);
+            }
+        );
+
+        // React option
+        const reactOption = createOption(
+            `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>`,
+            "Reaccionar",
+            () => {
+                showEmojiModal(msg);
+            }
+        );
+
+        menuContent.appendChild(replyOption);
+        menuContent.appendChild(markUnreadOption);
+        menuContent.appendChild(reactOption);
+
+        // Add separator before user-specific options
+        if ((msg.name || msg.user) === actualUserName) {
+            const separator = document.createElement("div");
+            separator.classList.add("border-t", "border-gray-700", "my-1");
+            menuContent.appendChild(separator);
+
+            // Edit option
+            const editOption = createOption(
+                `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>`,
+                "Editar mensaje",
+                () => {
+                    replyMessageDisplay.textContent = "Editando mensaje...";
+                    replyMessageDisplay.classList.remove("hidden");
+                    inputMessage.value = msg.message;
+                    isEditingMessage = true;
+                    editingMessageId = msg.timestamp;
+                    sendbutton.style.top = '28px';
+                }
+            );
+
+            // Delete option
+            const deleteOption = createOption(
+                `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>`,
+                "Borrar mensaje",
+                () => {
+                    socket.emit("deletemsg", { id: msg.timestamp });
+                },
+                "hover:text-red-500"
+            );
+
+            menuContent.appendChild(editOption);
+            menuContent.appendChild(deleteOption);
         }
-
-
-        optionsMenu.appendChild(replyOption);
-        optionsMenu.appendChild(markUnreadOption);
-        optionsMenu.appendChild(reactOption);
-        gridItem.appendChild(optionsMenu);
     };
-    return [optionsButton, optionsMenu];
+
+    // Close menu when clicking outside
+    document.addEventListener("click", (e) => {
+        if (!modalContainer.contains(e.target) && !e.target.closest('.options-button')) {
+            modalContainer.classList.add("hidden", "scale-95", "opacity-0");
+            modalContainer.classList.remove("options-menu-open", "scale-100", "opacity-100");
+        }
+    });
+
+    return [optionsButton];
 }
 
 
