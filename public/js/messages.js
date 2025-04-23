@@ -266,16 +266,12 @@ function sendMessage() {
         let finalMessage = message;
 
         if (replyMessage) {
-            replyMessage.message = replyMessage.message.replace(/\[reply:.*?\]/g, '');
-            let shortReplyMessage = replyMessage.message.slice(0, 40);
-            shortReplyMessage = shortReplyMessage.replace(/\n/g, ' ');
-            const replyPreview = shortReplyMessage.length < 40 ? shortReplyMessage : `${shortReplyMessage}...`;
-            finalMessage = `[reply: ${replyMessage.user}: ${replyPreview}] ${finalMessage}`;
             replyMessageDisplay.classList.add("hidden");
-            replyMessage = null;
             sendbutton.style.top = "";
-        }
-        if (isEditingMessage) {
+            socket.emit("sendmsg", finalMessage, replyMessage);
+            replyMessage = null;
+            
+        }else if (isEditingMessage) {
             socket.emit("editmsg", { message: finalMessage, id: editingMessageId });
             isEditingMessage = false;
             editingMessageId = null;
@@ -350,7 +346,7 @@ async function loadmessages(msg, isHistory) {
         if (donators.find(d => typeof d.img === 'string' && d.name === msg.user)) {
             const profileImage = new Image();
             const imageUrl = `/resources/profiles/${msg.user}_profile${donators.find(d => d.name === msg.user).img}`;
-            
+
             profileImage.src = imageUrl;
             profileImage.style.width = "40px";
             profileImage.style.height = "40px";
@@ -360,10 +356,10 @@ async function loadmessages(msg, isHistory) {
         }
 
     }
-    
+
     userContainer.appendChild(userName);
     gridItem.appendChild(userContainer);
-    
+
     if (msg.edited) {
         const editedLabel = document.createElement("span");
         editedLabel.classList.add("edited-mark");
@@ -374,8 +370,8 @@ async function loadmessages(msg, isHistory) {
     }
 
     messageText.classList.add("text-white", "text-lg");
-    messageText.innerHTML = await formatMessage(msg.message);
-    
+    messageText.innerHTML = await formatMessage(msg);
+
     const mentionRegex = /@([^\s]+)/g;
     messageText.innerHTML = messageText.innerHTML.replace(mentionRegex, (match, username) => {
         if (userNames.includes(username)) {
@@ -462,16 +458,9 @@ function messageMenu(gridItem, msg) {
         replyOption.textContent = "Responder";
         replyOption.classList.add("menu-option");
         replyOption.onclick = () => {
-            const replyPattern = /^\[reply: (.*?): (.*?)\] (.*)$/;
-            const match = msg.message.match(replyPattern);
-            let displayMessage;
+            const shortMessage = msg.message.slice(0, 40);
+            const displayMessage = shortMessage.length < 40 ? shortMessage : `${shortMessage}...`;
 
-            if (match) {
-                displayMessage = match[3];
-            } else {
-                const shortMessage = msg.message.slice(0, 40);
-                displayMessage = shortMessage.length < 40 ? shortMessage : `${shortMessage}...`;
-            }
 
             replyMessageDisplay.textContent = `Respondiendo a ${msg.user}: ${displayMessage}`;
             replyMessageDisplay.classList.remove("hidden");
@@ -558,23 +547,9 @@ function toggleUnreadMarker(gridItem) {
 }
 
 //region Format Message
-async function formatMessage(message) {
-    message = message.trim();
+async function formatMessage(msg) {
+    let message = msg.message.trim();
 
-    if (message.startsWith("[reply:")) {
-        const replyInfo = message.match(/\[reply: (.*?): (.*?)\] (.*)/);
-        if (replyInfo) {
-            const replyUser = replyInfo[1];
-            const replyText = replyInfo[2];
-            const replyPreview = replyText.length < 40 ? replyText : `${replyText.slice(0, 40)}...`;
-            message = `<div class="reply-info">Respondiendo a ${replyUser}: ${replyPreview}</div>` + replyInfo[3];
-        }
-    }
-
-
-    message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    message = message.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    message = message.replace(/\|\| (.*?) \|\|/g, `<span class="hidden-message" style="cursor: pointer; color: blue;">[Mostrar]</span><span class="actual-message" style="display:none;">$1</span>`);
     if (message.includes(':')) {
 
         emojiCache.forEach((emoji) => {
@@ -597,6 +572,17 @@ async function formatMessage(message) {
             }
         });
     }
+
+    if (msg.reply) {
+        const replyUser = msg.reply.replyUser;
+        const replyText = msg.reply.replyMessage;
+        const replyPreview = replyText.length < 40 ? replyText : `${replyText.slice(0, 40)}...`;
+        message = `<div class="reply-info">Respondiendo a ${replyUser}: ${replyPreview}</div>` + message;
+    }
+
+    message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    message = message.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    message = message.replace(/\|\| (.*?) \|\|/g, `<span class="hidden-message" style="cursor: pointer; color: blue;">[Mostrar]</span><span class="actual-message" style="display:none;">$1</span>`);
 
     const unorderedListItems = message.match(/^- (.*?)(?=\n|$)/gm);
     const orderedListItems = message.match(/^\d+\.\s(.*?)(?=\n|$)/gm);
