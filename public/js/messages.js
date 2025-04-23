@@ -583,7 +583,7 @@ function messageMenu(gridItem, msg) {
         }
     });
 
-    return [optionsButton];
+    return [optionsButton, modalContainer];
 }
 
 
