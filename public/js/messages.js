@@ -462,11 +462,11 @@ function messageMenu(gridItem, msg) {
         const rect = optionsButton.getBoundingClientRect();
         modalContainer.innerHTML = `<div class="py-1"></div>`;
         const menuContent = modalContainer.querySelector('div');
-        
+
         // Position the modal
         modalContainer.style.top = `${rect.top + window.scrollY + 25}px`;
         modalContainer.style.left = `${rect.left + window.scrollX - 197}px`;
-        
+
         // Show the modal with animation
         modalContainer.classList.remove("hidden", "scale-95", "opacity-0");
         modalContainer.classList.add("options-menu-open", "scale-100", "opacity-100");
@@ -474,17 +474,17 @@ function messageMenu(gridItem, msg) {
         const createOption = (icon, text, onClick, colorClass = "") => {
             const opt = document.createElement("div");
             opt.classList.add(
-                "menu-option", "cursor-pointer", "hover:bg-gray-700", 
+                "menu-option", "cursor-pointer", "hover:bg-gray-700",
                 "px-4", "py-2", "flex", "items-center", "gap-3",
                 "transition-colors", "duration-150"
             );
             if (colorClass) opt.classList.add(colorClass);
-            
+
             opt.innerHTML = `
                 <span class="text-gray-400">${icon}</span>
                 <span>${text}</span>
             `;
-            
+
             opt.onclick = (e) => {
                 e.stopPropagation();
                 onClick();
@@ -817,6 +817,7 @@ function renderEmojis(emojis, msg) {
     });
 }
 
+//region Render Reactions
 function renderReactions(messageId, emojiName, emojiUrl, userName) {
     const messageElement = document.querySelector(`[data-timestamp="${messageId}"]`);
 
@@ -865,18 +866,121 @@ function renderReactions(messageId, emojiName, emojiUrl, userName) {
                 divContainerEmojis.appendChild(emojiElement);
 
                 const emojiCount = document.createElement("span");
-                emojiCount.className = "reaction-count text-gray-300 text-xs mt-1";
+                emojiCount.className = "reaction-count text-gray-300 text-xs mt-1 relative";
                 emojiCount.textContent = "1";
                 emojiCount.style.marginRight = "15px";
+                emojiCount.style.cursor = "pointer";
+                
+                // Crear el tooltip personalizado
+                const tooltip = document.createElement("div");
+                tooltip.className = "custom-tooltip top-tooltip";
+                tooltip.textContent = Array.from(userSet).join(', ');
+                tooltip.style.display = "none";
+                
+                // Aplicar estilos al tooltip
+                applyTooltipStyles(tooltip);
+                
+                emojiCount.appendChild(tooltip);
+                
+                // Eventos para mostrar/ocultar el tooltip
+                emojiCount.addEventListener("mouseenter", () => {
+                    tooltip.style.display = "block";
+                    setTimeout(() => {
+                        tooltip.style.opacity = "1";
+                        tooltip.style.transform = "translate(-50%, 0)";
+                    }, 10);
+                });
+                
+                emojiCount.addEventListener("mouseleave", () => {
+                    tooltip.style.opacity = "0";
+                    tooltip.style.transform = "translate(-50%, 5px)";
+                    setTimeout(() => {
+                        tooltip.style.display = "none";
+                    }, 300);
+                });
+                
                 emojiElement.insertAdjacentElement("afterend", emojiCount);
             } else {
                 const emojiCount = emojiElement.nextElementSibling;
                 if (emojiCount && emojiCount.classList.contains("reaction-count")) {
                     emojiCount.textContent = `${userSet.size}`;
+                    
+                    // Actualizar el contenido del tooltip
+                    let tooltip = emojiCount.querySelector(".custom-tooltip");
+                    if (!tooltip) {
+                        tooltip = document.createElement("div");
+                        tooltip.className = "custom-tooltip top-tooltip";
+                        tooltip.style.display = "none";
+                        
+                        // Aplicar estilos al tooltip
+                        applyTooltipStyles(tooltip);
+                        
+                        emojiCount.appendChild(tooltip);
+                        
+                        // Eventos para mostrar/ocultar el tooltip
+                        emojiCount.addEventListener("mouseenter", () => {
+                            tooltip.style.display = "block";
+                            setTimeout(() => {
+                                tooltip.style.opacity = "1";
+                                tooltip.style.transform = "translate(-50%, 0)";
+                            }, 10);
+                        });
+                        
+                        emojiCount.addEventListener("mouseleave", () => {
+                            tooltip.style.opacity = "0";
+                            tooltip.style.transform = "translate(-50%, 5px)";
+                            setTimeout(() => {
+                                tooltip.style.display = "none";
+                            }, 300);
+                        });
+                    }
+                    
+                    tooltip.textContent = Array.from(userSet).join(', ');
                 }
             }
         }
     } else {
         console.log(`No se encontró un mensaje para añadir reacción con el timestamp ${messageId}`);
+    }
+}
+
+// Función para aplicar estilos al tooltip
+function applyTooltipStyles(tooltip) {
+    // Posicionar el tooltip encima del contador
+    tooltip.style.position = "absolute";
+    tooltip.style.bottom = "calc(100% + 10px)"; // 10px de espacio entre el tooltip y el contador
+    tooltip.style.left = "50%"; // Centrar horizontalmente
+    tooltip.style.transform = "translateX(-50%) translateY(5px)"; // Centrar y añadir offset para animación
+    
+    // Estilos visuales
+    tooltip.style.backgroundColor = "#2a2a2a";
+    tooltip.style.color = "white";
+    tooltip.style.padding = "6px 10px";
+    tooltip.style.borderRadius = "6px";
+    tooltip.style.fontSize = "12px";
+    tooltip.style.fontWeight = "500";
+    tooltip.style.whiteSpace = "nowrap";
+    tooltip.style.boxShadow = "0 2px 10px rgba(0, 0, 0, 0.2)";
+    tooltip.style.zIndex = "1000";
+    tooltip.style.opacity = "0";
+    tooltip.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+    
+    // Crear y añadir estilos para la flecha del tooltip
+    const style = document.createElement("style");
+    if (!document.querySelector("#tooltip-styles")) {
+        style.id = "tooltip-styles";
+        style.textContent = `
+            .top-tooltip::after {
+                content: '';
+                position: absolute;
+                top: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                border-width: 6px;
+                border-style: solid;
+                border-color: #2a2a2a transparent transparent transparent;
+            }
+        `;
+        document.head.appendChild(style);
     }
 }
