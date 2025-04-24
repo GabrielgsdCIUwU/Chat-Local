@@ -195,9 +195,9 @@ io.on("connection", (socket) => {
 
                 let newMessage;
                 if (reply) {
-                    newMessage = { name: user.name, message: msg, timestamp, reply: { replyUser: reply.user, replyMessage: reply.message } };
+                    newMessage = { user: user.name, message: msg, timestamp, reply: { replyUser: reply.user, replyMessage: reply.message } };
                 } else {
-                    newMessage = { name: user.name, message: msg, timestamp };
+                    newMessage = { user: user.name, message: msg, timestamp };
                 }
                 messagesData.push(newMessage);
 
@@ -206,7 +206,7 @@ io.on("connection", (socket) => {
                         console.error("Error al escribir el mensaje en el archivo:", err);
                         return socket.emit("error", { message: "Error al escribir el mensaje" });
                     }
-                    io.emit("newmsg", newMessage);
+                    io.emit("sendmsg", newMessage);
 
 
                     if (msg.includes("https://ko-fi.com/gabrielgsd") || msg.includes("https://www.paypal.com/paypalme/gabrielgsd") || msg.includes("https://paypal.me/gabrielgsd")) {
@@ -287,10 +287,10 @@ io.on("connection", (socket) => {
             let messages = JSON.parse(fs.readFileSync(messagesFilePath, "utf-8"));
 
             const messageIndex = messages.findIndex((msg) => msg.timestamp === timestamp);
-
+            console.log(messageIndex)
             if (messageIndex !== -1) {
-                console.log("usuario:", user.name, "usuarioMessage:", messages[messageIndex].name)
-                if (messages[messageIndex].name === user.name) {
+                console.log("usuario:", user.name, "usuarioMessage:", messages[messageIndex].user)
+                if (messages[messageIndex].user === user.name) {
                     messages[messageIndex].message = message;
                     messages[messageIndex].edited = true;
 
@@ -315,7 +315,7 @@ io.on("connection", (socket) => {
 
             const messageIndex = messages.findIndex((msg) => msg.timestamp === timestamp);
             if (messageIndex !== -1) {
-                if (messages[messageIndex].name === user.name) {
+                if (messages[messageIndex].user === user.name) {
                     messages.splice(messageIndex, 1);
                     fs.writeFileSync(messagesFilePath, JSON.stringify(messages, null, 2), "utf-8", (err) => {
                         if (err) {
