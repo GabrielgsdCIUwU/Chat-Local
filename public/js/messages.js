@@ -90,7 +90,7 @@ socket.on("messageUpdated", async (data) => {
     const messageElement = document.querySelector(`[data-timestamp="${timestamp}"]`);
     if (messageElement) {
         const messageText = messageElement.querySelectorAll("p")[1];
-        messageText.innerHTML = await formatMessage(message);
+        messageText.innerHTML = await formatMessage(data);
 
         if (edited) {
             const editedMark = messageElement.querySelector(".edited-mark");
@@ -652,8 +652,8 @@ async function formatMessage(msg) {
                     }
                 });
             });
-            message = `<div class="reply-info">Respondiendo a ${replyUser}: ${replyPreview}</div>` + message;
         }
+        message = `<div class="reply-info">Respondiendo a ${replyUser}: ${replyPreview}</div>` + message;
     }
 
     message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -689,7 +689,7 @@ async function formatAllMessages() {
     const messageTexts = mensajes.querySelectorAll(".text-lg");
 
     for (const messageText of messageTexts) {
-        const originalMessage = messageText.textContent;
+        const originalMessage = {message: messageText.textContent};
         const formattedMessage = await formatMessage(originalMessage);
         messageText.innerHTML = formattedMessage;
     }
