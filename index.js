@@ -2,7 +2,7 @@ import express from "express";
 import path from "path";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
-import http from "http";
+import https from "https"
 import { Server as SocketIOServer } from "socket.io";
 import session from "express-session";
 import passport from "passport";
@@ -28,6 +28,11 @@ dotenv.config({ path: envFilePath });
 
 const app = express();
 
+const opcinesSSL = {
+    key: fs.readFileSync(path.join(__dirname, "./certificates/key.pem")),
+    cert: fs.readFileSync(path.join(__dirname, "./certificates/cert.pem")),
+}
+
 app.use(express.json());
 app.disable("x-powered-by");
 
@@ -47,7 +52,7 @@ app.use(passport.session());
 
 const port = process.env.PORT || 3000;
 
-const server = http.createServer(app);
+const server = https.createServer(opcinesSSL, app);
 const io = new SocketIOServer(server);
 
 app.use("/public", express.static(path.join(__dirname, "public")));

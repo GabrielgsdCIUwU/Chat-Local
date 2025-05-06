@@ -8,3 +8,4 @@ public/json/*
 .vscode/settings.json
 resources/*
 public/css/output.css
+certificates/
