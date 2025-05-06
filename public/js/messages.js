@@ -10,6 +10,14 @@ const replyMessageDisplay = document.getElementById("replyMessageDisplay");
 //region cache emojis
 let emojiCache = [];
 
+if (Notification.permission === 'default') {
+    Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+            console.log("Permiso de notificacion dada");
+        }
+    })
+}
+
 async function fetchAndCacheEmojis() {
     if (sessionStorage.getItem("emojiCache")) {
         emojiCache = JSON.parse(sessionStorage.getItem("emojiCache"));
@@ -375,6 +383,11 @@ async function loadmessages(msg, isHistory) {
     const mentionRegex = /@([^\s]+)/g;
     messageText.innerHTML = messageText.innerHTML.replace(mentionRegex, (match, username) => {
         if (userNames.includes(username)) {
+            if (username === actualUserName && Notification.permission === 'granted') {
+                new Notification('Te han mencionado:', {
+                    body: messageText.innerHTML,
+                });
+            }
             return `<span style="color: yellow;">${match}</span>`;
         }
         return match;
