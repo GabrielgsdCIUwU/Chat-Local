@@ -3,6 +3,7 @@ import path from "path";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import https from "https"
+import http from "http";
 import { Server as SocketIOServer } from "socket.io";
 import session from "express-session";
 import passport from "passport";
@@ -50,7 +51,7 @@ app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 const server = https.createServer(opcinesSSL, app);
 const io = new SocketIOServer(server);
@@ -429,6 +430,15 @@ io.on("connection", (socket) => {
     });
 });
 
+http.createServer((req, res) => {
+    const host = req.headers.host.split(':')[0];
+    res.writeHead(301, {
+        Location: `https://${host}:${port}${req.url}`
+    });
+    res.end();
+}).listen(3000, () => {
+    console.log('Redireccionando')
+})
 
 server.listen(port, () => {
     console.log("Escuchando: " + port);
