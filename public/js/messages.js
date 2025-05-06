@@ -383,7 +383,7 @@ async function loadmessages(msg, isHistory) {
     const mentionRegex = /@([^\s]+)/g;
     messageText.innerHTML = messageText.innerHTML.replace(mentionRegex, (match, username) => {
         if (userNames.includes(username)) {
-            if (username === actualUserName && Notification.permission === 'granted') {
+            if (username === actualUserName && Notification.permission === 'granted' && !isHistory) {
                 new Notification('Te han mencionado:', {
                     body: messageText.innerHTML,
                 });
