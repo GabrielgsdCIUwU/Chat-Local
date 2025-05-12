@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import fs from "fs";
 import multer from "multer";
 import sizeOf from "image-size";
+import { isAuthenticated } from "./middlewares/isAuthenticated.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,13 +12,6 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
-function isAuthenticated(req, res, next) {
-    if (req.session && req.session.user) {
-        return next();
-    } else {
-        return res.redirect("/login")
-    }
-}
 
 
 const storageEmoji = multer.diskStorage({
