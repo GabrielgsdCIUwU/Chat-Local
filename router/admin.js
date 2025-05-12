@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import isAdmin from "./middlewares/isAdmin.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -96,12 +97,6 @@ router.post("/register", (req, res) => {
     }
 });
 
-
-function isAdmin(req, res) {
-    if (req.ip == "::1" || req.ip == "::ffff:127.0.0.1") {
-        return true;
-    }
-}
 
 router.get("/role", (req, res) => {
     if (isAdmin) {
