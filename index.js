@@ -122,9 +122,9 @@ io.on("connection", (socket) => {
         connectedUsers.add(user.name);
 
         // Emite la lista de usuarios conectados a todos los usuarios
-        getUserNames().then(userNames => {
-            socket.emit("userNames", userNames);
-        });
+            getUserNames().then(userNames => {
+                io.emit("userNames", userNames);
+            });
 
         // Escuchar la solicitud de inicio de chat privado
         socket.on("startPrivateChat", (recipientName) => {
