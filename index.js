@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
+import https from "https"
 import http from "http";
 import { Server as SocketIOServer } from "socket.io";
 import session from "express-session";
@@ -28,6 +29,11 @@ dotenv.config({ path: envFilePath });
 
 const app = express();
 
+const opcinesSSL = {
+    key: fs.readFileSync(path.join(__dirname, "./certificates/key.pem")),
+    cert: fs.readFileSync(path.join(__dirname, "./certificates/cert.pem")),
+}
+
 app.use(express.json());
 app.disable("x-powered-by");
 
@@ -45,9 +51,9 @@ app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
-const server = http.createServer(app);
+const server = https.createServer(opcinesSSL, app);
 const io = new SocketIOServer(server);
 
 app.use("/public", express.static(path.join(__dirname, "public")));
@@ -116,9 +122,9 @@ io.on("connection", (socket) => {
         connectedUsers.add(user.name);
 
         // Emite la lista de usuarios conectados a todos los usuarios
-        getUserNames().then(userNames => {
-            socket.emit("userNames", userNames);
-        });
+            getUserNames().then(userNames => {
+                io.emit("userNames", userNames);
+            });
 
         // Escuchar la solicitud de inicio de chat privado
         socket.on("startPrivateChat", (recipientName) => {
@@ -160,7 +166,7 @@ io.on("connection", (socket) => {
                 }
                 try {
                     const users = JSON.parse(data);
-                    const donators = users.filter(user => user.role === "Donador" || user.role === "Admin").map(user => ({name: user.name, color: user.color, img: user.img ?? false}));
+                    const donators = users.filter(user => user.role === "Donador" || user.role === "Admin").map(user => ({ name: user.name, color: user.color, img: user.img ?? false }));
                     socket.emit("donators", donators);
 
                 } catch (error) {
@@ -170,7 +176,7 @@ io.on("connection", (socket) => {
         });
 
         // Chat público (ya existente)
-        socket.on("sendmsg", (msg) => {
+        socket.on("sendmsg", (msg, reply) => {
             const timestamp = new Date().getTime();
             const messagesFilePath = path.join(__dirname, "./public/json/messages.json");
 
@@ -193,7 +199,12 @@ io.on("connection", (socket) => {
                     return socket.emit("error", { message: "Error al parsear los mensajes" });
                 }
 
-                const newMessage = { name: user.name, message: msg, timestamp };
+                let newMessage;
+                if (reply) {
+                    newMessage = { user: user.name, message: msg, timestamp, reply: { replyUser: reply.user, replyMessage: reply.message } };
+                } else {
+                    newMessage = { user: user.name, message: msg, timestamp };
+                }
                 messagesData.push(newMessage);
 
                 fs.writeFile(messagesFilePath, JSON.stringify(messagesData, null, 2), "utf-8", (err) => {
@@ -201,8 +212,8 @@ io.on("connection", (socket) => {
                         console.error("Error al escribir el mensaje en el archivo:", err);
                         return socket.emit("error", { message: "Error al escribir el mensaje" });
                     }
+                    io.emit("sendmsg", newMessage);
 
-                    io.emit("sendmsg", { user: user.name, message: msg, timestamp: timestamp });
 
                     if (msg.includes("https://ko-fi.com/gabrielgsd") || msg.includes("https://www.paypal.com/paypalme/gabrielgsd") || msg.includes("https://paypal.me/gabrielgsd")) {
                         const spamerFilePath = path.join(__dirname, "./public/json/spamer.json");
@@ -282,10 +293,10 @@ io.on("connection", (socket) => {
             let messages = JSON.parse(fs.readFileSync(messagesFilePath, "utf-8"));
 
             const messageIndex = messages.findIndex((msg) => msg.timestamp === timestamp);
-
+            console.log(messageIndex)
             if (messageIndex !== -1) {
-                console.log("usuario:", user.name, "usuarioMessage:", messages[messageIndex].name)
-                if (messages[messageIndex].name === user.name) {
+                console.log("usuario:", user.name, "usuarioMessage:", messages[messageIndex].user)
+                if (messages[messageIndex].user === user.name) {
                     messages[messageIndex].message = message;
                     messages[messageIndex].edited = true;
 
@@ -310,7 +321,7 @@ io.on("connection", (socket) => {
 
             const messageIndex = messages.findIndex((msg) => msg.timestamp === timestamp);
             if (messageIndex !== -1) {
-                if (messages[messageIndex].name === user.name) {
+                if (messages[messageIndex].user === user.name) {
                     messages.splice(messageIndex, 1);
                     fs.writeFileSync(messagesFilePath, JSON.stringify(messages, null, 2), "utf-8", (err) => {
                         if (err) {
@@ -419,6 +430,15 @@ io.on("connection", (socket) => {
     });
 });
 
+http.createServer((req, res) => {
+    const host = req.headers.host.split(':')[0];
+    res.writeHead(301, {
+        Location: `https://${host}:${port}${req.url}`
+    });
+    res.end();
+}).listen(3000, () => {
+    console.log('Redireccionando')
+})
 
 server.listen(port, () => {
     console.log("Escuchando: " + port);

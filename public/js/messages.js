@@ -10,6 +10,14 @@ const replyMessageDisplay = document.getElementById("replyMessageDisplay");
 //region cache emojis
 let emojiCache = [];
 
+if (Notification.permission === 'default') {
+    Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+            console.log("Permiso de notificacion dada");
+        }
+    })
+}
+
 async function fetchAndCacheEmojis() {
     if (sessionStorage.getItem("emojiCache")) {
         emojiCache = JSON.parse(sessionStorage.getItem("emojiCache"));
@@ -90,7 +98,7 @@ socket.on("messageUpdated", async (data) => {
     const messageElement = document.querySelector(`[data-timestamp="${timestamp}"]`);
     if (messageElement) {
         const messageText = messageElement.querySelectorAll("p")[1];
-        messageText.innerHTML = await formatMessage(message);
+        messageText.innerHTML = await formatMessage(data);
 
         if (edited) {
             const editedMark = messageElement.querySelector(".edited-mark");
@@ -266,16 +274,12 @@ function sendMessage() {
         let finalMessage = message;
 
         if (replyMessage) {
-            replyMessage.message = replyMessage.message.replace(/\[reply:.*?\]/g, '');
-            let shortReplyMessage = replyMessage.message.slice(0, 40);
-            shortReplyMessage = shortReplyMessage.replace(/\n/g, ' ');
-            const replyPreview = shortReplyMessage.length < 40 ? shortReplyMessage : `${shortReplyMessage}...`;
-            finalMessage = `[reply: ${replyMessage.user}: ${replyPreview}] ${finalMessage}`;
             replyMessageDisplay.classList.add("hidden");
-            replyMessage = null;
             sendbutton.style.top = "";
-        }
-        if (isEditingMessage) {
+            socket.emit("sendmsg", finalMessage, replyMessage);
+            replyMessage = null;
+
+        } else if (isEditingMessage) {
             socket.emit("editmsg", { message: finalMessage, id: editingMessageId });
             isEditingMessage = false;
             editingMessageId = null;
@@ -350,7 +354,7 @@ async function loadmessages(msg, isHistory) {
         if (donators.find(d => typeof d.img === 'string' && d.name === msg.user)) {
             const profileImage = new Image();
             const imageUrl = `/resources/profiles/${msg.user}_profile${donators.find(d => d.name === msg.user).img}`;
-            
+
             profileImage.src = imageUrl;
             profileImage.style.width = "40px";
             profileImage.style.height = "40px";
@@ -360,10 +364,10 @@ async function loadmessages(msg, isHistory) {
         }
 
     }
-    
+
     userContainer.appendChild(userName);
     gridItem.appendChild(userContainer);
-    
+
     if (msg.edited) {
         const editedLabel = document.createElement("span");
         editedLabel.classList.add("edited-mark");
@@ -374,11 +378,16 @@ async function loadmessages(msg, isHistory) {
     }
 
     messageText.classList.add("text-white", "text-lg");
-    messageText.innerHTML = await formatMessage(msg.message);
-    
+    messageText.innerHTML = await formatMessage(msg);
+
     const mentionRegex = /@([^\s]+)/g;
     messageText.innerHTML = messageText.innerHTML.replace(mentionRegex, (match, username) => {
         if (userNames.includes(username)) {
+            if (username === actualUserName && Notification.permission === 'granted' && !isHistory) {
+                new Notification('Te han mencionado:', {
+                    body: messageText.innerHTML,
+                });
+            }
             return `<span style="color: yellow;">${match}</span>`;
         }
         return match;
@@ -440,98 +449,154 @@ async function loadmessages(msg, isHistory) {
 
 //region options msg menu
 function messageMenu(gridItem, msg) {
+    // Create options button with improved styling
     const optionsButton = document.createElement("button");
-    const optionsMenu = document.createElement("div");
-
-    optionsButton.textContent = "⋮";
-    optionsButton.classList.add("options-button");
+    optionsButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+      <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+    </svg>`;
+    optionsButton.classList.add("options-button", "text-gray-400", "hover:text-white", "transition-colors", "duration-200", "rounded-full", "p-1", "hover:bg-gray-700");
     optionsButton.style.position = "absolute";
     optionsButton.style.top = "10px";
     optionsButton.style.right = "10px";
+
+    const modalContainer = document.getElementById("messageOptionsModal");
+
     optionsButton.onclick = (event) => {
         event.stopPropagation();
-        optionsMenu.classList.toggle("hidden");
-        optionsMenu.style.position = 'absolute';
-        optionsMenu.style.backgroundColor = '#2c2f33';
-        optionsMenu.style.padding = '10px';
-        optionsMenu.style.borderRadius = '5px';
-        optionsMenu.style.top = '30px';
-        optionsMenu.style.right = '0';
 
-        const replyOption = document.createElement("div");
-        replyOption.textContent = "Responder";
-        replyOption.classList.add("menu-option");
-        replyOption.onclick = () => {
-            const replyPattern = /^\[reply: (.*?): (.*?)\] (.*)$/;
-            const match = msg.message.match(replyPattern);
-            let displayMessage;
-
-            if (match) {
-                displayMessage = match[3];
-            } else {
-                const shortMessage = msg.message.slice(0, 40);
-                displayMessage = shortMessage.length < 40 ? shortMessage : `${shortMessage}...`;
+        // Close any open menus first
+        document.querySelectorAll('.options-menu-open').forEach(menu => {
+            if (menu !== modalContainer) {
+                menu.classList.add("hidden", "scale-95", "opacity-0");
+                menu.classList.remove("options-menu-open", "scale-100", "opacity-100");
             }
+        });
 
-            replyMessageDisplay.textContent = `Respondiendo a ${msg.user}: ${displayMessage}`;
-            replyMessageDisplay.classList.remove("hidden");
-            replyMessage = msg;
-            optionsMenu.classList.add("hidden");
-            sendbutton.style.top = '28px';
+        const rect = optionsButton.getBoundingClientRect();
+        modalContainer.innerHTML = `<div class="py-1"></div>`;
+        const menuContent = modalContainer.querySelector('div');
+
+        // Position the modal
+        modalContainer.style.top = `${rect.top + window.scrollY + 25}px`;
+        modalContainer.style.left = `${rect.left + window.scrollX - 197}px`;
+
+        // Show the modal with animation
+        modalContainer.classList.remove("hidden", "scale-95", "opacity-0");
+        modalContainer.classList.add("options-menu-open", "scale-100", "opacity-100");
+
+        const createOption = (icon, text, onClick, colorClass = "") => {
+            const opt = document.createElement("div");
+            opt.classList.add(
+                "menu-option", "cursor-pointer", "hover:bg-gray-700",
+                "px-4", "py-2", "flex", "items-center", "gap-3",
+                "transition-colors", "duration-150"
+            );
+            if (colorClass) opt.classList.add(colorClass);
+
+            opt.innerHTML = `
+                <span class="text-gray-400">${icon}</span>
+                <span>${text}</span>
+            `;
+
+            opt.onclick = (e) => {
+                e.stopPropagation();
+                onClick();
+                modalContainer.classList.add("hidden", "scale-95", "opacity-0");
+                modalContainer.classList.remove("options-menu-open", "scale-100", "opacity-100");
+            };
+            return opt;
         };
 
-        const markUnreadOption = document.createElement("div");
-        markUnreadOption.textContent = "Marcar como no leído";
-        markUnreadOption.classList.add("menu-option");
-        markUnreadOption.onclick = () => {
-            addUnreadMarker(gridItem);
-            optionsMenu.classList.add("hidden");
-        };
-
-        const reactOption = document.createElement("div");
-        reactOption.textContent = "Reaccionar";
-        reactOption.classList.add("menu-option");
-        reactOption.onclick = () => {
-            showEmojiModal(msg);
-            optionsMenu.classList.add("hidden");
-        };
-
-        optionsMenu.innerHTML = "";
-
-        //opciones cuando el mensaje es del autor
-        const editMessageOption = document.createElement("div");
-        const deleteMessageOption = document.createElement("div");
-        if ((msg.name || msg.user) === actualUserName) {
-            //editar mensaje
-            editMessageOption.textContent = "Editar mensaje";
-            editMessageOption.classList.add("menu-option");
-            editMessageOption.onclick = () => {
-                replyMessageDisplay.textContent = "Editando mensaje...";
+        // Reply option
+        const replyOption = createOption(
+            `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+            </svg>`,
+            "Responder",
+            () => {
+                const shortMessage = msg.message.slice(0, 40);
+                const displayMessage = shortMessage.length < 40 ? shortMessage : `${shortMessage}...`;
+                replyMessageDisplay.textContent = `Respondiendo a ${msg.user}: ${displayMessage}`;
                 replyMessageDisplay.classList.remove("hidden");
-                inputMessage.value = msg.message;
-                isEditingMessage = true;
-                editingMessageId = msg.timestamp;
-                optionsMenu.classList.add("hidden");
+                replyMessage = msg;
                 sendbutton.style.top = '28px';
-            };
+            }
+        );
 
-            deleteMessageOption.textContent = "Borrar mensaje";
-            deleteMessageOption.classList.add("menu-option");
-            deleteMessageOption.onclick = () => {
-                socket.emit("deletemsg", { id: msg.timestamp });
-                optionsMenu.classList.add("hidden");
-            };
-            optionsMenu.appendChild(editMessageOption);
-            optionsMenu.appendChild(deleteMessageOption);
+        // Mark as unread option
+        const markUnreadOption = createOption(
+            `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+            </svg>`,
+            "Marcar como no leído",
+            () => {
+                addUnreadMarker(gridItem);
+            }
+        );
+
+        // React option
+        const reactOption = createOption(
+            `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>`,
+            "Reaccionar",
+            () => {
+                showEmojiModal(msg);
+            }
+        );
+
+        menuContent.appendChild(replyOption);
+        menuContent.appendChild(markUnreadOption);
+        menuContent.appendChild(reactOption);
+
+        // Add separator before user-specific options
+        if ((msg.name || msg.user) === actualUserName) {
+            const separator = document.createElement("div");
+            separator.classList.add("border-t", "border-gray-700", "my-1");
+            menuContent.appendChild(separator);
+
+            // Edit option
+            const editOption = createOption(
+                `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>`,
+                "Editar mensaje",
+                () => {
+                    replyMessageDisplay.textContent = "Editando mensaje...";
+                    replyMessageDisplay.classList.remove("hidden");
+                    inputMessage.value = msg.message;
+                    isEditingMessage = true;
+                    editingMessageId = msg.timestamp;
+                    sendbutton.style.top = '28px';
+                }
+            );
+
+            // Delete option
+            const deleteOption = createOption(
+                `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>`,
+                "Borrar mensaje",
+                () => {
+                    socket.emit("deletemsg", { id: msg.timestamp });
+                },
+                "hover:text-red-500"
+            );
+
+            menuContent.appendChild(editOption);
+            menuContent.appendChild(deleteOption);
         }
-
-
-        optionsMenu.appendChild(replyOption);
-        optionsMenu.appendChild(markUnreadOption);
-        optionsMenu.appendChild(reactOption);
-        gridItem.appendChild(optionsMenu);
     };
-    return [optionsButton, optionsMenu];
+
+    // Close menu when clicking outside
+    document.addEventListener("click", (e) => {
+        if (!modalContainer.contains(e.target) && !e.target.closest('.options-button')) {
+            modalContainer.classList.add("hidden", "scale-95", "opacity-0");
+            modalContainer.classList.remove("options-menu-open", "scale-100", "opacity-100");
+        }
+    });
+
+    return [optionsButton, modalContainer];
 }
 
 
@@ -558,23 +623,9 @@ function toggleUnreadMarker(gridItem) {
 }
 
 //region Format Message
-async function formatMessage(message) {
-    message = message.trim();
+async function formatMessage(msg) {
+    let message = msg.message.trim();
 
-    if (message.startsWith("[reply:")) {
-        const replyInfo = message.match(/\[reply: (.*?): (.*?)\] (.*)/);
-        if (replyInfo) {
-            const replyUser = replyInfo[1];
-            const replyText = replyInfo[2];
-            const replyPreview = replyText.length < 40 ? replyText : `${replyText.slice(0, 40)}...`;
-            message = `<div class="reply-info">Respondiendo a ${replyUser}: ${replyPreview}</div>` + replyInfo[3];
-        }
-    }
-
-
-    message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    message = message.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    message = message.replace(/\|\| (.*?) \|\|/g, `<span class="hidden-message" style="cursor: pointer; color: blue;">[Mostrar]</span><span class="actual-message" style="display:none;">$1</span>`);
     if (message.includes(':')) {
 
         emojiCache.forEach((emoji) => {
@@ -597,6 +648,30 @@ async function formatMessage(message) {
             }
         });
     }
+
+    if (msg.reply) {
+        const replyUser = msg.reply.replyUser;
+        const replyText = msg.reply.replyMessage;
+        let replyPreview = replyText.length < 40 ? replyText : `${replyText.slice(0, 40)}...`;
+        if (replyPreview.includes(':') || replyPreview.includes(';')) {
+            emojiCache.forEach((emoji) => {
+                const emojiUrl = emoji.url;
+                const emojiName = emoji.name;
+                const patterns = [`;${emojiName};`, `:${emojiName}:`];
+                patterns.forEach(pattern => {
+                    const regex = new RegExp(pattern, 'g');
+                    if (regex.test(replyPreview)) {
+                        replyPreview = replyPreview.replace(regex, `<img src="${emojiUrl}" width="50px" style="display: inline;">`);
+                    }
+                });
+            });
+        }
+        message = `<div class="reply-info">Respondiendo a ${replyUser}: ${replyPreview}</div>` + message;
+    }
+
+    message = message.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    message = message.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    message = message.replace(/\|\| (.*?) \|\|/g, `<span class="hidden-message" style="cursor: pointer; color: blue;">[Mostrar]</span><span class="actual-message" style="display:none;">$1</span>`);
 
     const unorderedListItems = message.match(/^- (.*?)(?=\n|$)/gm);
     const orderedListItems = message.match(/^\d+\.\s(.*?)(?=\n|$)/gm);
@@ -627,7 +702,7 @@ async function formatAllMessages() {
     const messageTexts = mensajes.querySelectorAll(".text-lg");
 
     for (const messageText of messageTexts) {
-        const originalMessage = messageText.textContent;
+        const originalMessage = {message: messageText.textContent};
         const formattedMessage = await formatMessage(originalMessage);
         messageText.innerHTML = formattedMessage;
     }
@@ -755,6 +830,7 @@ function renderEmojis(emojis, msg) {
     });
 }
 
+//region Render Reactions
 function renderReactions(messageId, emojiName, emojiUrl, userName) {
     const messageElement = document.querySelector(`[data-timestamp="${messageId}"]`);
 
@@ -803,18 +879,121 @@ function renderReactions(messageId, emojiName, emojiUrl, userName) {
                 divContainerEmojis.appendChild(emojiElement);
 
                 const emojiCount = document.createElement("span");
-                emojiCount.className = "reaction-count text-gray-300 text-xs mt-1";
+                emojiCount.className = "reaction-count text-gray-300 text-xs mt-1 relative";
                 emojiCount.textContent = "1";
                 emojiCount.style.marginRight = "15px";
+                emojiCount.style.cursor = "pointer";
+                
+                // Crear el tooltip personalizado
+                const tooltip = document.createElement("div");
+                tooltip.className = "custom-tooltip top-tooltip";
+                tooltip.textContent = Array.from(userSet).join(', ');
+                tooltip.style.display = "none";
+                
+                // Aplicar estilos al tooltip
+                applyTooltipStyles(tooltip);
+                
+                emojiCount.appendChild(tooltip);
+                
+                // Eventos para mostrar/ocultar el tooltip
+                emojiCount.addEventListener("mouseenter", () => {
+                    tooltip.style.display = "block";
+                    setTimeout(() => {
+                        tooltip.style.opacity = "1";
+                        tooltip.style.transform = "translate(-50%, 0)";
+                    }, 10);
+                });
+                
+                emojiCount.addEventListener("mouseleave", () => {
+                    tooltip.style.opacity = "0";
+                    tooltip.style.transform = "translate(-50%, 5px)";
+                    setTimeout(() => {
+                        tooltip.style.display = "none";
+                    }, 300);
+                });
+                
                 emojiElement.insertAdjacentElement("afterend", emojiCount);
             } else {
                 const emojiCount = emojiElement.nextElementSibling;
                 if (emojiCount && emojiCount.classList.contains("reaction-count")) {
                     emojiCount.textContent = `${userSet.size}`;
+                    
+                    // Actualizar el contenido del tooltip
+                    let tooltip = emojiCount.querySelector(".custom-tooltip");
+                    if (!tooltip) {
+                        tooltip = document.createElement("div");
+                        tooltip.className = "custom-tooltip top-tooltip";
+                        tooltip.style.display = "none";
+                        
+                        // Aplicar estilos al tooltip
+                        applyTooltipStyles(tooltip);
+                        
+                        emojiCount.appendChild(tooltip);
+                        
+                        // Eventos para mostrar/ocultar el tooltip
+                        emojiCount.addEventListener("mouseenter", () => {
+                            tooltip.style.display = "block";
+                            setTimeout(() => {
+                                tooltip.style.opacity = "1";
+                                tooltip.style.transform = "translate(-50%, 0)";
+                            }, 10);
+                        });
+                        
+                        emojiCount.addEventListener("mouseleave", () => {
+                            tooltip.style.opacity = "0";
+                            tooltip.style.transform = "translate(-50%, 5px)";
+                            setTimeout(() => {
+                                tooltip.style.display = "none";
+                            }, 300);
+                        });
+                    }
+                    
+                    tooltip.textContent = Array.from(userSet).join(', ');
                 }
             }
         }
     } else {
         console.log(`No se encontró un mensaje para añadir reacción con el timestamp ${messageId}`);
+    }
+}
+
+// Función para aplicar estilos al tooltip
+function applyTooltipStyles(tooltip) {
+    // Posicionar el tooltip encima del contador
+    tooltip.style.position = "absolute";
+    tooltip.style.bottom = "calc(100% + 10px)"; // 10px de espacio entre el tooltip y el contador
+    tooltip.style.left = "50%"; // Centrar horizontalmente
+    tooltip.style.transform = "translateX(-50%) translateY(5px)"; // Centrar y añadir offset para animación
+    
+    // Estilos visuales
+    tooltip.style.backgroundColor = "#2a2a2a";
+    tooltip.style.color = "white";
+    tooltip.style.padding = "6px 10px";
+    tooltip.style.borderRadius = "6px";
+    tooltip.style.fontSize = "12px";
+    tooltip.style.fontWeight = "500";
+    tooltip.style.whiteSpace = "nowrap";
+    tooltip.style.boxShadow = "0 2px 10px rgba(0, 0, 0, 0.2)";
+    tooltip.style.zIndex = "1000";
+    tooltip.style.opacity = "0";
+    tooltip.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+    
+    // Crear y añadir estilos para la flecha del tooltip
+    const style = document.createElement("style");
+    if (!document.querySelector("#tooltip-styles")) {
+        style.id = "tooltip-styles";
+        style.textContent = `
+            .top-tooltip::after {
+                content: '';
+                position: absolute;
+                top: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                border-width: 6px;
+                border-style: solid;
+                border-color: #2a2a2a transparent transparent transparent;
+            }
+        `;
+        document.head.appendChild(style);
     }
 }
