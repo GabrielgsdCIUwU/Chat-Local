@@ -25,7 +25,8 @@ export function execute({ args, socket, io }) {
     .addField("- gambling info", "/bot gambling info")
     .addField("- gambling loteria", "/bot gambling loteria (cantidad)")
     .addField("- gambling robar", "/bot gambling robar (usuario) (cantidad)")
-    .addField("- gambling banca rota", "/bot gambling bancaRota");
+    .addField("- gambling banca rota", "/bot gambling bancaRota")
+    .addField("- gambling duelo", "/bot gambling duelo (usuario) (cantidad)");
 
     // Emitir mensaje del bot al cliente
     io.emit("sendmsg", { user: "🤖 Bot", message: embed.toString(), timestamp });
