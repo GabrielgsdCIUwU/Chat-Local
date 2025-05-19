@@ -3,7 +3,7 @@ export function execute({ args, socket, io, username, currenData, userIndex, act
     let gamblerBankRupt = currenData[userIndex];
     if (gamblerBankRupt.money == 0) {
         gamblerBankRupt.bankRupt++;
-        gamblerBankRupt.dept = gamblerBankRupt.dept + 100 + Math.floor(Math.random() * parseInt(gamblerBankRupt.bankRupt) * 10);
+        gamblerBankRupt.debt = gamblerBankRupt.debt + 100 + Math.floor(Math.random() * parseInt(gamblerBankRupt.bankRupt) * 10);
         gamblerBankRupt.money = 100;
         return io.emit("sendmsg", { user: "🤖 Bot", message: `${username} acaba de llamar al banco y ha vuelto a tener ${gamblerBankRupt.money}, ha llamado a la banca un total de ${gamblerBankRupt.bankRupt} veces`, timestamp });
     } else {
