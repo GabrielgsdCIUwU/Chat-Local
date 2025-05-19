@@ -24,11 +24,17 @@ export function execute({ args, socket, io, username, currenData, userIndex, act
         if (resultado < 0.5) {
             gambler.money += actualEarningsPayingDebt(amount, gambler);
             challengerGambler.money -= amount;
+            if (challengerGambler.money < 0) {
+                challengerGambler.money = 0;
+            }
             gambler.duelWin++;
             challengerGambler.duelLose++;
             io.emit("sendmsg", { user: "🤖 Bot", message: `${username} ha ganado el duelo contra ${challengerName} y se lleva ${amount}€`, timestamp });
         } else {
             gambler.money -= amount;
+            if (gambler.money < 0) {
+                gambler.money = 0;
+            }
             challengerGambler.money += actualEarningsPayingDebt(amount, challengerGambler);
             gambler.duelLose++;
             challengerGambler.duelWin++;
