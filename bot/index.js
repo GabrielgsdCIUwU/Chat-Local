@@ -13,6 +13,7 @@ async function loadCommand(commandName) {
         const commandPath = pathToFileURL(path.join(commandsPath, `${commandName}.js`)).href;
         return await import(commandPath);
     } catch (error) {
+        console.log(error);
         return null;
     }
 }
