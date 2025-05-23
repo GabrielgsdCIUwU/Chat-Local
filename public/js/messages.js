@@ -649,6 +649,26 @@ async function formatMessage(msg) {
         });
     }
 
+    const parts = message.split(/(```[\s\S]*?```)/g);
+    message = parts.map(part => {
+        if (part.startsWith("```") && part.endsWith("```")) {
+            const match = part.match(/^```(\w+)?\n?([\s\S]*?)```$/);
+            const lang = match[1] || "plaintext";
+            const code = match[2].replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return `<pre class="bg-gray-900 text-sm rounded-lg p-3 overflow-x-auto"><code class="language-${lang}">${code}</code></pre>`;
+        } else {
+            const processed = part
+                .replace(/`([^`\n]+?)`/g, (_, code) => {
+                    const escaped = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    return `<code class="bg-gray-800 text-green-400 px-1 rounded">${escaped}</code>`;
+                })
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\|\| (.*?) \|\|/g, `<span class="hidden-message" style="cursor: pointer; color: blue;">[Mostrar]</span><span class="actual-message" style="display:none;">$1</span>`);
+            return processed;
+        }
+    }).join('');
+
     if (msg.reply) {
         const replyUser = msg.reply.replyUser;
         const replyText = msg.reply.replyMessage;
