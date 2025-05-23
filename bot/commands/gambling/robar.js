@@ -1,7 +1,7 @@
 export function execute({ args, socket, io, username, currenData, userIndex, actualEarningsPayingDebt }) {
     const timestamp = new Date().getTime()
     let gambler = currenData[userIndex];
-    const targetName = args[0];
+    const targetName = args.slice(0, -1).join(" ");
     const targetIndex = currenData.findIndex((user) => user.name === targetName);
 
     if (targetIndex === -1 || targetName === username) {
@@ -10,10 +10,10 @@ export function execute({ args, socket, io, username, currenData, userIndex, act
 
     let target = currenData[targetIndex];
     const probabilidad = Math.random();
-    const cantidad = args[1] ? parseInt(args[1]) : 0;
+    const cantidad = parseInt(args[args.length - 1]);;
 
-    if (isNaN(cantidad) || cantidad <= 0 || cantidad > target.money) {
-        return io.emit("sendmsg", { user: "🤖 Bot", message: `${username} tu cantidad no es válida o ${target.name} no tiene ese dinero.`, timestamp });
+    if (isNaN(cantidad) || cantidad <= 0 || cantidad > target.money || cantidad > gambler.money) {
+        return io.emit("sendmsg", { user: "🤖 Bot", message: `${username} tu cantidad no es válida o ${target.name} no tiene ese dinero o no tienes suficiente dinero para robar.`, timestamp });
     }
 
     gambler.timesSteal++;
@@ -25,6 +25,9 @@ export function execute({ args, socket, io, username, currenData, userIndex, act
     } else {
         let cantidadPerdido = cantidad + Math.floor(Math.random() * cantidad / 4)
         gambler.money -= cantidadPerdido;
+        if (gambler.money < 0) {
+            gambler.money = 0;
+        }
         return io.emit("sendmsg", { user: "🤖 Bot", message: `${username} ha intentado robar a ${targetName} pero ha fallado, ha perdido ${cantidadPerdido}€`, timestamp });
     }
 }

@@ -24,11 +24,17 @@ export function execute({ args, socket, io, username, currenData, userIndex, act
         if (resultado < 0.5) {
             gambler.money += actualEarningsPayingDebt(amount, gambler);
             challengerGambler.money -= amount;
+            if (challengerGambler.money < 0) {
+                challengerGambler.money = 0;
+            }
             gambler.duelWin++;
             challengerGambler.duelLose++;
             io.emit("sendmsg", { user: "🤖 Bot", message: `${username} ha ganado el duelo contra ${challengerName} y se lleva ${amount}€`, timestamp });
         } else {
             gambler.money -= amount;
+            if (gambler.money < 0) {
+                gambler.money = 0;
+            }
             challengerGambler.money += actualEarningsPayingDebt(amount, challengerGambler);
             gambler.duelLose++;
             challengerGambler.duelWin++;
@@ -45,7 +51,7 @@ export function execute({ args, socket, io, username, currenData, userIndex, act
         }
     } else {
         let challenger = currenData[userIndex];
-        const targetName = args[0];
+        const targetName = args.slice(0, -1).join(" ");
         const targetIndex = currenData.findIndex((user) => user.name === targetName);
 
         if (targetIndex === -1 || targetName === username) {
@@ -53,7 +59,7 @@ export function execute({ args, socket, io, username, currenData, userIndex, act
         }
 
         let target = currenData[targetIndex];
-        const amount = args[1] ? parseInt(args[1]) : 0;
+        const amount = parseInt(args[args.length - 1]);;
 
         if (isNaN(amount) || amount <= 0 || amount > target.money) {
             return io.emit("sendmsg", { user: "🤖 Bot", message: `${username} tu cantidad no es válida o ${target.name} no tiene ese dinero.`, timestamp });

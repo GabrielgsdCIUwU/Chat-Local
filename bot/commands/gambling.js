@@ -1,34 +1,10 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath, pathToFileURL } from "url";
+import { actualEarningsPayingDebt } from "../utility/actualEarningsPayingDebt.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-
-
-
-
-//region actualEarnings
-function actualEarningsPayingDebt(earning, user) {
-    let debt = user.debt;
-    if (debt > 0) {
-        let payDebt = Math.floor(earning * 0.2);
-
-        if (payDebt > debt) {
-            payDebt = debt;
-        }
-
-        user.debt -= payDebt;
-        let actualEarnings = earning - payDebt;
-        user.totalEarnings += actualEarnings;
-        return actualEarnings;
-    } else {
-        user.totalEarnings += earning;
-        return earning;
-    }
-}
-
 
 const subcommandsPath = path.join(__dirname, "./gambling");
 
