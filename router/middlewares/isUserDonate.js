@@ -1,3 +1,4 @@
+import fs from 'fs';
 export function isUserDonate(req, callback) {
     return new Promise((resolve, reject) => {
         fs.readFile(usersFilePath, "utf8", (err, data) => {
