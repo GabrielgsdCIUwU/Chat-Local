@@ -1,17 +1,4 @@
-class EmbedMessage {
-    constructor() {
-        this.fields = [];
-    }
-    addField(name, value) {
-        this.fields.push({ name, value });
-        return this;
-    }
-
-    toString() {
-        return this.fields.map(field => `**${field.name}:** ${field.value}`).join("\n");
-    }
-}
-
+import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
 export function execute({  args, socket, io, username, currenData, userIndex, actualEarningsPayingDebt }) {
     const timestamp = new Date().getTime()

@@ -1,4 +1,6 @@
-export function execute({  args, socket, io, username, currenData, userIndex, actualEarningsPayingDebt }) {
+import { actualEarningsPayingDebt } from "../../utility/actualEarningsPayingDebt.js";
+
+export function execute({  args, socket, io, username, currenData, userIndex }) {
     const timestamp = new Date().getTime()
     let gambler = currenData[userIndex];
     const apuesta = parseInt(args[0]);
