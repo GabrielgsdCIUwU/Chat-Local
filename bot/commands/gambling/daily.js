@@ -37,7 +37,40 @@ export function execute({ args, socket, io, username, currenData, userIndex, act
         return;
     }
 
-    if (timeSinceLastDaily > oneDayAndHalf) {
+    function isBusinessDay(date) {
+        const d = date.getDay();
+        return d !== 0 && d !== 6;
+    }
+
+    function businessDayBetween(d1, d2) {
+        let count =0;
+        const date = new Date(d1);
+        while (date < d2) {
+            date.setDate(date.getDate() +1)
+            if (isBusinessDay(date)) count++;
+        }
+        return count;
+    }
+
+    const diff = (now - user.lastDaily) / (1000 * 60 * 60 * 24);
+    const businessDays = businessDayBetween(user.lastDaily, now);
+
+    // Nueva lógica para mantener la racha de viernes a lunes
+    let keepStreak = false;
+    if (now.getDay() === 1) { // Si hoy es lunes
+        const lastDailyDate = new Date(user.lastDaily);
+        if (lastDailyDate.getDay() === 5) { // Y el último daily fue viernes
+            // Comprobar que no han pasado más de 3 días naturales (viernes a lunes)
+            const daysPassed = Math.floor((now - lastDailyDate) / (1000 * 60 * 60 * 24));
+            if (daysPassed <= 3) {
+                keepStreak = true;
+            }
+        }
+    }
+
+    if (keepStreak) {
+        user.dailyStreak += 1;
+    } else if (businessDays > 1 || (businessDays === 1 && diff > 1.5)) {
         user.dailyStreak = 1;
     } else {
         user.dailyStreak += 1;
