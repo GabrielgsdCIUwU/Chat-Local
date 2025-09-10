@@ -1,4 +1,12 @@
+import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const usersFilePath = path.join(__dirname, "../../backend/json/users.json");
+
 export function isUserDonate(req, callback) {
     return new Promise((resolve, reject) => {
         fs.readFile(usersFilePath, "utf8", (err, data) => {
