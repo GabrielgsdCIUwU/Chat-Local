@@ -175,15 +175,19 @@ io.on("connection", (socket) => {
             });
         });
 
+        socket.on("sendcmd", (cmdData) => {
+            botHandler.handleCommand({
+                cmd: cmdData,
+                socket,
+                io,
+                username: user.name
+            });
+        });
+
         // Chat público (ya existente)
         socket.on("sendmsg", (msg, reply) => {
             const timestamp = new Date().getTime();
             const messagesFilePath = path.join(__dirname, "./public/json/messages.json");
-
-            if (msg.startsWith("/bot")) {
-                botHandler.handleCommand({ msg, socket, io, username: user.name });
-                return;
-            }
 
             fs.readFile(messagesFilePath, "utf-8", (err, data) => {
                 if (err) {

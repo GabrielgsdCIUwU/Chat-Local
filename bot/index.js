@@ -18,14 +18,24 @@ async function loadCommand(commandName) {
     }
 }
 
-export async function handleCommand({ msg, socket, io, username }) {
-    const args = msg.split(" ").slice(1); // Obtener argumentos del comando
-    const commandName = args[0]; // Nombre del comando
-    const command = await loadCommand(commandName);
-    if (command && command.execute) {
-        command.execute({ args: args.slice(1), socket, io, username, msg }); // Ejecutar lógica del comando
+export async function handleCommand({ cmd, socket, io, username }) {
+    const { command, subcommands, params, raw } = cmd;
+
+    console.log("c",command, "s", subcommands, "p", params,"r", raw)
+
+    const commandModule = await loadCommand(command);
+
+    if (commandModule && commandModule.execute) {
+        commandModule.execute({
+            subcommand: subcommands,
+            args: params,
+            socket,
+            io,
+            username,
+            raw
+        });
     } else {
-        io.emit("sendmsg", { user: "🤖 Bot", message: "No existe este comando, revisa lo que has escrito: " + msg,  timestamp: new Date().getTime() });
+        io.emit("sendmsg", { user: "🤖 Bot", message: "No existe este comando, revisa lo que has escrito: " + raw,  timestamp: new Date().getTime() });
     }
 }
 

@@ -19,8 +19,8 @@ async function loadSubcommand(subcommandName) {
 }
 
 
-export function execute({ args, socket, io, username }) {
-
+export function execute({subcommand, args, socket, io, username, raw }) {
+    console.log(subcommand[0]);
     const timestamp = new Date().getTime();
     const gamblingFilePath = path.join(__dirname, "../../public/json/gambling.json");
 
@@ -48,11 +48,11 @@ export function execute({ args, socket, io, username }) {
             return;
         }
         
-        const subcommandName = args[0];
-        const subcommand = await loadSubcommand(subcommandName);
+        const subcommandName = subcommand[0];
+        const subcommandLoaded = await loadSubcommand(subcommandName);
         try {
-            if (subcommand && subcommand.execute) {
-                subcommand.execute({ args: args.slice(1), socket, io, username, currenData, userIndex, actualEarningsPayingDebt });
+            if (subcommandLoaded && subcommandLoaded.execute) {
+                subcommandLoaded.execute({ args, socket, io, username, currenData, userIndex, actualEarningsPayingDebt });
             }
         } catch (err) {
             console.log(err)
