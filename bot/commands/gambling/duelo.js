@@ -1,5 +1,9 @@
 const pendingDuels = new Map();
-
+export const params = [
+    {name: "usuario", type: "user", required: false},
+    {name: "cantidad", type: "number", required: false},
+    {name: "acción", type: "string", required: false, values: ["aceptar", "rechazar"]}
+]
 export function execute({ args, socket, io, username, currenData, userIndex, actualEarningsPayingDebt }) {
     const timestamp = new Date().getTime();
     
@@ -18,6 +22,11 @@ export function execute({ args, socket, io, username, currenData, userIndex, act
 
         let gambler = currenData[userIndex];
         let challengerGambler = currenData[challengerIndex];
+
+        if (challengerGambler.money < amount || gambler.money < amount) {
+            pendingDuels.delete(username);
+            return io.emit("sendmsg", { user: "🤖 Bot", message: `${username} Tu o ${challengerName} no tiene el suficiente dinero para aceptar el reto!`, timestamp });
+        }
 
         const resultado = Math.random();
 
@@ -75,7 +84,7 @@ export function execute({ args, socket, io, username, currenData, userIndex, act
 
         console.log(pendingDuels);
 
-        return io.emit("sendmsg", { user: "🤖 Bot", message: `**${challengerName}** ha retado a ${targetName} con ${amount}€, usa el comando /bot gambling duelo (**aceptar** || **rechazar**)`, timestamp });
+        return io.emit("sendmsg", { user: "🤖 Bot", message: `**${challengerName}** ha retado a ${targetName} con ${amount}€, usa el comando /gambling duelo (**aceptar** || **rechazar**)`, timestamp });
 
 
     }
