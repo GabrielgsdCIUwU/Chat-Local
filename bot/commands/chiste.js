@@ -1,4 +1,15 @@
-import chistes from "../../public/json/chistes.json" assert { type: "json" };
+import { readFile } from "fs/promises";
+import { fileURLToPath } from "url";
+import { dirname, resolve } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const filePath = resolve(__dirname, "../../public/json/chistes.json");
+const data = await readFile(filePath, "utf-8");
+const chistes = JSON.parse(data);
+
+
 export function execute({ args, socket, io }) {
     const timestamp = new Date().getTime();
 
