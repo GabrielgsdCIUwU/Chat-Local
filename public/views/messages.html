@@ -21,16 +21,31 @@
 
       <div class="relative mb-2">
         <div id="replyMessageDisplay" class="text-sm text-gray-300 mb-1 hidden"></div>
-        <textarea
-          id="mensaje"
-          rows="1"
-          class="w-full bg-gray-700 placeholder-gray-400 text-gray-200 text-sm border border-gray-600 rounded-full pl-5 pr-24 py-3 transition duration-300 ease focus:outline-none focus:border-blue-400 focus:bg-gray-600 focus:shadow-lg hover:border-gray-500 shadow-sm"
-          placeholder="Escribe tu mensaje"></textarea>
-        <button
-          class="button-send absolute right-1 top-1 bg-blue-600 text-white rounded-full py-2 px-4 border border-transparent text-sm transition-all shadow-lg hover:bg-blue-500 hover:shadow-md active:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          id="enviar">
-          Enviar
-        </button>
+        
+        <div class="relative w-full bg-gray-700 border border-gray-600 rounded-lg transition duration-300 ease focus-within:border-blue-400 focus-within:bg-gray-600 focus-within:shadow-lg hover:border-gray-500 shadow-sm">
+          <div class="flex items-center relative">
+            <textarea
+              id="mensaje"
+              rows="1"
+              class="flex-1 bg-transparent placeholder-gray-400 text-gray-200 text-sm pl-5 pr-24 py-3 resize-none focus:outline-none"
+              placeholder="Escribe tu mensaje"></textarea>
+            
+            <button
+              class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-green-600 text-white rounded-full p-2 border border-transparent text-sm transition-all shadow-lg hover:bg-green-500 hover:shadow-md active:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400"
+              id="enviar">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+              </svg>
+            </button>
+            
+            <div id="parameterChips" class="hidden absolute left-0 top-0 flex flex-wrap gap-1 px-2 py-3">
+              <span id="textMeasure" class="invisible absolute whitespace-pre text-sm pl-5"></span>
+            </div>
+          </div>
+        </div>
+        
+        <div id="suggestionBoxContainer" class="relative">
+        </div>
       </div>
       <div id="typingDisplay" class="text-sm text-white-500 mt-2 h-4"></div>
 
@@ -91,7 +106,7 @@
             Limpiar caché
           </button>
           <button
-            class="bg-blue-600 text-white rounded-full py-2 px-4 border border-transparent text-sm transition-all shadow-lg hover:bg-blue-500 hover:shadow-md active:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400 mt-2"
+            class="bg-blue-600 text-white rounded-full py-2 px-4 border border-transparent text-sm transition-all shadow-lg hover:bg-blue-500 hover:shadow-md active:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 mt-2"
             id="stickermode">
             Sticker mode
           </button>
@@ -101,6 +116,7 @@
 
     <script src="/public/js/encuesta.js"></script>
     <script src="/public/js/messages.js"></script>
+    <script src="/public/js/commands.js"></script>
     <script src="/public/js/emojis.js"></script>
     <script src="/public/js/typing.js"></script>
   </body>
