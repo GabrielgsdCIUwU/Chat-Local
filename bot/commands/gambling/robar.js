@@ -1,3 +1,8 @@
+export const params = [
+    {name: "usuario", type: "user", required: true},
+    {name: "dinero", type: "number", required: true}
+]
+
 export function execute({ args, socket, io, username, currenData, userIndex, actualEarningsPayingDebt }) {
     const timestamp = new Date().getTime()
     let gambler = currenData[userIndex];

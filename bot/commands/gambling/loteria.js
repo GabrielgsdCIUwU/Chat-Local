@@ -1,5 +1,7 @@
 import { actualEarningsPayingDebt } from "../../utility/actualEarningsPayingDebt.js";
-
+export const params = [
+    {name: "cantidad", type: "number", required: true}
+]
 export function execute({  args, socket, io, username, currenData, userIndex }) {
     const timestamp = new Date().getTime()
     let gambler = currenData[userIndex];
