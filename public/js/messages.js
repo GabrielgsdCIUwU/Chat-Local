@@ -7,6 +7,8 @@ let donators;
 const emojiSearch = document.getElementById('emojiSearch');
 const reactionsMap = new Map();
 const replyMessageDisplay = document.getElementById("replyMessageDisplay");
+const historyMessagesSended = [];
+let currentHistoryMessagesSelected = 0;
 //region cache emojis
 let emojiCache = [];
 
@@ -264,6 +266,16 @@ inputMessage.addEventListener("keydown", (event) => {
         event.preventDefault();
         sendMessage();
         inputMessage.value = "";
+    } else if (event.key === 'ArrowUp') {
+        if (historyMessagesSended.length > currentHistoryMessagesSelected){
+            currentHistoryMessagesSelected++;
+            }
+        inputMessage.value = historyMessagesSended.at(-currentHistoryMessagesSelected);
+    } else if (event.key === 'ArrowDown') {
+        if (currentHistoryMessagesSelected > 1) {
+            currentHistoryMessagesSelected--;
+        }
+        inputMessage.value = historyMessagesSended.at(-currentHistoryMessagesSelected);
     }
 });
 let replyPreview;
@@ -272,7 +284,7 @@ function sendMessage() {
     const message = inputMessage.value.trim();
     if (message) {
         let finalMessage = message;
-
+        historyMessagesSended.push(finalMessage);
         if (replyMessage) {
             replyMessageDisplay.classList.add("hidden");
             sendbutton.style.top = "";
