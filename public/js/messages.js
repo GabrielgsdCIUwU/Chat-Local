@@ -9,6 +9,8 @@ const reactionsMap = new Map();
 const replyMessageDisplay = document.getElementById("replyMessageDisplay");
 const historyMessagesSended = [];
 let currentHistoryMessagesSelected = 0;
+let filteredCommands = [];
+let selectedCommandIndex = -1;
 //region cache emojis
 let emojiCache = [];
 
@@ -138,9 +140,9 @@ socket.on("reload", () => {
     window.location.reload();
 });
 
-let userNames = [];
+window.userNames = [];
 socket.on("userNames", (names) => {
-    userNames = names;
+    window.userNames = names;
 });
 
 socket.on("error", (err) => {
@@ -166,7 +168,9 @@ let selectedUserIndex = -1;
 
 sendbutton.addEventListener("click", (event) => {
     event.preventDefault();
-    sendMessage();
+    if (!textarea.value.startsWith("/")) {
+        sendMessage();
+    }
 });
 
 inputMessage.addEventListener("input", adjustHeight);
@@ -262,16 +266,16 @@ inputMessage.addEventListener("keydown", (event) => {
                 inputMessage.value = "";
             }
         }
-    } else if (event.key === 'Enter') {
+    } else if (event.key === 'Enter' && !textarea.value.startsWith("/")) {
         event.preventDefault();
         sendMessage();
         inputMessage.value = "";
-    } else if (event.key === 'ArrowUp') {
-        if (historyMessagesSended.length > currentHistoryMessagesSelected){
+    } else if (event.key === 'ArrowUp' && !textarea.value.startsWith("/")) {
+        if (historyMessagesSended.length > currentHistoryMessagesSelected) {
             currentHistoryMessagesSelected++;
-            }
+        }
         inputMessage.value = historyMessagesSended.at(-currentHistoryMessagesSelected);
-    } else if (event.key === 'ArrowDown') {
+    } else if (event.key === 'ArrowDown' && !textarea.value.startsWith("/")) {
         if (currentHistoryMessagesSelected > 1) {
             currentHistoryMessagesSelected--;
         }
@@ -280,9 +284,55 @@ inputMessage.addEventListener("keydown", (event) => {
 });
 let replyPreview;
 //region Send Message
-function sendMessage() {
-    const message = inputMessage.value.trim();
-    if (message) {
+function sendMessage(msg) {
+    const message = (msg !== undefined ? msg : inputMessage.value).trim();
+    if (!message) return;
+
+    console.log("entrada: ", msg, message)
+
+    if (message.startsWith("/")) {
+        const tokens = []
+        let buffer = ""
+        let inParam = false
+
+        for (let i = 1; i < message.length; i++) {
+            const char = message[i]
+            if (char === "%" && !inParam) {
+                if (buffer.trim()) tokens.push(buffer.trim())
+                buffer = ""
+                inParam = true
+            } else if (char === "%" && inParam) {
+                tokens.push(buffer)
+                buffer = ""
+                inParam = false
+            } else if (char === " " && !inParam) {
+                if (buffer.trim()) tokens.push(buffer.trim())
+                buffer = ""
+            } else {
+                buffer += char
+            }
+        }
+
+        if (buffer.trim()) tokens.push(buffer.trim())
+
+        const command = tokens[0]
+        let node = commandsTree[command]
+        const subcommands = []
+        const params = []
+
+        for (let i = 1; i < tokens.length; i++) {
+            const token = tokens[i]
+            if (node && node[token] && typeof node[token] === "object") {
+                subcommands.push(token)
+                node = node[token]
+            } else {
+                params.push(token)
+            }
+        }
+
+        console.log(command, subcommands, params, message)
+        socket.emit("sendcmd", { command, subcommands, params, raw: message })
+    } else {
         let finalMessage = message;
         historyMessagesSended.push(finalMessage);
         if (replyMessage) {
@@ -299,12 +349,14 @@ function sendMessage() {
         } else {
             socket.emit("sendmsg", finalMessage);
         }
-
-
-        inputMessage.value = "";
-        userList.classList.add("hidden");
-        removeUnreadMarker();
     }
+
+
+
+    inputMessage.value = "";
+    replyMessage = null;
+    userList.classList.add("hidden");
+    removeUnreadMarker();
 }
 
 //region Hightlight User
@@ -734,7 +786,7 @@ async function formatAllMessages() {
     const messageTexts = mensajes.querySelectorAll(".text-lg");
 
     for (const messageText of messageTexts) {
-        const originalMessage = {message: messageText.textContent};
+        const originalMessage = { message: messageText.textContent };
         const formattedMessage = await formatMessage(originalMessage);
         messageText.innerHTML = formattedMessage;
     }
@@ -915,18 +967,18 @@ function renderReactions(messageId, emojiName, emojiUrl, userName) {
                 emojiCount.textContent = "1";
                 emojiCount.style.marginRight = "15px";
                 emojiCount.style.cursor = "pointer";
-                
+
                 // Crear el tooltip personalizado
                 const tooltip = document.createElement("div");
                 tooltip.className = "custom-tooltip top-tooltip";
                 tooltip.textContent = Array.from(userSet).join(', ');
                 tooltip.style.display = "none";
-                
+
                 // Aplicar estilos al tooltip
                 applyTooltipStyles(tooltip);
-                
+
                 emojiCount.appendChild(tooltip);
-                
+
                 // Eventos para mostrar/ocultar el tooltip
                 emojiCount.addEventListener("mouseenter", () => {
                     tooltip.style.display = "block";
@@ -935,7 +987,7 @@ function renderReactions(messageId, emojiName, emojiUrl, userName) {
                         tooltip.style.transform = "translate(-50%, 0)";
                     }, 10);
                 });
-                
+
                 emojiCount.addEventListener("mouseleave", () => {
                     tooltip.style.opacity = "0";
                     tooltip.style.transform = "translate(-50%, 5px)";
@@ -943,25 +995,25 @@ function renderReactions(messageId, emojiName, emojiUrl, userName) {
                         tooltip.style.display = "none";
                     }, 300);
                 });
-                
+
                 emojiElement.insertAdjacentElement("afterend", emojiCount);
             } else {
                 const emojiCount = emojiElement.nextElementSibling;
                 if (emojiCount && emojiCount.classList.contains("reaction-count")) {
                     emojiCount.textContent = `${userSet.size}`;
-                    
+
                     // Actualizar el contenido del tooltip
                     let tooltip = emojiCount.querySelector(".custom-tooltip");
                     if (!tooltip) {
                         tooltip = document.createElement("div");
                         tooltip.className = "custom-tooltip top-tooltip";
                         tooltip.style.display = "none";
-                        
+
                         // Aplicar estilos al tooltip
                         applyTooltipStyles(tooltip);
-                        
+
                         emojiCount.appendChild(tooltip);
-                        
+
                         // Eventos para mostrar/ocultar el tooltip
                         emojiCount.addEventListener("mouseenter", () => {
                             tooltip.style.display = "block";
@@ -970,7 +1022,7 @@ function renderReactions(messageId, emojiName, emojiUrl, userName) {
                                 tooltip.style.transform = "translate(-50%, 0)";
                             }, 10);
                         });
-                        
+
                         emojiCount.addEventListener("mouseleave", () => {
                             tooltip.style.opacity = "0";
                             tooltip.style.transform = "translate(-50%, 5px)";
@@ -979,7 +1031,7 @@ function renderReactions(messageId, emojiName, emojiUrl, userName) {
                             }, 300);
                         });
                     }
-                    
+
                     tooltip.textContent = Array.from(userSet).join(', ');
                 }
             }
@@ -996,7 +1048,7 @@ function applyTooltipStyles(tooltip) {
     tooltip.style.bottom = "calc(100% + 10px)"; // 10px de espacio entre el tooltip y el contador
     tooltip.style.left = "50%"; // Centrar horizontalmente
     tooltip.style.transform = "translateX(-50%) translateY(5px)"; // Centrar y añadir offset para animación
-    
+
     // Estilos visuales
     tooltip.style.backgroundColor = "#2a2a2a";
     tooltip.style.color = "white";
@@ -1009,7 +1061,7 @@ function applyTooltipStyles(tooltip) {
     tooltip.style.zIndex = "1000";
     tooltip.style.opacity = "0";
     tooltip.style.transition = "opacity 0.3s ease, transform 0.3s ease";
-    
+
     // Crear y añadir estilos para la flecha del tooltip
     const style = document.createElement("style");
     if (!document.querySelector("#tooltip-styles")) {

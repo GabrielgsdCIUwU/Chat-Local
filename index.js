@@ -45,6 +45,12 @@ const sessionMiddleware = session({
     secret: process.env.sessionSecret,
     resave: false,
     saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        maxAge: 1000 * 60 * 60 * 24
+    }
 });
 
 app.use(sessionMiddleware);
@@ -102,7 +108,7 @@ const guardarEncuesta = (encuestaData) => {
 
 
 const connectedUsers = new Set();
-function getUserNames() {
+export function getUserNames() {
     return new Promise((resolve) => {
         const userNames = Array.from(connectedUsers);
         resolve(userNames);
@@ -122,9 +128,9 @@ io.on("connection", (socket) => {
         connectedUsers.add(user.name);
 
         // Emite la lista de usuarios conectados a todos los usuarios
-            getUserNames().then(userNames => {
-                io.emit("userNames", userNames);
-            });
+        getUserNames().then(userNames => {
+            io.emit("userNames", userNames);
+        });
 
         // Escuchar la solicitud de inicio de chat privado
         socket.on("startPrivateChat", (recipientName) => {
