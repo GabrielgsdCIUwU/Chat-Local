@@ -16,7 +16,7 @@ export default function registerUserEvents(io, socket, user) {
             const data = await fs.readFile(path.join(__dirname, "../../backend/json/users.json"), "utf8");
             const users = JSON.parse(data);
             const donators = users
-                .filter(u => u.role === "Donador" || u.role === "Admin")
+                .filter(u => u.roles.includes("Donador") || u.roles.includes("Admin"))
                 .map(u => ({ name: u.name, color: u.color, img: u.img ?? false }));
             socket.emit("donators", donators);
         } catch (error) {

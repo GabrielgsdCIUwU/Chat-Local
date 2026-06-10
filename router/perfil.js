@@ -82,7 +82,7 @@ router.post('/color', (req, res) => {
             if (!user) {
                 return res.status(404).json({ message: "Usuario no encontrado" });
             }
-            if (user.role != "Donador" && user.role != "Admin") {
+            if (!user.roles.includes("Donador") && !user.roles.includes("Admin")) {
                 return res.status(403).json({ message: "No tienes permisos para cambiar el color" });
             }
             user.color = color;
@@ -120,7 +120,7 @@ router.post('/img', upload.single('img'), (req, res) => {
             if (!user) {
                 return res.status(404).json({ message: "Usuario no encontrado" });
             }
-            if (user.role != "Donador" && user.role != "Admin") {
+            if (!user.roles.includes("Donador") && !user.roles.includes("Admin")) {
                 return res.status(403).json({ message: "No tienes permisos para cambiar la imágen" });
             }
             user.img = extensionFile;
@@ -156,7 +156,7 @@ router.post('/nombre', (req, res) => {
             if (!user) {
                 return res.status(404).json({ message: "Usuario no encontrado" });
             }
-            if (user.role != "Donador" && user.role != "Admin") {
+            if (!user.roles.includes("Donador") && !user.roles.includes("Admin")) {
                 return res.status(403).json({ message: "No tienes permisos para cambiar el nombre" });
             }
             const searchName = usersData.find(user => user.name === nombre);

@@ -18,7 +18,12 @@ export function isUserDonate(req, callback) {
             let usersData = [];
             try {
                 usersData = JSON.parse(data);
-                const user = usersData.find(user => user.name === req.session.user.name && (user.role === "Donador" || user.role === "Admin"));
+                const user = usersData.find(user => {
+                    if (user.name !== req.session.user.name) return false;
+
+                    if (user.roles.includes("Donador") ||user.roles.includes("Admin")) return true;
+                    return false;
+                });
                 resolve(!!user);
             } catch (error) {
                 console.error("Error al parsear los usuarios:", error);
