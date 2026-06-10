@@ -53,13 +53,11 @@ async function readCommands(dir) {
 }
 
 router.get("/commands", async (req, res) => {
-    if (!isIpAllowed(req.ip)) return;
     const tree = await readCommands(commandsPath);
     res.json(tree);
 });
 
 router.get("/users", (req, res) => {
-    if (!isIpAllowed(req.ip)) return;
     res.json(getUserNames());
 });
 
