@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath, pathToFileURL } from "url";
 import { isAuthenticated } from "./middlewares/isAuthenticated.js";
-import { getUserNames } from "../index.js";
+import { getUserNames } from "../socket/state.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
