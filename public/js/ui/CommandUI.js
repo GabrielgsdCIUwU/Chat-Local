@@ -1,0 +1,224 @@
+import { appState } from '../core/state.js';
+
+export class CommandUI {
+    constructor(socket, textarea, btnSend) {
+        this.socket = socket;
+        this.textarea = textarea;
+        this.btnSend = btnSend;
+        
+        this.suggestionBoxContainer = document.getElementById("suggestionBoxContainer");
+        this.parameterChips = document.getElementById("parameterChips");
+        
+        this.suggestionBox = document.createElement("div");
+        this.suggestionBox.className = "absolute bg-gray-700 text-white rounded-lg shadow-xl hidden z-50 border border-gray-600";
+        this.suggestionBoxContainer.appendChild(this.suggestionBox);
+
+        this.reset();
+    }
+
+    reset() {
+        this.suggestions = [];
+        this.selectedIndex = -1;
+        this.activeCommand = null;
+        this.activeParams = [];
+        this.paramValues = {};
+        this.pathStack = [];
+        
+        this.suggestionBox.innerHTML = "";
+        this.suggestionBox.classList.add("hidden");
+        this.parameterChips.innerHTML = "";
+        this.parameterChips.classList.add("hidden");
+        this.validateParameters();
+    }
+
+    isActive() {
+        return this.activeCommand !== null || this.textarea.value.trim().startsWith("/");
+    }
+
+    handleKeydown(e) {
+        if (!this.isActive()) return false;
+
+        const paramInputs = Array.from(this.parameterChips.querySelectorAll("input"));
+
+        // Navegación entre parámetros con Tab
+        if (e.key === "Tab" && paramInputs.length) {
+            e.preventDefault();
+            const currentIndex = paramInputs.indexOf(document.activeElement);
+            const nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
+            if (nextIndex >= 0 && nextIndex < paramInputs.length) {
+                paramInputs[nextIndex].focus();
+            } else {
+                this.textarea.focus();
+            }
+            return true;
+        }
+
+        // Navegación en la caja de sugerencias
+        if (!this.suggestionBox.classList.contains("hidden") && this.suggestionBox.children.length) {
+            if (e.key === "ArrowDown") {
+                e.preventDefault();
+                this.selectedIndex = (this.selectedIndex + 1) % this.suggestionBox.children.length;
+                this.highlightSuggestion();
+                return true;
+            } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                this.selectedIndex = this.selectedIndex <= 0 ? this.suggestionBox.children.length - 1 : this.selectedIndex - 1;
+                this.highlightSuggestion();
+                return true;
+            } else if (e.key === "Enter") {
+                e.preventDefault();
+                if (this.selectedIndex >= 0) {
+                    this.suggestionBox.children[this.selectedIndex].click();
+                }
+                return true;
+            } else if (e.key === "Escape") {
+                this.reset();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    handleInput() {
+        const raw = this.textarea.value;
+        if (!raw.startsWith("/")) {
+            this.reset();
+            return;
+        }
+
+        const tokens = raw.slice(1).split(" ").filter(Boolean);
+        const endsWithSpace = raw.endsWith(" ");
+        const lastToken = endsWithSpace ? "" : tokens[tokens.length - 1] || "";
+        
+        let node = appState.commandsTree;
+        for (let i = 0; i < tokens.length; i++) {
+            if (node && node[tokens[i]]) node = node[tokens[i]];
+            else break;
+        }
+
+        const subKeys = Object.keys(node || {}).filter(
+            k => k !== "description" && k !== "params" && typeof node[k] === "object"
+        );
+
+        if (subKeys.length) {
+            this.buildSuggestions(node, subKeys, lastToken);
+        } else {
+            this.suggestionBox.classList.add("hidden");
+        }
+    }
+
+    buildSuggestions(node, subKeys, lastToken) {
+        this.suggestions = subKeys
+            .filter(k => k.toLowerCase().startsWith(lastToken.toLowerCase()))
+            .map(k => ({
+                text: k,
+                display: "/" + [...this.pathStack, k].join(" "),
+                description: node[k].description || "Comando",
+                params: node[k].params || []
+            }));
+
+        this.renderSuggestions();
+    }
+
+    renderSuggestions() {
+        if (!this.suggestions.length) {
+            this.suggestionBox.classList.add("hidden");
+            return;
+        }
+        
+        this.suggestionBox.innerHTML = "";
+        this.suggestions.forEach((s, i) => {
+            const item = document.createElement("div");
+            item.className = "px-4 py-3 cursor-pointer hover:bg-gray-600 border-b border-gray-600 text-sm";
+            item.innerHTML = `
+                <div class="font-medium text-white">${s.display}</div>
+                <div class="text-xs text-gray-300 mt-1">${s.description}</div>
+            `;
+            
+            item.addEventListener("click", () => this.selectSuggestion(s));
+            this.suggestionBox.appendChild(item);
+        });
+
+        this.suggestionBox.style.minWidth = Math.max(this.suggestionBoxContainer.clientWidth, 240) + "px";
+        this.suggestionBox.classList.remove("hidden");
+        this.suggestionBox.classList.add("top-full");
+    }
+
+    highlightSuggestion() {
+        Array.from(this.suggestionBox.children).forEach((el, idx) => {
+            el.classList.toggle("bg-gray-600", idx === this.selectedIndex);
+        });
+    }
+
+    selectSuggestion(s) {
+        this.pathStack.push(s.text);
+        this.textarea.value = s.display + " ";
+        this.textarea.focus();
+        
+        if (s.params?.length) {
+            this.showParameterChips(s.display, s.params);
+        } else {
+            this.parameterChips.classList.add("hidden");
+        }
+        
+        this.suggestionBox.classList.add("hidden");
+    }
+
+    showParameterChips(commandText, params) {
+        this.activeCommand = commandText;
+        this.activeParams = params;
+        this.parameterChips.innerHTML = "";
+        this.parameterChips.classList.remove("hidden");
+
+        params.forEach((p, idx) => {
+            const chip = document.createElement("div");
+            chip.className = `inline-flex items-center space-x-1 border rounded-md px-2 py-1 text-xs ${p.required ? "bg-red-800 border-red-600" : "bg-blue-800 border-blue-600"}`;
+            
+            chip.innerHTML = `<label class="font-medium ${p.required ? 'text-red-200' : 'text-blue-200'}">${p.name}</label>`;
+            
+            const input = document.createElement("input");
+            input.type = "text";
+            input.className = "bg-transparent text-white text-xs w-20 focus:outline-none placeholder-gray-400";
+            input.placeholder = p.type === "user" ? "Usuario..." : "...";
+            input.dataset.paramName = p.name;
+
+            input.addEventListener("input", () => {
+                this.paramValues[p.name] = input.value;
+                this.validateParameters();
+            });
+
+            chip.appendChild(input);
+            this.parameterChips.appendChild(chip);
+        });
+
+        this.validateParameters();
+        this.parameterChips.querySelector("input")?.focus();
+    }
+
+    validateParameters() {
+        if (!this.activeParams.length) {
+            this.btnSend.disabled = false;
+            return;
+        }
+        const missing = this.activeParams.filter(p => p.required && (!this.paramValues[p.name]?.trim()));
+        this.btnSend.disabled = missing.length > 0;
+    }
+
+    sendCommand() {
+        let finalCmd = this.activeCommand || this.textarea.value;
+        
+        if (this.activeCommand && this.activeParams.length) {
+            this.activeParams.forEach(p => {
+                const val = (this.paramValues[p.name] || "").trim();
+                if (val) finalCmd += val.includes(" ") ? ` %${val}%` : ` ${val}`;
+            });
+        }
+
+        const tokens = finalCmd.slice(1).split(" ").filter(Boolean);
+        const command = tokens[0];
+        const params = tokens.slice(1);
+
+        this.socket.emit("sendcmd", { command, subcommands: [], params, raw: finalCmd });
+        this.reset();
+    }
+}
