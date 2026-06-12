@@ -1,3 +1,5 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { connectedUsers } from "./state.js";
 
 import registerUserEvents from "./events/userEvents.js";
