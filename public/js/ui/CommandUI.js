@@ -86,24 +86,43 @@ export class CommandUI {
             return;
         }
 
-        const tokens = raw.slice(1).split(" ").filter(Boolean);
-        const endsWithSpace = raw.endsWith(" ");
-        const lastToken = endsWithSpace ? "" : tokens[tokens.length - 1] || "";
+        const tokens = raw.slice(1).split(" ");
+        const activeTokens = tokens.slice(0, -1);
+        const lastToken = tokens[tokens.length - 1];
         
         let node = appState.commandsTree;
-        for (let i = 0; i < tokens.length; i++) {
-            if (node && node[tokens[i]]) node = node[tokens[i]];
-            else break;
+        this.pathStack = [];
+        
+        for (let i = 0; i < activeTokens.length; i++) {
+            const token = activeTokens[i];
+            if (token && node && node[token]) {
+                node = node[token];
+                this.pathStack.push(token);
+            } else {
+                node = null;
+                break;
+            }
         }
 
         const subKeys = Object.keys(node || {}).filter(
             k => k !== "description" && k !== "params" && typeof node[k] === "object"
         );
 
-        if (subKeys.length) {
+        if (subKeys.length > 0) {
             this.buildSuggestions(node, subKeys, lastToken);
+            this.parameterChips.classList.add("hidden");
+            this.activeCommand = null;
+        } else if (node?.params) {
+            this.suggestionBox.classList.add("hidden");
+            const commandPath = "/" + this.pathStack.join(" ");
+            
+            if (this.activeCommand !== commandPath) {
+                this.showParameterChips(commandPath, node.params);
+            }
         } else {
             this.suggestionBox.classList.add("hidden");
+            this.parameterChips.classList.add("hidden");
+            this.activeCommand = null;
         }
     }
 
@@ -151,23 +170,36 @@ export class CommandUI {
     }
 
     selectSuggestion(s) {
-        this.pathStack.push(s.text);
+        this.suggestionBox.classList.add("hidden");
+
         this.textarea.value = s.display + " ";
         this.textarea.focus();
         
         if (s.params?.length) {
             this.showParameterChips(s.display, s.params);
         } else {
-            this.parameterChips.classList.add("hidden");
+            this.activeCommand = null;
+            this.activeParams = [];
+            
+            if (this.parameterChips) {
+                this.parameterChips.classList.add("hidden");
+            }
+            
+            this.handleInput(); 
         }
-        
-        this.suggestionBox.classList.add("hidden");
     }
 
     showParameterChips(commandText, params) {
         this.activeCommand = commandText;
         this.activeParams = params;
         this.parameterChips.innerHTML = "";
+        
+        if (!params || params.length === 0) {
+            this.parameterChips.classList.add("hidden");
+            this.validateParameters();
+            return;
+        }
+
         this.parameterChips.classList.remove("hidden");
 
         params.forEach((p, idx) => {
@@ -178,7 +210,7 @@ export class CommandUI {
             
             const input = document.createElement("input");
             input.type = "text";
-            input.className = "bg-transparent text-white text-xs w-20 focus:outline-none placeholder-gray-400";
+            input.className = "bg-transparent text-white text-xs w-20 focus:outline-none placeholder-gray-400 border-none";
             input.placeholder = p.type === "user" ? "Usuario..." : "...";
             input.dataset.paramName = p.name;
 
@@ -187,38 +219,107 @@ export class CommandUI {
                 this.validateParameters();
             });
 
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (!this.btnSend.disabled) {
+                        this.sendCommand();
+                    }
+                }
+            });
+
             chip.appendChild(input);
             this.parameterChips.appendChild(chip);
         });
 
         this.validateParameters();
+        
+        if (this.textarea.value.trim() !== commandText) {
+            this.textarea.value = commandText + " ";
+        }
+
         this.parameterChips.querySelector("input")?.focus();
     }
 
     validateParameters() {
         if (!this.activeParams.length) {
-            this.btnSend.disabled = false;
+            if (this.btnSend) this.btnSend.disabled = false;
             return;
         }
         const missing = this.activeParams.filter(p => p.required && (!this.paramValues[p.name]?.trim()));
-        this.btnSend.disabled = missing.length > 0;
+        if (this.btnSend) this.btnSend.disabled = missing.length > 0;
     }
 
     sendCommand() {
+        const rawCommand = this.#buildRawCommand();
+        if (!rawCommand || rawCommand === "/") return;
+
+        const tokens = this.#tokenizeCommand(rawCommand);
+        if (!tokens.length) {
+            this.reset();
+            return;
+        }
+
+        const { command, subcommands, params } = this.#resolveCommandStructure(tokens);
+
+        this.socket.emit("sendcmd", { command, subcommands, params, raw: rawCommand });
+        this.textarea.value = "";
+        this.reset();
+    }
+
+    #buildRawCommand() {
         let finalCmd = this.activeCommand || this.textarea.value;
         
         if (this.activeCommand && this.activeParams.length) {
-            this.activeParams.forEach(p => {
-                const val = (this.paramValues[p.name] || "").trim();
-                if (val) finalCmd += val.includes(" ") ? ` %${val}%` : ` ${val}`;
+            this.activeParams.forEach(param => {
+                const value = (this.paramValues[param.name] || "").trim();
+                if (value) {
+                    finalCmd += value.includes(" ") ? ` %${value}%` : ` ${value}`;
+                }
             });
         }
+        
+        return finalCmd.trim();
+    }
 
-        const tokens = finalCmd.slice(1).split(" ").filter(Boolean);
+    #tokenizeCommand(rawCommand) {
+        const commandString = rawCommand.slice(1).trim(); 
+        if (!commandString) return [];
+
+        const matches = commandString.match(/%[^%]+%|[^\s]+/g) || [];
+
+        return matches.map(token => {
+            if (token.startsWith('%') && token.endsWith('%') && token.length >= 2) {
+                return token.slice(1, -1).trim(); 
+            }
+            return token;
+        });
+    }
+
+    #resolveCommandStructure(tokens) {
         const command = tokens[0];
-        const params = tokens.slice(1);
+        const subcommands = [];
+        const params = [];
 
-        this.socket.emit("sendcmd", { command, subcommands: [], params, raw: finalCmd });
-        this.reset();
+        let currentNode = appState.commandsTree[command];
+
+        for (let i = 1; i < tokens.length; i++) {
+            const token = tokens[i];
+            
+            const isSubcommandNode = currentNode && 
+                                     currentNode[token] && 
+                                     typeof currentNode[token] === "object" && 
+                                     token !== "params" && 
+                                     token !== "description";
+
+            if (isSubcommandNode) {
+                subcommands.push(token);
+                currentNode = currentNode[token]; 
+            } else {
+                params.push(token);
+            }
+        }
+
+        return { command, subcommands, params };
     }
 }
