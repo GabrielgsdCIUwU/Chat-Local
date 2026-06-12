@@ -1,5 +1,6 @@
-import { fileURLToPath, pathToFileURL } from 'url';
-import path from 'path';
+import { fileURLToPath} from 'node:url';
+import path from 'node:path';
+import { CommandLoader } from '../backend/core/CommandLoader';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -7,25 +8,14 @@ const __dirname = path.dirname(__filename);
 // Ruta donde se almacenan los comandos del bot
 const commandsPath = path.join(__dirname, "./commands");
 
-// Función para cargar y ejecutar un comando
-async function loadCommand(commandName) {
-    try {
-        const commandPath = pathToFileURL(path.join(commandsPath, `${commandName}.js`)).href;
-        return await import(commandPath);
-    } catch (error) {
-        console.log(error);
-        return null;
-    }
-}
 
 export async function handleCommand({ cmd, socket, io, username }) {
     const { command, subcommands, params, raw } = cmd;
+    const timestamp = Date.now();
 
-    console.log("c",command, "s", subcommands, "p", params,"r", raw)
+    const commandModule = await CommandLoader.load(commandsPath, command);
 
-    const commandModule = await loadCommand(command);
-
-    if (commandModule && commandModule.execute) {
+    if (commandModule?.execute) {
         commandModule.execute({
             subcommand: subcommands,
             args: params,
@@ -35,7 +25,7 @@ export async function handleCommand({ cmd, socket, io, username }) {
             raw
         });
     } else {
-        io.emit("sendmsg", { user: "🤖 Bot", message: "No existe este comando, revisa lo que has escrito: " + raw,  timestamp: new Date().getTime() });
+        io.emit("sendmsg", { user: "🤖 Bot", message: "No existe este comando, revisa lo que has escrito: " + raw,  timestamp });
     }
 }
 
