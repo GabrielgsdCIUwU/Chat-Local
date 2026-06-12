@@ -1,31 +1,35 @@
 import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
-import fs from "fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import fs from "node:fs";
 import multer from "multer";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { JsonDatabaseClient } from "../backend/database/JsonDatabaseClient.js";
+import { UserRepository } from "../backend/repositories/UserRepository.js";
+import { UserService } from "../backend/services/UserService.js";
+import { ApiResponse } from "../backend/core/ApiResponse.js";
 
-const usersFilePath = path.join(__dirname, "../backend/json/users.json");
-const profileDir = path.join(__dirname, "../resources/profiles")
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);   
+const profileDir = path.join(__dirname, "../resources/profiles");     
 
 const router = express.Router();
+
+const userDbClient = new JsonDatabaseClient(path.join(__dirname, "../backend/json/users.json"));
+const userRepository = new UserRepository(userDbClient);
+const userService = new UserService(userRepository, profileDir);
+
 let extensionFile;
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const dir = path.join(__dirname, "../resources/profiles/");
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
+        if (!fs.existsSync(profileDir)) {
+            fs.mkdirSync(profileDir, { recursive: true });
         }
-        cb(null, dir);
+        cb(null, profileDir);
     },
     filename: (req, file, cb) => {
-        const ext = path.extname(file.originalname);
-        extensionFile = ext;
-        const username = req.session.user.name;
-        const filename = `${username}_profile${ext}`;
-        cb(null, filename);
+        const extensionFile = path.extname(file.originalname);
+        cb(null, `${req.session.user.name}_profile${extensionFile}`);
     }
 });
 
@@ -41,154 +45,50 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage, fileFilter });
 
 //region datos
-router.get('/datos', (req, res) => {
-    fs.readFile(usersFilePath, (err, data) => {
-        if (err) {
-            console.error("Error al leer los usuarios:", err);
-            return res.status(500).json({ message: "Error al leer los usuarios" });
-        }
-        let usersData = [];
-        try {
-            usersData = JSON.parse(data);
-            const user = usersData.find(user => user.name === req.session.user.name);
-            if (!user) {
-                return res.status(404).json({ message: "Usuario no encontrado" });
-            }
-            let datos = {
-                nombre: user.name,
-                color: user.color || "#FFFFFF",
-            };
-            res.json(datos);
-        } catch (error) {
-            console.error("Error al parsear los usuarios:", error);
-            return res.status(500).json({ message: "Error al parsear los usuarios" });
-        }
-    });
+router.get('/datos', async (req, res) => {
+    try {
+        const data = await userService.getUserData(req.session.user.name);
+        res.json(data);
+    } catch (error) {
+        ApiResponse.error(res, error.message, 500);
+    }
 });
 
 //region color
-router.post('/color', (req, res) => {
+router.post('/color', async (req, res) => {
     const { color } = req.body;
-    fs.readFile(usersFilePath, (err, data) => {
-        if (err) {
-            console.error("Error al leer los usuarios:", err);
-            return res.status(500).json({ message: "Error al leer los usuarios" });
-        }
-
-        let usersData = [];
-        try {
-            usersData = JSON.parse(data);
-            const user = usersData.find(user => user.name === req.session.user.name);
-            if (!user) {
-                return res.status(404).json({ message: "Usuario no encontrado" });
-            }
-            if (!user.roles.includes("Donador") && !user.roles.includes("Admin")) {
-                return res.status(403).json({ message: "No tienes permisos para cambiar el color" });
-            }
-            user.color = color;
-
-            fs.writeFile(usersFilePath, JSON.stringify(usersData, null, 2), (err) => {
-                if (err) {
-                    console.error("Error al escribir los usuarios:", err);
-                    return res.status(500).json({ message: "Error al escribir los usuarios" });
-                }
-                return res.json({ message: "Color actualizado correctamente", color });
-            });
-        } catch (error) {
-            console.error("Error al parsear los usuarios:", error);
-            return res.status(500).json({ message: "Error al parsear los usuarios" });
-        }
-    });
+    try {
+        await userService.changeColor(req.session.user.name, color);
+        ApiResponse.success(res, "Color actualizado correctamente", { color: color});
+    } catch (error) {
+        ApiResponse.error(res, error.message, error.message.includes("permisos") ? 403 : 500);
+    }
 });
 
 //region imagen
-router.post('/img', upload.single('img'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ message: "No se ha subido ninguna imágen válida" });
+router.post('/img', upload.single('img'), async (req, res) => {
+    if (!req.file) return ApiResponse.error(res, "No se ha subido ninguna imágen válida", 400);
+
+    try {
+        await userService.changeProfileImage(req.session.user.name, extensionFile);
+        ApiResponse.success(res, "Imagen de perfil subida correctamente", {filename: req.file.filename});
+    } catch (error) {
+        ApiResponse.error(res, error.message, 403);
     }
-
-    fs.readFile(usersFilePath, (err, data) => {
-        if (err) {
-            console.error("Error al leer los usuarios:", err);
-            return res.status(500).json({ message: "Error al leer los usuarios" });
-        }
-
-        let usersData = [];
-        try {
-            usersData = JSON.parse(data);
-            const user = usersData.find(user => user.name === req.session.user.name);
-            if (!user) {
-                return res.status(404).json({ message: "Usuario no encontrado" });
-            }
-            if (!user.roles.includes("Donador") && !user.roles.includes("Admin")) {
-                return res.status(403).json({ message: "No tienes permisos para cambiar la imágen" });
-            }
-            user.img = extensionFile;
-
-            fs.writeFile(usersFilePath, JSON.stringify(usersData, null, 2), (err) => {
-                if (err) {
-                    console.error("Error al escribir los usuarios:", err);
-                    return res.status(500).json({ message: "Error al escribir los usuarios" });
-                }
-                return res.json({ message: "Imagen de perfil subida correctamente", filename: req.file.filename });
-            });
-        } catch (error) {
-            console.error("Error al parsear los usuarios:", error);
-            return res.status(500).json({ message: "Error al parsear los usuarios" });
-        }
-    });
 });
 
 
 //region nombre
-router.post('/nombre', (req, res) => {
-    const { nombre } = req.body;
-    fs.readFile(usersFilePath, (err, data) => {
-        if (err) {
-            console.error("Error al leer los usuarios:", err);
-            return res.status(500).json({ message: "Error al leer los usuarios" });
-        }
-
-        let usersData = [];
-        try {
-            usersData = JSON.parse(data);
-            const user = usersData.find(user => user.name === req.session.user.name);
-            if (!user) {
-                return res.status(404).json({ message: "Usuario no encontrado" });
-            }
-            if (!user.roles.includes("Donador") && !user.roles.includes("Admin")) {
-                return res.status(403).json({ message: "No tienes permisos para cambiar el nombre" });
-            }
-            const searchName = usersData.find(user => user.name === nombre);
-            if (searchName && searchName.name !== user.name) {
-                return res.status(409).json({ message: "Nombre de usuario ya utilizado" });
-            }
-            user.name = nombre;
-
-            fs.writeFile(usersFilePath, JSON.stringify(usersData, null, 2), (err) => {
-                if (err) {
-                    console.error("Error al escribir los usuarios:", err);
-                    return res.status(500).json({ message: "Error al escribir los usuarios" });
-                }
-
-                const profileFiles = fs.readdirSync(profileDir);
-                const profileFile = profileFiles.find(file => file.startsWith(`${req.session.user.name}_profile.`));
-
-                if (profileFile) {
-                    const oldProfilePath = path.join(profileDir, profileFile);
-                    const ext = path.extname(profileFile)
-                    const newProfilePath = path.join(profileDir, `${nombre}_profile${ext}`);
-
-                    fs.renameSync(oldProfilePath, newProfilePath);
-                }
-                req.session.user.name = nombre;
-                return res.json({ message: "Nombre actualizado correctamente", nombre });
-            });
-        } catch (error) {
-            console.error("Error al parsear los usuarios:", error);
-            return res.status(500).json({ message: "Error al parsear los usuarios" });
-        }
-    });
+router.post('/nombre', async (req, res) => {
+    const { nombre: newName } = req.body;
+    try {
+        await userService.changename(req.session.user.name, newName);
+        req.session.user.name = newName;
+        ApiResponse.success(res, "Nombre actualizado correctamente", { nombre: newName});
+    } catch (error) {
+        const status = error.message.includes("utilizado") ? 409 : (error.message.includes("permisos") ? 403 : 500);
+        ApiResponse.error(res, error.message, status);
+    }
 });
 
 export default router;
