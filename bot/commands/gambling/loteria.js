@@ -1,29 +1,32 @@
 import { actualEarningsPayingDebt } from "../../utility/actualEarningsPayingDebt.js";
 export const params = [
     {name: "cantidad", type: "number", required: true}
-]
-export function execute({  args, socket, io, username, currenData, userIndex }) {
-    const timestamp = new Date().getTime()
-    let gambler = currenData[userIndex];
-    const apuesta = parseInt(args[0]);
+];
 
-    if (isNaN(apuesta) || apuesta <= 0 || apuesta > gambler.money) {
-        if (apuesta > gambler.money) {
-            return io.emit("sendmsg", { user: "🤖 Bot", message: `${username} No puedes hacer gambling si NO TIENES ese dinero!!!`, timestamp });
-        } else {
-            return io.emit("sendmsg", { user: "🤖 Bot", message: `${username} apuesta no válida o no tienes dinero: ${apuesta}`, timestamp });
-        }
+/**
+ * @param {import("./types/CommandContext.js").CommandContext} context 
+ */
+export function execute(context) {
+    const gambler = context.users.find(u => u.name === context.username);
+    const bet = Number.parseInt(context.args[0]);
+
+    if (Number.isNaN(bet) || bet <= 0 || bet > gambler.money) {
+        const msg = bet > gambler.money 
+            ? "¡No puedes hacer gambling si NO TIENES ese dinero!" 
+            : `Apuesta no válida: ${bet}`;
+
+        return context.io.emit("sendmsg", { user: "🤖 Bot", message: `${context.username}, ${msg}`, timestamp: context.timestamp });
     }
 
-    const numeroGanador = Math.floor(Math.random() * 6) + 1;
-    const numeroJugador = Math.floor(Math.random() * 6) + 1;
+    const winnerNumber = Math.floor(Math.random() * 6) + 1;
+    const playerNumber = Math.floor(Math.random() * 6) + 1;
 
-    if (numeroJugador === numeroGanador) {
-        gambler.money += actualEarningsPayingDebt(apuesta * 5, gambler);
-        io.emit("sendmsg", { user: "🤖 Bot", message: `¡Felicidades ${username}! Has ganado ${apuesta * 5}€ en la lotería.`, timestamp });
+    if (playerNumber === winnerNumber) {
+        gambler.money += actualEarningsPayingDebt(bet * 5, gambler);
+        io.emit("sendmsg", { user: "🤖 Bot", message: `¡Felicidades ${context.username}! Has ganado ${bet * 5}€ en la lotería.`, timestamp: context.timestamp });
     } else {
-        gambler.money -= apuesta;
-        gambler.spend += apuesta;
-        io.emit("sendmsg", { user: "🤖 Bot", message: `Lo siento ${username}, has perdido ${apuesta}€ en la lotería.`, timestamp });
+        gambler.money -= bet;
+        gambler.spend = (gambler.spend || 0) + apuesta;
+        io.emit("sendmsg", { user: "🤖 Bot", message: `Lo siento ${context.username}, has perdido ${bet}€ en la lotería.`, timestamp: context.timestamp });
     }
 }
