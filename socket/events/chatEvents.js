@@ -3,18 +3,24 @@ import fsSync from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import botHandler from "../../bot/index.js";
+import { JsonDatabaseClient } from "../../backend/database/JsonDatabaseClient.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const MSG_PATH = path.join(__dirname, "../../public/json/messages.json");
-
-export default function registerChatEvents(io, socket, user) {
+const spamDb = new JsonDatabaseClient(path.join(__dirname, "../../public/json/spamer.json"));
+/**
+ * @param {*} io 
+ * @param {*} socket 
+ * @param {*} user 
+ * @param {import('../../backend/repositories/MessageRepository.js').MessageRepository} messageRepo 
+ */
+export default function registerChatEvents(io, socket, user, messageRepo) {
     
     // Historial
     socket.on("requestHistory", async () => {
         try {
-            const data = await fs.readFile(MSG_PATH, "utf-8");
-            socket.emit("messageHistory", JSON.parse(data));
+            const data = await messageRepo.getAll();
+            socket.emit("messageHistory", data);
         } catch (error) {
             socket.emit("error", { message: "Error al leer los mensajes" });
         }
@@ -22,11 +28,8 @@ export default function registerChatEvents(io, socket, user) {
 
     // Enviar mensaje
     socket.on("sendmsg", async (msg, reply) => {
-        const timestamp = new Date().getTime();
+        const timestamp = Date.now();
         try {
-            const data = await fs.readFile(MSG_PATH, "utf-8");
-            let messagesData = JSON.parse(data);
-
             const newMessage = { 
                 user: user.name, 
                 message: msg, 
@@ -34,21 +37,18 @@ export default function registerChatEvents(io, socket, user) {
                 ...(reply && { reply: { replyUser: reply.user, replyMessage: reply.message } })
             };
             
-            messagesData.push(newMessage);
-            await fs.writeFile(MSG_PATH, JSON.stringify(messagesData, null, 2), "utf-8");
-            
+            await messageRepo.saveMessage(newMessage);
             io.emit("sendmsg", newMessage);
 
             // Logica de Spam de Donaciones
             if (msg.includes("ko-fi.com/") || msg.includes("paypal.com/") || msg.includes("paypal.me/")) {
-                const spamerFilePath = path.join(__dirname, "../../public/json/spamer.json");
-                const spamData = await fs.readFile(spamerFilePath, "utf-8");
-                let spamCount = JSON.parse(spamData);
-                if (!Array.isArray(spamCount) || spamCount.length === 0) spamCount = [0];
-                spamCount[0] += 1;
-                
-                await fs.writeFile(spamerFilePath, JSON.stringify(spamCount));
-                io.emit("sendmsg", { user: "🤖 Bot", message: `${user.name} ha contribuido a mi creador, el contador sube a ${spamCount[0]} veces.`, timestamp });
+                await spamDb.update((spamCount) => {
+                    if (!Array.isArray(spamCount) || spamCount.length === 0) spamCount = [0];
+                    spamCount[0] += 1;
+                    return spamCount;
+                });
+                const count = (await spamDb.read())[0];
+                io.emit("sendmsg", { user: "🤖 Bot", message: `${user.name} ha contribuido a mi creador, el contador sube a ${count} veces.`, timestamp });
             }
         } catch (error) {
             console.error("Error manejando mensaje:", error);
@@ -59,57 +59,23 @@ export default function registerChatEvents(io, socket, user) {
     // Editar y Borrar
     socket.on("editmsg", async (data) => {
         try {
-            const fileData = await fs.readFile(MSG_PATH, "utf-8");
-            let messages = JSON.parse(fileData);
-            const msgIndex = messages.findIndex((m) => m.timestamp === data.id);
-
-            if (msgIndex !== -1 && messages[msgIndex].user === user.name) {
-                messages[msgIndex].message = data.message;
-                messages[msgIndex].edited = true;
-                await fs.writeFile(MSG_PATH, JSON.stringify(messages, null, 2));
-                io.emit("messageUpdated", { timestamp: data.id, message: data.message, edited: true });
-            }
+            await messageRepo.editMessage(data.id, user.name, data.message);
+            io.emit("messageUpdated", {timestamp: data.id, message: data.message, edited: true});
         } catch (err) { console.error("Error al editar:", err); }
     });
 
     socket.on("deletemsg", async (data) => {
         try {
-            const fileData = await fs.readFile(MSG_PATH, "utf-8");
-            let messages = JSON.parse(fileData);
-            const msgIndex = messages.findIndex((m) => m.timestamp === data.id);
-
-            if (msgIndex !== -1 && messages[msgIndex].user === user.name) {
-                messages.splice(msgIndex, 1);
-                await fs.writeFile(MSG_PATH, JSON.stringify(messages, null, 2));
-                io.emit("messageDeleted", { timestamp: data.id });
-            }
+            await messageRepo.deleteMessage(data.id, user.name);
+            io.emit("messageDeleted", {timestamp: data.id});
         } catch (err) { console.error("Error al borrar:", err); }
     });
 
     // Reacciones
     socket.on("addReaction", async (data) => {
         try {
-            const fileData = await fs.readFile(MSG_PATH, "utf-8");
-            let messages = JSON.parse(fileData);
-            const msgIndex = messages.findIndex((m) => m.timestamp === data.messageId);
-
-            if (msgIndex !== -1) {
-                const message = messages[msgIndex];
-                if (!message.emojis) message.emojis = [];
-                
-                let emojiEntry = message.emojis.find(e => e.name === data.emojiName);
-                if (!emojiEntry) {
-                    emojiEntry = { name: data.emojiName, users: [] };
-                    message.emojis.push(emojiEntry);
-                }
-
-                if (!emojiEntry.users.includes(user.name)) {
-                    emojiEntry.users.push(user.name);
-                }
-
-                await fs.writeFile(MSG_PATH, JSON.stringify(messages, null, 2));
-                io.emit("newReaction", { messageId: data.messageId, emojiName: data.emojiName, emojiUrl: data.emojiUrl, userName: user.name });
-            }
+            await messageRepo.addReaction(data.messageId, data.emojiName, user.name);
+            io.emit("newReaction", { messageId: data.messageId, emojiName: data.emojiName, emojiUrl: data.emojiUrl, userName: user.name });
         } catch (err) { console.error("Error al reaccionar:", err); }
     });
 
