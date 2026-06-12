@@ -1,100 +1,57 @@
 import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
-import fs from "fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import isAdmin from "./middlewares/isAdmin.js";
+
+import { JsonDatabaseClient } from "../backend/database/JsonDatabaseClient.js";
+import { UserRepository } from "../backend/repositories/UserRepository.js";
+import { BannedIpRepository } from "../backend/repositories/BannedIpRepository.js";
+import { AuthService } from "../backend/services/AuthService.js";
+import { ApiResponse } from "../backend/core/ApiResponse.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
-router.post("/login", (req, res) => {
-    const { name, passwd } = req.body;
+const userDbClient = new JsonDatabaseClient(path.join(__dirname, "../backend/json/users.json"));
+const bannedDbClient = new JsonDatabaseClient(path.join(__dirname, "../backend/json/usersban.json"));
 
-    if (!name || !passwd) {
-        return res.status(400).json({ message: "Debes poner usuario y contraseña!" });
-    }
-    const location = req.ip
-    if (!location) {
-        return res.status(400).json({ message: "Se ha producido un error al obtener tu IP local" });
-    }
-    const bannedIPs = JSON.parse(fs.readFileSync('./backend/json/usersban.json'));
-    const blockedIP = bannedIPs.find(banned => banned.ip === location);
-    if (blockedIP) return res.status(403).json({ message: `Lo siento pero has sido baneado por: ${blockedIP.motivo}` })
+const userRepository = new UserRepository(userDbClient);
+const bannedIpRepository = new BannedIpRepository(bannedDbClient);
+const authService = new AuthService(userRepository, bannedIpRepository);
 
-    const usersFilePath = path.join(__dirname, "../backend/json/users.json");
-
-    fs.readFile(usersFilePath, "utf-8", (err, data) => {
-        if (err) {
-            return res.status(500).json({ message: "Error al leer los usuarios" });
-        }
-
-        let currenData = JSON.parse(data);
-        const userIndex = currenData.findIndex((user) => user.name === name);
-
-        if (userIndex === -1) {
-            return res.status(400).json({ message: "Usuario no encontrado" });
-        }
-
-        if (currenData[userIndex].passwd === passwd) {
-            if (typeof currenData[userIndex].location === "object") {
-                const allLocations = currenData[userIndex].location
-                allLocations.forEach(ip => {
-                    if (`${ip}` === location) {
-                        req.session.user = { name: currenData[userIndex].name };
-                        return res.status(200).json({ message: "Login exitoso!" });
-                    }
-                });
-
-            } else {
-                if (currenData[userIndex].location !== location) return res.status(400).json({ message: "Tienes que iniciar sesión en el mismo sitio que has creado la cuenta!!" })
-                req.session.user = { name: currenData[userIndex].name };
-                return res.status(200).json({ message: "Login exitoso!" });
-            }
-
-
-        } else {
-            return res.status(401).json({ message: "Usuario o contraseña incorrecta!" });
-        }
-    });
-});
-
-router.post("/register", (req, res) => {
+router.post("/login", async (req, res) => {
     try {
         const { name, passwd } = req.body;
-        const usersFilePath = path.join(__dirname, "../backend/json/users.json");
+
         if (!name || !passwd) {
-            return res.status(400).json({ message: "Debes poner usuario y contraseña!" });
+            return ApiResponse.error(res, "Debes poner usuario y contraseña!", 400);
+        }
+        const location = req.ip
+        if (!location) {
+            return ApiResponse.error(res, "Se ha producido un error al obtener tu IP local", 400);
         }
 
-        fs.readFile(usersFilePath, "utf-8", (err, data) => {
-            if (err) {
-                return res.status(500).json({ message: "Error al cargar los usuarios" });
-            }
+        const userDTO = await authService.login(name, passwd, location);
 
-            let usersData = JSON.parse(data);
-
-            const userExists = usersData.find((user) => user.name === name);
-
-            if (userExists) {
-                return res.status(400).json({ message: "El usuario ya existe" });
-            }
-
-            const newUser = { name, passwd, location: req.ip, roles: [] };
-            usersData.push(newUser);
-
-            fs.writeFile(usersFilePath, JSON.stringify(usersData, null, 2), "utf-8", (err) => {
-                if (err) {
-                    return res.status(500).json({ message: "Error al escribir el usuario" });
-                }
-
-                res.status(200).json({ message: "Usuario creado exitosamente" });
-            });
-        });
+        req.session.user = { name: userDTO.name };
+        return ApiResponse.success(res, "Login exitoso!", userDTO);
     } catch (error) {
-        console.log(error)
-        res.status(500).json({ error: "Unexpected error occurred" });
+        const statusCode = error.message.includes('baneado') ? 403 : 401;
+        return ApiResponse.error(res, error.message, statusCode);
+    }
+});
+
+router.post("/register", async (req, res) => {
+    try {
+        const { name, passwd } = req.body;
+        if (!name || !passwd) return ApiResponse.error(res, "Debes poner usuario y contraseña!", 400);
+
+        await authService.register(name, passwd, ip);
+        return ApiResponse.success(res, "Usuario creado exitosamente");
+    } catch (error) {
+        return ApiResponse.error(res, error.message, 400);
     }
 });
 
@@ -105,22 +62,15 @@ router.get("/role", (req, res) => {
     }
 });
 
-router.get("/list/users", (req, res) => {
-    const usersFilePath = path.join(__dirname, "../backend/json/users.json");
-    fs.readFile(usersFilePath, "utf8", (err, data) => {
-        if (err) return res.status(500).json({message: "Se ha producido un error en el servidor."});
-        let usersData = JSON.parse(data);
-        try {
-            let names = []
-            usersData.forEach(user => {
-                names.push(user.name);
-            });
-            return res.send(names)
-        } catch (err) {
-            res.status(500).json({message: "Se ha producido un error en el servidor."});
-            console.error(err)
-        }
-    });
+router.get("/list/users", async (req, res) => {
+    try {
+        const users = await userRepository.findAll();
+        const names = users.map(user => user.name);
+        return res.json(names);
+    } catch (error) {
+        console.error(error);
+        return ApiResponse.error(res, "Se ha producido un error en el servidor.", 500)
+    }
 });
 
 export default router;
