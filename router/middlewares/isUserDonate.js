@@ -1,36 +1,31 @@
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { JsonDatabaseClient } from '../../backend/database/JsonDatabaseClient.js';
+import { ROLES } from '../../backend/core/constants.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const usersFilePath = path.join(__dirname, "../../backend/json/users.json");
+const usersDb = new JsonDatabaseClient(path.join(__dirname, "../../backend/json/users.json"));
 
-export function isUserDonate(req, callback) {
-    return new Promise((resolve, reject) => {
-        fs.readFile(usersFilePath, "utf8", (err, data) => {
-            if (err) {
-                console.error("Error al leer los usuarios:", err);
-                return resolve(false);
-            }
-
-            let usersData = [];
-            try {
-                usersData = JSON.parse(data);
-                const user = usersData.find(user => {
-                    if (user.name !== req.session.user.name) return false;
-
-                    if (user.roles.includes("Donador") ||user.roles.includes("Admin")) return true;
-                    return false;
-                });
-                resolve(!!user);
-            } catch (error) {
-                console.error("Error al parsear los usuarios:", error);
-                resolve(false);
-            }
-        });
-    });
+/**
+ * Checks if the user in the current session has Donor or Admin privileges.
+ * 
+ * @param {import('express').Request} req 
+ * @returns {Promise<boolean>}
+ */
+export async function isUserDonate(req, callback) {
+     try {
+        const users = await usersDb.read();
+        const user = users.find(u => u.name === req.session.user.name);
+        
+        if (!user) return false;
+        
+        return user.roles.includes(ROLES.DONADOR) || user.roles.includes(ROLES.ADMIN);
+    } catch (error) {
+        console.error("Error al verificar privilegios:", error);
+        return false;
+    }
 }
 
 export default { isUserDonate };
