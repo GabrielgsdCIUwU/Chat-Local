@@ -1,38 +1,38 @@
+import { actualEarningsPayingDebt } from "../../utility/actualEarningsPayingDebt.js";
+
 export const params = [
     {name: "usuario", type: "user", required: true},
     {name: "dinero", type: "number", required: true}
 ]
 
-export function execute({ args, socket, io, username, currenData, userIndex, actualEarningsPayingDebt }) {
-    const timestamp = new Date().getTime()
-    let gambler = currenData[userIndex];
-    const targetName = args.slice(0, -1).join(" ");
-    const targetIndex = currenData.findIndex((user) => user.name === targetName);
+/**
+ * 
+ * @param {import("./types/CommandContext.js").CommandContext} context 
+ */
+export function execute(context) {
+    const targetName = context.args.slice(0, -1).join(" ");
+    const amount = Number.parseInt(context.args.at(-1));
 
-    if (targetIndex === -1 || targetName === username) {
-        return io.emit("sendmsg", { user: "🤖 Bot", message: `${targetName} no es válido o no existe @${username}`, timestamp });
-    }
+    try {
+        const { sender, target } = context.gamblingService.validateTransaction(context.users, context.username, targetName, amount);
 
-    let target = currenData[targetIndex];
-    const probabilidad = Math.random();
-    const cantidad = parseInt(args[args.length - 1]);;
+        sender.timesSteal = (sender.timesSteal || 0) + 1;
+        const probability = Math.random();
 
-    if (isNaN(cantidad) || cantidad <= 0 || cantidad > target.money || cantidad > gambler.money) {
-        return io.emit("sendmsg", { user: "🤖 Bot", message: `${username} tu cantidad no es válida o ${target.name} no tiene ese dinero o no tienes suficiente dinero para robar.`, timestamp });
-    }
+        if (probability < 0.5) {
+            target.money -= amount;
+            sender.money += actualEarningsPayingDebt(amount, sender);
+            sender.moneySteal = (sender.moneySteal || 0) + amount;
 
-    gambler.timesSteal++;
-    if (probabilidad < 0.5) {
-        target.money -= cantidad;
-        gambler.money += actualEarningsPayingDebt(cantidad, gambler);
-        gambler.moneySteal += cantidad;
-        return io.emit("sendmsg", { user: "🤖 Bot", message: `${username} ha robado ${cantidad}€ a ${targetName}`, timestamp });
-    } else {
-        let cantidadPerdido = cantidad + Math.floor(Math.random() * cantidad / 4)
-        gambler.money -= cantidadPerdido;
-        if (gambler.money < 0) {
-            gambler.money = 0;
+            context.io.emit("sendmsg", { user: "🤖 Bot", message: `${context.username} ha robado ${amount}€ a ${targetName}`, timestamp: context.timestamp });
+        } else {
+            const moneyLost = amount + Math.floor(Math.random() * amount / 4);
+            sender.money -= moneyLost;
+            if (sender.money < 0) sender.money = 0;
+
+            context.io.emit("sendmsg", { user: "🤖 Bot", message: `${context.username} ha intentado robar a ${targetName} pero ha fallado, perdiendo ${cantidadPerdido}€`, timestamp: context.timestamp });
         }
-        return io.emit("sendmsg", { user: "🤖 Bot", message: `${username} ha intentado robar a ${targetName} pero ha fallado, ha perdido ${cantidadPerdido}€`, timestamp });
+    } catch (error) {
+        context.io.emit("sendmsg", { user: "🤖 Bot", message: `${context.username}, ${error.message}`, timestamp: context.timestamp });
     }
 }
