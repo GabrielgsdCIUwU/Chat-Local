@@ -23,10 +23,10 @@ export function execute(context) {
 
     if (playerNumber === winnerNumber) {
         gambler.money += actualEarningsPayingDebt(bet * 5, gambler);
-        io.emit("sendmsg", { user: "🤖 Bot", message: `¡Felicidades ${context.username}! Has ganado ${bet * 5}€ en la lotería.`, timestamp: context.timestamp });
+        context.io.emit("sendmsg", { user: "🤖 Bot", message: `¡Felicidades ${context.username}! Has ganado ${bet * 5}€ en la lotería.`, timestamp: context.timestamp });
     } else {
         gambler.money -= bet;
-        gambler.spend = (gambler.spend || 0) + apuesta;
-        io.emit("sendmsg", { user: "🤖 Bot", message: `Lo siento ${context.username}, has perdido ${bet}€ en la lotería.`, timestamp: context.timestamp });
+        gambler.spend = (gambler.spend || 0) + bet;
+        context.io.emit("sendmsg", { user: "🤖 Bot", message: `Lo siento ${context.username}, has perdido ${bet}€ en la lotería.`, timestamp: context.timestamp });
     }
 }
