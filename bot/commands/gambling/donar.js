@@ -13,7 +13,7 @@ export function execute(context) {
     const amount = Number.parseInt(context.args.at(-1));
 
     try {
-        const { sender, target } = context.gamblingService.validateTransaction(UserRepository, context.username, targetName, amount);
+        const { sender, target } = context.gamblingService.validateTransaction(context.users, context.username, targetName, amount);
 
         sender.money -= amount;
         target.money += actualEarningsPayingDebt(amount, target);
@@ -21,16 +21,16 @@ export function execute(context) {
         if (!sender.donated) sender.donated = 0;
         sender.donated += amount;
 
-        io.emit("sendmsg", { 
+        context.io.emit("sendmsg", { 
             user: "🤖 Bot", 
             message: `${username} ha regalado ${amount}€ a ${targetName}`, 
-            timestamp 
+            timestamp: context.timestamp
         });
     } catch (error) {
-        io.emit("sendmsg", { 
+        context.io.emit("sendmsg", { 
             user: "🤖 Bot", 
             message: `${username}, ${error.message}`, 
-            timestamp 
+            timestamp: context.timestamp 
         });
     }
 
