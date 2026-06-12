@@ -1,6 +1,7 @@
-import { readFile } from "fs/promises";
-import { fileURLToPath } from "url";
-import { dirname, resolve } from "path";
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+import { actualEarningsPayingDebt } from "../../utility/actualEarningsPayingDebt.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -9,14 +10,17 @@ const filePath = resolve(__dirname, "../../../public/json/nonCountDays.json");
 const data = await readFile(filePath, "utf-8");
 const nonCountDays = JSON.parse(data);
 
-export function execute({ args, socket, io, username, currenData, userIndex, actualEarningsPayingDebt }) {
-    const timestamp = new Date().getTime();
+/**
+ * @param {import("./types/CommandContext.js").CommandContext} context 
+ */
+
+export function execute(context) {
     const baseAmount = 250;
     const twelveHours = 12 * 60 * 60 * 1000;
     const twentyFourHours = 24 * 60 * 60 * 1000;
 
-    const user = currenData[userIndex];
-    const now = new Date(timestamp);
+    const user = context.users.find(u => u.name === context.username);
+    const now = new Date(context.timestamp);
 
     // Inicializar valores si no existen
     if (!user.lastDaily) user.lastDaily = 0;
@@ -27,10 +31,10 @@ export function execute({ args, socket, io, username, currenData, userIndex, act
 
     // Verificar si es día laborable
     if (!isWeekday) {
-        io.emit("sendmsg", {
+        context.io.emit("sendmsg", {
             user: "🤖 Bot",
-            message: `${username}, solo puedes reclamar el daily de lunes a viernes.`,
-            timestamp
+            message: `${context.username}, solo puedes reclamar el daily de lunes a viernes.`,
+            timestamp: context.timestamp
         });
         return;
     }
@@ -42,10 +46,10 @@ export function execute({ args, socket, io, username, currenData, userIndex, act
         const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
         const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
 
-        io.emit("sendmsg", {
+        context.io.emit("sendmsg", {
             user: "🤖 Bot",
-            message: `${username}, ya has reclamado tu recompensa diaria. Tiempo restante: ${hours} horas, ${minutes} minutos, ${seconds} segundos.`,
-            timestamp
+            message: `${context.username}, ya has reclamado tu recompensa diaria. Tiempo restante: ${hours} horas, ${minutes} minutos, ${seconds} segundos.`,
+            timestamp: context.timestamp
         });
         return;
     }
@@ -142,5 +146,5 @@ export function execute({ args, socket, io, username, currenData, userIndex, act
         ? `${username} ha reclamado su daily. Tu racha ha comenzado de nuevo. Bonus: +${streakBonus}€. Total recibido: ${totalReward}€`
         : `${username} ha reclamado su daily. Racha actual: ${user.dailyStreak} días. Bonus: +${streakBonus}€. Total recibido: ${totalReward}€`;
 
-    io.emit("sendmsg", { user: "🤖 Bot", message, timestamp });
+    context.io.emit("sendmsg", { user: "🤖 Bot", message, timestamp: context.timestamp });
 }
