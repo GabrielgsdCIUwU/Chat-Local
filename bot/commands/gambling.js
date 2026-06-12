@@ -1,70 +1,51 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath, pathToFileURL } from "url";
-import { actualEarningsPayingDebt } from "../utility/actualEarningsPayingDebt.js";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { JsonDatabaseClient } from "../../backend/database/JsonDatabaseClient.js";
+import { GamblingRepository } from "../../backend/repositories/GamblingRepository.js";
+import { GamblingService } from "../../backend/services/GamblingService.js";
+import { CommandLoader } from "../../backend/core/CommandLoader.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const subcommandsPath = path.join(__dirname, "./gambling");
 
-// Función para cargar y ejecutar un subcomando
-async function loadSubcommand(subcommandName) {
-    try {
-        const subcommandPath = pathToFileURL(path.join(subcommandsPath, `${subcommandName}.js`)).href;
-        return await import(subcommandPath);
-    } catch (error) {
-        return null;
+const gamblingDbClient = new JsonDatabaseClient(path.join(__dirname, "../../public/json/gambling.json"));
+const gamblingRepository = new GamblingRepository(gamblingDbClient);
+const gamblingService = new GamblingService(gamblingRepository);
+
+export async function execute({subcommand, args, socket, io, username, raw }) {
+    const timestamp = Date.now();
+    
+    if (!subcommand || subcommand.length === 0) {
+        return io.emit("sendmsg", { user: "🤖 Bot", message: "Debes especificar un subcomando.", timestamp });
     }
-}
 
+    const subcommandName = subcommand[0];
+    const subcommandLoaded = await CommandLoader.load(subcommandsPath, subcommandName);
 
-export function execute({subcommand, args, socket, io, username, raw }) {
-    console.log(subcommand[0]);
-    const timestamp = new Date().getTime();
-    const gamblingFilePath = path.join(__dirname, "../../public/json/gambling.json");
+    if (!subcommandLoaded?.execute) {
+        return io.emit("sendmsg", { user: "🤖 Bot", message: `El subcomando "${subcommandName}" no existe.`, timestamp });
+    }
 
-    fs.readFile(gamblingFilePath, "utf-8", async (err, data) => {
-        if (err) {
-            console.error("Error al leer el archivo de gambling:", err);
-            io.emit("sendmsg", { user: "🤖 Bot", message: "Hubo un error al ejecutar el comando", timestamp })
-            return;
-        }
+    try {
+        await gamblingRepository.executeTransaction((users) => {
+            const currentUser = gamblingService.ensureUserExists(users, username);
 
-        let currenData = JSON.parse(data);
-        const userIndex = currenData.findIndex((user) => user.name === username);
-
-        if (userIndex === -1) {
-            const newGambler = { name: username, money: 100, totalEarnings: 0, spend: 0, timesSteal: 0, moneySteal: 0, duelWin: 0, duelLose: 0, bankRupt: 0, debt: 0 };
-            currenData.push(newGambler);
-            fs.writeFile(gamblingFilePath, JSON.stringify(currenData, null, 2), "utf-8", (err) => {
-                if (err) {
-                    console.error("Error al guardar al nuevo gambler:", err);
-                    io.emit("sendmsg", { user: "🤖 Bot", message: "Hubo un error al ejecutar el comando", timestamp });
-                    return;
-                }
-                io.emit("sendmsg", { user: "🤖 Bot", message: "Se te acaba de registrar, ejecuta otra vez el comando. LET'S GO GAMBLING!", timestamp })
+            subcommandLoaded.execute({
+                args,
+                io,
+                username,
+                currentUser,
+                users,
+                gamblingService,
+                timestamp
             });
-            return;
-        }
-        
-        const subcommandName = subcommand[0];
-        const subcommandLoaded = await loadSubcommand(subcommandName);
-        try {
-            if (subcommandLoaded && subcommandLoaded.execute) {
-                subcommandLoaded.execute({ args, socket, io, username, currenData, userIndex, actualEarningsPayingDebt });
-            }
-        } catch (err) {
-            console.log(err)
-            io.emit("sendmsg", { user: "🤖 Bot", message: `El subcomando "${subcommandName}" no existe.`, timestamp });
-        }
-
-        //region actualizar datos
-        fs.writeFile(gamblingFilePath, JSON.stringify(currenData, null, 2), "utf-8", (err) => {
-            if (err) {
-                console.error("Error al actualizar los datos de gambling:", err);
-                return io.emit("sendmsg", { user: "🤖 Bot", message: "Hubo un error al guardar los cambios, se ha vuelto al estado anterior", timestamp });
-            }
         });
-    });
+    } catch (err) {
+        console.error(`Error executing gambling subcommand ${subcommandName}:`, err);
+        io.emit("sendmsg", { user: "🤖 Bot", message: "Hubo un error al ejecutar el comando.", timestamp });
+    }
 }
