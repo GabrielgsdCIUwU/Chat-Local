@@ -5,6 +5,7 @@ export class State {
         this.donators = [];
         this.emojiCache = [];
         this.commandsTree = {};
+        this.reactionsMap = new Map();
 
         this.replyMessage = null;
         this.isEditingMessage = false;
