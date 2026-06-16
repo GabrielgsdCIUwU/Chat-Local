@@ -137,14 +137,14 @@ export function execute(context) {
     const totalReward = baseAmount + streakBonus;
 
     // Aplicar recompensa
-    user.money += actualEarningsPayingDebt(totalReward, currenData[userIndex]);
+    user.money += actualEarningsPayingDebt(totalReward, user);
     user.totalEarnings += totalReward;
     user.lastDaily = context.timestamp;
 
     // Mensaje de confirmación
     const message = user.dailyStreak === 1
-        ? `${username} ha reclamado su daily. Tu racha ha comenzado de nuevo. Bonus: +${streakBonus}€. Total recibido: ${totalReward}€`
-        : `${username} ha reclamado su daily. Racha actual: ${user.dailyStreak} días. Bonus: +${streakBonus}€. Total recibido: ${totalReward}€`;
+        ? `${context.username} ha reclamado su daily. Tu racha ha comenzado de nuevo. Bonus: +${streakBonus}€. Total recibido: ${totalReward}€`
+        : `${context.username} ha reclamado su daily. Racha actual: ${user.dailyStreak} días. Bonus: +${streakBonus}€. Total recibido: ${totalReward}€`;
 
     context.io.emit("sendmsg", { user: "🤖 Bot", message, timestamp: context.timestamp });
 }
