@@ -1,12 +1,11 @@
 import fsSync from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import crypto from "node:crypto";
 import botHandler from "../../bot/index.js";
-import { JsonDatabaseClient } from "../../backend/database/JsonDatabaseClient.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const spamDb = new JsonDatabaseClient(path.join(__dirname, "../../public/json/spamer.json"));
 /**
  * @param {*} io 
  * @param {*} socket 
@@ -28,8 +27,10 @@ export default function registerChatEvents(io, socket, user, container) {
     // Enviar mensaje
     socket.on("sendmsg", async (msg, reply) => {
         const timestamp = Date.now();
+        const id = crypto.randomUUID();
         try {
             const newMessage = { 
+                id,
                 user: user.name, 
                 message: msg, 
                 timestamp, 
@@ -50,14 +51,14 @@ export default function registerChatEvents(io, socket, user, container) {
     socket.on("editmsg", async (data) => {
         try {
             await container.messageRepository.editMessage(data.id, user.name, data.message);
-            io.emit("messageUpdated", {timestamp: data.id, message: data.message, edited: true});
+            io.emit("messageUpdated", {id: data.id, message: data.message, edited: true});
         } catch (err) { console.error("Error al editar:", err); }
     });
 
     socket.on("deletemsg", async (data) => {
         try {
             await container.messageRepository.deleteMessage(data.id, user.name);
-            io.emit("messageDeleted", {timestamp: data.id});
+            io.emit("messageDeleted", {id: data.id});
         } catch (err) { console.error("Error al borrar:", err); }
     });
 

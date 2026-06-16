@@ -19,7 +19,7 @@ export class MessageRepository {
 
      async editMessage(id, username, newText) {
         return await this.db.update((messages) => {
-            const msg = messages.find(m => m.timestamp === id);
+            const msg = messages.find(m => m.id === id);
             if (msg?.user === username) {
                 msg.message = newText;
                 msg.edited = true;
@@ -30,7 +30,7 @@ export class MessageRepository {
 
      async deleteMessage(id, username) {
         return await this.db.update((messages) => {
-            const msgIndex = messages.findIndex(m => m.timestamp === id);
+            const msgIndex = messages.findIndex(m => m.id === id);
             if (msgIndex !== -1 && messages[msgIndex].user === username) {
                 messages.splice(msgIndex, 1);
             }
@@ -40,12 +40,12 @@ export class MessageRepository {
 
      async addReaction(messageId, emojiName, username) {
         return await this.db.update((messages) => {
-            const msg = messages.find(m => m.timestamp === messageId);
+            const msg = messages.find(m => m.id === messageId);
             if (msg) {
                 if (!msg.emojis) msg.emojis = [];
                 let emojiEntry = msg.emojis.find(e => e.name === emojiName);
                 if (!emojiEntry) {
-                    emojiEntry = { name: emojiEntry, users: [] };
+                    emojiEntry = { name: emojiName, users: [] };
                     msg.emojis.push(emojiEntry);
                 }
                 if (!emojiEntry.users.includes(username)) {

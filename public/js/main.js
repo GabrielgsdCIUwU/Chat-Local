@@ -72,7 +72,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         chatUI.renderMessage(msg, false);
     });
     socket.on("messageUpdated", (data) => chatUI.updateMessage(data));
-    socket.on("messageDeleted", (data) => chatUI.deleteMessage(data.timestamp));
+    socket.on("messageDeleted", (data) => chatUI.deleteMessage(data.id));
 
     socket.on("usersTyping", (users) => {
         const display = document.getElementById("typingDisplay");

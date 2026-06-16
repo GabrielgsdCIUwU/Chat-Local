@@ -31,7 +31,7 @@ export class ChatUI {
         const item = document.createElement("div");
         item.className = "bg-gray-700 rounded-lg shadow-md p-4 mb-3 relative opacity-100 transition-all duration-300 ease-in-out";
         item.style.marginBottom = "1rem";
-        item.dataset.timestamp = msg.timestamp;
+        item.dataset.id = msg.id;
 
         const donator = appState.donators.find(d => d.name === msg.user);
         let avatarHtml = "";
@@ -86,7 +86,7 @@ export class ChatUI {
 
     //region renderReaction
      renderReaction(messageId, emojiName, emojiUrl, userName) {
-        const messageElement = this.container.querySelector(`[data-timestamp="${messageId}"]`);
+        const messageElement = this.container.querySelector(`[data-id="${messageId}"]`);
         if (!messageElement) return;
 
         if (!appState.reactionsMap.has(messageId)) appState.reactionsMap.set(messageId, new Map());
@@ -126,7 +126,7 @@ export class ChatUI {
     
     //region updateMessage
     updateMessage(data) {
-        const item = this.container.querySelector(`[data-timestamp="${data.timestamp}"]`);
+        const item = this.container.querySelector(`[data-id="${data.id}"]`);
         if (item) {
             const mockMsg = { message: data.message };
             const { formattedText } = this.formatter.format(mockMsg, true);
@@ -141,8 +141,8 @@ export class ChatUI {
     }
 
     //region deleteMessage
-    deleteMessage(timestamp) {
-        const item = this.container.querySelector(`[data-timestamp="${timestamp}"]`);
+    deleteMessage(id) {
+        const item = this.container.querySelector(`[data-id="${id}"]`);
         if (item) item.remove();
     }
 }
