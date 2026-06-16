@@ -1,106 +1,97 @@
-# Chat-Local [![wakatime](https://wakatime.com/badge/user/0de54a75-ef87-45cb-8941-d36c72181f10/project/d8da0672-8156-41ef-8c87-551269088f41.svg)](https://wakatime.com/badge/user/0de54a75-ef87-45cb-8941-d36c72181f10/project/d8da0672-8156-41ef-8c87-551269088f41)
+# Chat-Local 💬 [![wakatime](https://wakatime.com/badge/user/0de54a75-ef87-45cb-8941-d36c72181f10/project/d8da0672-8156-41ef-8c87-551269088f41.svg)](https://wakatime.com/badge/user/0de54a75-ef87-45cb-8941-d36c72181f10/project/d8da0672-8156-41ef-8c87-551269088f41)
 
-Este es un proyecto de chat local que utiliza `Node.js`, `Express` y `Socket.IO` para proporcionar una experiencia de chat en tiempo real. El proyecto incluye características como autenticación de usuarios, emojis personalizados y más.
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
+![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socket.io&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
-## Requisitos
+Una aplicación de chat en tiempo real desarrollada con **JavaScript Vanilla** (Node.js, Express y Socket.IO). Este proyecto destaca por su arquitectura robusta, aplicación de **principios SOLID** y patrones de diseño (Inyección de Dependencias, Repositorios, Servicios) sin depender de frameworks pesados..
 
-- [Node.js v20.17.0](https://nodejs.org/en/download)
+## ✨ Características Principales
+
+* **💬 Chat en Tiempo Real:** Comunicación instantánea con soporte de historial y prevención de *Race Conditions*.
+* **🛡️ Sistema de Autenticación:** Registro y login con contraseñas cifradas (`bcrypt`) y gestión segura de sesiones.
+* **🤖 Bot Multipropósito y Comandos Dinámicos:** Intérprete de comandos (ej. `/8ball`, `/ping`) cargados dinámicamente mediante abstracción.
+* **🎲 Economía (Gambling):** Sistema de dinero virtual, robos, duelos y loterías con validación estricta de tipos numéricos.
+* **🔒 Seguridad Anti-Ataques:** Protección contra ataques DDoS y de fuerza bruta mediante Rate Limiting (`express-rate-limit`) y bases de datos aisladas del acceso público.
+
+---
+
+## 🛠️ Requisitos del Sistema
+
+- [Node.js v20.17.0+](https://nodejs.org/en/download)
 - npm (Node Package Manager)
 
-## Instalación
+---
 
-1. Clona el repositorio en tu máquina local:
+## 🚀 Instalación y Despliegue Local
 
-    ```sh
-    git clone https://github.com/GabrielgsdCIUwU/Chat-Local.git
-    cd Chat-Local
-    ```
+1. **Clona el repositorio:**
+   ```sh
+   git clone https://github.com/GabrielgsdCIUwU/Chat-Local.git
+   cd Chat-Local
+   ```
 
-2. Instala las dependencias del proyecto:
+2. **Instala las dependencias:**
+   ```sh
+   npm install
+   ```
 
-    ```sh
-    npm install
-    ```
+3. **Configura el entorno:**
+   Crea un archivo `.env` en la raíz del proyecto y añade:
+   ```env
+   sessionSecret=tuSecretoDeSesionSuperSeguro
+   PORT=3000
+   USE_HTTPS=false
+   ```
 
-3. Crea un archivo `.env` en la raíz del proyecto y añade las siguientes variables de entorno:
+4. **Inicializa las bases de datos locales y carpetas de recursos:**
+   Este script creará los archivos JSON seguros y las carpetas para subir imágenes.
+   ```sh
+   npm run init
+   ```
 
-    ```env
-    sessionSecret=tuSecretoDeSesion
-    PORT=3000
-    ```
+5. **Compila los estilos (TailwindCSS):**
+   ```sh
+   npm run css
+   ```
 
-4. Crea el archivo `css` de [`tailwindcss`](https://tailwindcss.com/) con el siguiente comando:
+6. **Inicia el servidor:**
+   ```sh
+   npm run server
+   ```
+   *Abre tu navegador en `http://localhost:3000` para empezar.*
 
-    ```sh
-    npm run css
-    ```
+---
 
-5. Crea todos los archivos `json` y carpetas necesarias con el siguiente comando:
+## 🏗️ Arquitectura y Estructura del Proyecto
 
-    ```sh
-    npm run init
-    ```
+El código está estructurado en una arquitectura de capas (N-Tier) para mantener un alto nivel de escalabilidad y mantenibilidad:
 
-5. Inicia el servidor:
+* **`backend/core/`**: Contenedor de Inyección de Dependencias (`DIContainer`), respuestas estructuradas y constantes.
+* **`backend/database/` y `backend/repositories/`**: Abstracción del acceso a datos. Maneja un sistema de colas (`Promise.resolve()`) para evitar la sobreescritura corrupta de los JSON.
+* **`backend/services/`**: Lógica de negocio pura (Autenticación, validación de Gambling, gestión de perfiles).
+* **`bot/`**: Subsistema aislado que actúa como un framework propio de comandos (similar a Discord.js).
+* **`socket/`**: Gestión de eventos en tiempo real aislados por dominio (chat, usuarios, encuestas, privados).
+* **`public/`**: Assets puramente front-end (JS del cliente, CSS compilado y Vistas HTML).
 
-    ```sh
-    npm run server
-    ```
+---
 
-## Estructura del Proyecto
+## 🌐 Notas de Despliegue (Producción)
 
-El proyecto está organizado de la siguiente manera:
+Si deseas desplegar esta aplicación, ten en cuenta las siguientes configuraciones ya incluidas:
 
-### Archivos Principales
+* **Reverse Proxy Trust:** El servidor confía en la IP del proxy (`app.set('trust proxy', 1)`), ideal para Nginx o Cloudflare Tunnels.
+* **Rate Limiting:** Prevención de fuerza bruta en rutas de autenticación.
+* **Protección de Datos:** Las bases de datos (`.json`) operan en la carpeta `backend/` para evitar exposición estática en la web.
+* **PM2:** Se recomienda utilizar `pm2` para mantener vivo el proceso en entornos Linux.
 
-#### index.js
+---
 
-Este archivo configura y arranca el servidor Express, además de manejar las conexiones de Socket.IO.
+## 🤝 Contribuciones
 
-#### paginas.js
+Las contribuciones son bienvenidas. Si deseas sugerir mejoras de arquitectura, optimización o reportar bugs, por favor abre un *issue* o un *pull request*.
 
-Define las rutas para servir las páginas HTML del proyecto.
+## 📄 Licencia
 
-#### img.js
-
-Maneja la carga y el servicio de emojis personalizados.
-
-#### chat.js
-
-Define las rutas y la lógica para el chat público.
-
-#### admin.js
-
-Maneja la autenticación de usuarios y el registro.
-
-### Carpetas principales
-
-#### backend/json
-
-Aquí se guarda todos los nombres de usuario, contraseñas y usuarios que estan baneados del chat.
-
-#### bot
-
-Contiene todos los comandos y como lo va a manejar el bot para responder en el chat.
-
-#### resources/emojis
-
-Esta carpeta es donde se guarda todos los emojis que se va a mostrar en el chat.
-
-#### resources/waitlist
-
-Esta carpeta es donde se guarda todos los archivos que suben los usuarios.
-
-## Uso
-
-1. Abre tu navegador y navega a http://localhost:3000 para ver la página principal.
-2. Regístrate y luego inicia sesión para acceder al chat.
-3. Sube emojis personalizados y úsalos en tus mensajes.
-
-## Contribuciones
-
-Las contribuciones son bienvenidas. Por favor, abre un issue o un pull request para discutir cualquier cambio que te gustaría hacer.
-
-## Licencia
-
-Este proyecto está licenciado bajo la Licencia MIT. Consulta el archivo `LICENSE` para más detalles.
+Este proyecto está licenciado bajo la **Licencia MIT**. Consulta el archivo `LICENSE` para más detalles.
