@@ -4,10 +4,10 @@ export const params = [
 ];
 
 /**
- * @param {import("./types/CommandContext.js").CommandContext} context 
+ * @param {import("./types/CommandContext.js").GamblingContext} context 
  */
 export function execute(context) {
-    const gambler = context.users.find(u => u.name === context.username);
+    const gambler = context.currentUser;
     const bet = Number.parseInt(context.args[0]);
 
     if (Number.isNaN(bet) || bet <= 0 || bet > gambler.money) {
@@ -15,7 +15,7 @@ export function execute(context) {
             ? "¡No puedes hacer gambling si NO TIENES ese dinero!" 
             : `Apuesta no válida: ${bet}`;
 
-        return context.io.emit("sendmsg", { user: "🤖 Bot", message: `${context.username}, ${msg}`, timestamp: context.timestamp });
+        return context.reply(msg);
     }
 
     const winnerNumber = Math.floor(Math.random() * 6) + 1;
@@ -23,10 +23,10 @@ export function execute(context) {
 
     if (playerNumber === winnerNumber) {
         gambler.money += calculateNetEarnings(bet * 5, gambler);
-        context.io.emit("sendmsg", { user: "🤖 Bot", message: `¡Felicidades ${context.username}! Has ganado ${bet * 5}€ en la lotería.`, timestamp: context.timestamp });
+        return context.reply(`¡Felicidades ${context.username}! Has ganado ${bet * 5}€ en la lotería.`);
     } else {
         gambler.money -= bet;
         gambler.spend = (gambler.spend || 0) + bet;
-        context.io.emit("sendmsg", { user: "🤖 Bot", message: `Lo siento ${context.username}, has perdido ${bet}€ en la lotería.`, timestamp: context.timestamp });
+        context.reply(`Lo siento ${context.username}, has perdido ${bet}€ en la lotería.`)
     }
 }

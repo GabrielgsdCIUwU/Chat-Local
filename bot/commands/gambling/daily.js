@@ -11,7 +11,7 @@ const data = await readFile(filePath, "utf-8");
 const nonCountDays = JSON.parse(data);
 
 /**
- * @param {import("./types/CommandContext.js").CommandContext} context 
+ * @param {import("./types/CommandContext.js").GamblingContext} context 
  */
 
 export function execute(context) {
@@ -19,7 +19,7 @@ export function execute(context) {
     const twelveHours = 12 * 60 * 60 * 1000;
     const twentyFourHours = 24 * 60 * 60 * 1000;
 
-    const user = context.users.find(u => u.name === context.username);
+    const user = context.currentUser;
     const now = new Date(context.timestamp);
 
     // Inicializar valores si no existen
@@ -31,11 +31,7 @@ export function execute(context) {
 
     // Verificar si es día laborable
     if (!isWeekday) {
-        context.io.emit("sendmsg", {
-            user: "🤖 Bot",
-            message: `${context.username}, solo puedes reclamar el daily de lunes a viernes.`,
-            timestamp: context.timestamp
-        });
+        context.reply(`${context.username}, solo puedes reclamar el daily de lunes a viernes.`)
         return;
     }
 
@@ -46,11 +42,7 @@ export function execute(context) {
         const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
         const seconds = Math.floor((timeLeft % (60 * 1000)) / 1000);
 
-        context.io.emit("sendmsg", {
-            user: "🤖 Bot",
-            message: `${context.username}, ya has reclamado tu recompensa diaria. Tiempo restante: ${hours} horas, ${minutes} minutos, ${seconds} segundos.`,
-            timestamp: context.timestamp
-        });
+        context.reply(`${context.username}, ya has reclamado tu recompensa diaria. Tiempo restante: ${hours} horas, ${minutes} minutos, ${seconds} segundos.`)
         return;
     }
 
@@ -143,5 +135,5 @@ export function execute(context) {
         ? `${context.username} ha reclamado su daily. Tu racha ha comenzado de nuevo. Bonus: +${streakBonus}€. Total recibido: ${totalReward}€`
         : `${context.username} ha reclamado su daily. Racha actual: ${user.dailyStreak} días. Bonus: +${streakBonus}€. Total recibido: ${totalReward}€`;
 
-    context.io.emit("sendmsg", { user: "🤖 Bot", message, timestamp: context.timestamp });
+    context.reply(message)
 }

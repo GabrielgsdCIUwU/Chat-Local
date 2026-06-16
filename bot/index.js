@@ -1,6 +1,7 @@
 import { fileURLToPath} from 'node:url';
 import path from 'node:path';
 import { CommandLoader } from '../backend/core/CommandLoader.js';
+import { BotContext } from './core/BotContext.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -9,23 +10,21 @@ const __dirname = path.dirname(__filename);
 const commandsPath = path.join(__dirname, "./commands");
 
 
-export async function handleCommand({ cmd, socket, io, username }) {
-    const { command, subcommands, params, raw } = cmd;
+export async function handleCommand({ cmd, socket, io, username, container }) {
+    const { command, subcommands, params: args, raw } = cmd;
     const timestamp = Date.now();
 
     const commandModule = await CommandLoader.load(commandsPath, command);
+    
+    const context = new BotContext({
+            command, subcommands, args, raw, io, socket, username, container, timestamp
+        });
 
     if (commandModule?.execute) {
-        commandModule.execute({
-            subcommand: subcommands,
-            args: params,
-            socket,
-            io,
-            username,
-            raw
-        });
+
+        commandModule.execute(context);
     } else {
-        io.emit("sendmsg", { user: "🤖 Bot", message: "No existe este comando, revisa lo que has escrito: " + raw,  timestamp });
+        context.reply("No existe este comando, revisa lo que has escrito: " + raw)
     }
 }
 

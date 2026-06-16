@@ -6,14 +6,14 @@ export const params = [
 ]
 /**
  * 
- * @param {import("./types/CommandContext.js").CommandContext} context 
+ * @param {import("./types/CommandContext.js").GamblingContext} context 
  */
 export function execute(context) {
     const targetName = context.args.slice(0, -1).join(" ");
     const amount = Number.parseInt(context.args.at(-1));
 
     try {
-        const { sender, target } = context.gamblingService.validateTransaction(context.users, context.username, targetName, amount);
+        const { sender, target } = context.container.gamblingService.validateTransaction(context.users, context.username, targetName, amount);
 
         sender.money -= amount;
         target.money += calculateNetEarnings(amount, target);
@@ -21,17 +21,9 @@ export function execute(context) {
         if (!sender.donated) sender.donated = 0;
         sender.donated += amount;
 
-        context.io.emit("sendmsg", { 
-            user: "🤖 Bot", 
-            message: `${username} ha regalado ${amount}€ a ${targetName}`, 
-            timestamp: context.timestamp
-        });
+        context.reply(`${username} ha regalado ${amount}€ a ${targetName}`);
     } catch (error) {
-        context.io.emit("sendmsg", { 
-            user: "🤖 Bot", 
-            message: `${username}, ${error.message}`, 
-            timestamp: context.timestamp 
-        });
+        context.reply(`${username}, ${error.message}`)
     }
 
 }

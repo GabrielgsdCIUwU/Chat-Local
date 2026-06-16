@@ -1,7 +1,10 @@
 import { EmbedMessage } from "../utility/EmbedMessage.js";
 
-export function execute({ args, socket, io }) {
-    const timestamp = new Date().getTime();
+/**
+ * 
+ * @param {import('../core/BotContext.js').BotContext} context 
+ */
+export function execute(context) {
     const embed = new EmbedMessage()
     .addField("Estos son todos los comandos:", "")
     .addField("- ping", "/ping")
@@ -17,6 +20,5 @@ export function execute({ args, socket, io }) {
     .addField("- gambling duelo", "/gambling duelo (usuario) (cantidad)")
     .addField("- gambling top", "/gambling top");
 
-    // Emitir mensaje del bot al cliente
-    io.emit("sendmsg", { user: "🤖 Bot", message: embed.toString(), timestamp });
+    context.reply(embed.toString())
 }

@@ -2,7 +2,7 @@ import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
 /**
  * 
- * @param {import("./types/CommandContext.js").CommandContext} context 
+ * @param {import("./types/CommandContext.js").GamblingContext} context 
  */
 export function execute(context) {
     const sorted = [...context.users].sort((a, b) => {
@@ -29,5 +29,5 @@ export function execute(context) {
         embed.addField(`#${index + 1} ${user.name}`, `💰 ${user.money}€ | 🥊 Éxito en duelos: ${winRate}`);
     });
 
-    context.io.emit("sendmsg", { user: "🤖 Bot", message: `🏆 **Ranking de Riqueza**\n${embed.toString()}`, timestamp: context.timestamp });
+    context.reply(`🏆 **Ranking de Riqueza**\n${embed.toString()}`)`;`
 }

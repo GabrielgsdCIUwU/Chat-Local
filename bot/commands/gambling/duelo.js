@@ -8,7 +8,7 @@ export const params = [
 ];
 
 /**
- * @param {import("./types/CommandContext.js").CommandContext} context 
+ * @param {import("./types/CommandContext.js").GamblingContext} context 
  */
 export function execute(context) {
 
@@ -16,14 +16,14 @@ export function execute(context) {
     
     if (action === "aceptar") {
         if (!pendingDuels.has(context.username)) {
-            return io.emit("sendmsg", { user: "🤖 Bot", message: `${context.username} No tienes ningún duelo pendiente`, timestamp: context.timestamp });
+            return context.reply(`${context.username} No tienes ningún duelo pendiente`)
         }
 
         const { challengerName, amount } = pendingDuels.get(context.username);
         pendingDuels.delete(context.username);
 
         try {
-            const { sender: challenger, target: accepter } = context.gamblingService.validateTransaction(context.users, challengerName, context.username, amount);
+            const { sender: challenger, target: accepter } = context.container.gamblingService.validateTransaction(context.users, challengerName, context.username, amount);
 
             const result = Math.random();
 
@@ -33,40 +33,40 @@ export function execute(context) {
                 accepter.duelWin = (accepter.duelWin || 0) + 1;
                 challenger.duelLose = (challenger.duelLose || 0) + 1;
 
-                context.io.emit("sendmsg", { user: "🤖 Bot", message: `${context.username} ha ganado el duelo contra ${challengerName} y se lleva ${amount}€`, timestamp: context.timestamp });
+                return context.reply(`${context.username} ha ganado el duelo contra ${challengerName} y se lleva ${amount}€`);
             } else {
                 accepter.money = Math.max(0, accepter.money - amount);
                 challenger.money += calculateNetEarnings(amount, challenger);
                 accepter.duelLose = (accepter.duelLose || 0) + 1;
                 challenger.duelWin = (accepter.duelWin || 0) + 1;
 
-                context.io.emit("sendmsg", { user: "🤖 Bot", message: `${context.username} ha perdido el duelo contra ${challengerName} y le entrega ${amount}€`, timestamp: context.timestamp });
+                return context.reply(`${context.username} ha perdido el duelo contra ${challengerName} y le entrega ${amount}€`)
             }
         } catch (error) {
-            return context.io.emit("sendmsg", { user: "🤖 Bot", message: `El duelo fue cancelado: ${error.message}`, timestamp: context.timestamp });
+            return context.reply(`El duelo fue cancelado: ${error.message}`);
         }
     } else if (action === "rechazar") {
         if (pendingDuels.has(context.username)) {
             pendingDuels.delete(context.username);
-            context.io.emit("sendmsg", { user: "🤖 Bot", message: `${context.username} ha rechazado el duelo.`, timestamp: context.timestamp });
+            return context.reply(`${context.username} ha rechazado el duelo.`);
         } else {
-            context.io.emit("sendmsg", { user: "🤖 Bot", message: `No tienes duelos pendientes @${context.username}.`, timestamp: context.timestamp });
+            context.reply(`No tienes duelos pendientes @${context.username}.`);
         }
     } else {
         const targetName = context.args.slice(0, -1).join(" ");
         const amount = Number.parseInt(context.args.at(-1));
 
         try {
-            context.gamblingService.validateTransaction(context.users, context.username, targetName, amount);
+            context.container.gamblingService.validateTransaction(context.users, context.username, targetName, amount);
 
             if (pendingDuels.has(targetName)) {
-                 return context.io.emit("sendmsg", { user: "🤖 Bot", message: `${context.username} el usuario ${targetName} ya tiene un duelo pendiente.`, timestamp: context.timestamp });
+                return context.reply(`${context.username} el usuario ${targetName} ya tiene un duelo pendiente.`);
             }
 
             pendingDuels.set(targetName, { challengerName: context.username, amount });
-            context.io.emit("sendmsg", { user: "🤖 Bot", message: `**${context.username}** ha retado a ${targetName} con ${amount}€, usa el comando /gambling duelo (**aceptar** || **rechazar**)`, timestamp: context.timestamp });
+            return context.reply(`**${context.username}** ha retado a ${targetName} con ${amount}€, usa el comando /gambling duelo (**aceptar** || **rechazar**)`);
         } catch (error) {
-            context.io.emit("sendmsg", { user: "🤖 Bot", message: `${context.username}, ${error.message}`, timestamp: context.timestamp });
+            return context.reply(`${context.username}, ${error.message}`)
         }
     }
 }

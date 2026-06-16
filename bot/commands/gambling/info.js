@@ -5,13 +5,13 @@ export const params = [
 ];
 
 /**
- * @param {import("./types/CommandContext.js").CommandContext} context 
+ * @param {import("./types/CommandContext.js").GamblingContext} context 
  */
 export function execute(context) {
     const targetName = context.args.join(" ") || context.username;
-    const gambler = context.users.find(u => u.name === targetName);
+    const gambler = context.currentUser;
     if (!gambler) {
-        return context.io.emit("sendmsg", { user: "🤖 Bot", message: `${targetName} no existe o no tiene estadísticas de apuestas @${context.username}`, timestamp: context.timestamp });
+        return context.reply(`${targetName} no existe o no tiene estadísticas de apuestas @${context.username}`);
     }
 
     const totalGames = (gambler.totalEarnings || 0) + (gambler.spend || 0);
@@ -35,7 +35,5 @@ export function execute(context) {
         .addField("🏦 Banca rota", `${gambler.bankRupt} veces`)
         .addField("💳 Deuda", `${gambler.debt}€`);
 
-
-    return context.io.emit("sendmsg", { user: "🤖 Bot", message: embed.toString(), timestamp: context.timestamp })
-
+    return context.reply(embed.toString());
 }

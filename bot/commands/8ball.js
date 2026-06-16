@@ -1,13 +1,17 @@
 export const params = [
     {name: "pregunta", type: "string", required: true}
 ];
-export function execute({ args, socket, io, username }) {
-    const timestamp = new Date().getTime();
 
-    const pregunta = args[0];
+/**
+ * 
+ * @param {import('../core/BotContext.js').BotContext} context 
+ */
+export function execute(context) {
+
+    const pregunta = context.args[0];
 
     if(!pregunta) {
-        io.emit("sendmsg", { user: "🤖 Bot", message: "Debes hacerme una pregunta.", timestamp });
+        context.reply("Debes hacerme una pregunta.")
         return;
     }
     
@@ -35,7 +39,5 @@ export function execute({ args, socket, io, username }) {
 
     const respuesta = respuestas[Math.floor(Math.random() * respuestas.length)];
 
-    const response = `**Pregunta:**\n${pregunta}\n\n**Respuesta:**\n${respuesta}`;
-
-    io.emit("sendmsg", { user: "🤖 Bot", message: response, timestamp });
+    context.reply(`**Pregunta:**\n${pregunta}\n\n**Respuesta:**\n${respuesta}`)
 }
