@@ -26,7 +26,7 @@ export function execute(context) {
     if (!user.lastDaily) user.lastDaily = 0;
     if (!user.dailyStreak) user.dailyStreak = 0;
 
-    const timeSinceLastDaily = timestamp - user.lastDaily;
+    const timeSinceLastDaily = context.timestamp - user.lastDaily;
     const isWeekday = now.getDay() >= 1 && now.getDay() <= 5; // Lunes a viernes
 
     // Verificar si es día laborable
@@ -139,7 +139,7 @@ export function execute(context) {
     // Aplicar recompensa
     user.money += actualEarningsPayingDebt(totalReward, currenData[userIndex]);
     user.totalEarnings += totalReward;
-    user.lastDaily = timestamp;
+    user.lastDaily = context.timestamp;
 
     // Mensaje de confirmación
     const message = user.dailyStreak === 1
