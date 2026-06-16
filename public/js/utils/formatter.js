@@ -1,5 +1,6 @@
 import { FormatContext } from "./formatters/FormatContext.js";
 import {
+    EscapeHtmlRule,
     EmojiRule,
     MarkdownAndCodeRule,
     ListRule,
@@ -12,6 +13,7 @@ export class MessageFormatter {
         this.appState = appState;
         
         this.rules = [
+            EscapeHtmlRule,
             EmojiRule,
             MarkdownAndCodeRule,
             ListRule,

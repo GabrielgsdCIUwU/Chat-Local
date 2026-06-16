@@ -21,7 +21,7 @@ export const MarkdownAndCodeRule = (text) => {
         if (part.startsWith("```") && part.endsWith("```")) {
             const match = part.match(/^```(\w+)?\n?([\s\S]*?)```$/);
             const lang = match[1] || "plaintext";
-            const safeCode = match[2].replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const safeCode = match[2];
             return `<pre class="bg-gray-900 text-sm rounded-lg p-3 overflow-x-auto"><code class="language-${lang}">${safeCode}</code></pre>`;
         }
         
@@ -89,3 +89,13 @@ export const ReplyRule = (text, context) => {
     
     return `${replyHtml}${text}`;
 };
+
+//region EscapeHtmlRule
+export const EscapeHtmlRule = (text) => {
+    return text
+        .replaceAll('&', "&amp;")
+        .replaceAll('<', "&lt;")
+        .replaceAll('>', "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll('\'', "&#039;");
+}
