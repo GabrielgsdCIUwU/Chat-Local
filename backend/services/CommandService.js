@@ -20,6 +20,7 @@ export class CommandService {
         const commands = {};
 
         for (const file of files) {
+            if (file.isDirectory() && (file.name === "types")) continue;
             const fullPath = path.join(dir, file.name);
 
             if (file.isDirectory()) {
@@ -39,7 +40,7 @@ export class CommandService {
                 const module = await import(pathToFileURL(fullPath).href).catch(() => null);
 
                 if (commands[commandName]) {
-                    commands[commandName] = { ...commands[commandName], parms: module?.params || [] };
+                    commands[commandName] = { ...commands[commandName], params: module?.params || [] };
                 } else {
                     commands[commandName] = { params: module?.params || [] };
                 }
