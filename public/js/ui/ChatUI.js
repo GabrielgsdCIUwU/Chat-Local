@@ -20,7 +20,6 @@ export class ChatUI {
             if (this.isTabActive) {
                 document.title = "ChatGSD";
                 this.unreadCount = 0;
-                this.removeUnreadMarker();
             }
         });
 
