@@ -30,7 +30,7 @@ export function execute(context) {
             sender.money -= moneyLost;
             if (sender.money < 0) sender.money = 0;
 
-            context.io.emit("sendmsg", { user: "🤖 Bot", message: `${context.username} ha intentado robar a ${targetName} pero ha fallado, perdiendo ${cantidadPerdido}€`, timestamp: context.timestamp });
+            context.io.emit("sendmsg", { user: "🤖 Bot", message: `${context.username} ha intentado robar a ${targetName} pero ha fallado, perdiendo ${moneyLost}€`, timestamp: context.timestamp });
         }
     } catch (error) {
         context.io.emit("sendmsg", { user: "🤖 Bot", message: `${context.username}, ${error.message}`, timestamp: context.timestamp });
