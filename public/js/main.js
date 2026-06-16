@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             renderMessageReactions(msg);
         }
 
-        if (container) container.scrollTop = container.scrollHeight;
+        if (container) container.scrollTop = 0;
         historyQueue = [];
     };
 
