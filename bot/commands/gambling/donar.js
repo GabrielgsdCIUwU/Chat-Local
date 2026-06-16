@@ -1,4 +1,4 @@
-import { actualEarningsPayingDebt } from "../../utility/actualEarningsPayingDebt.js";
+import { calculateNetEarnings } from "../../utility/calculateNetEarnings.js";
 
 export const params = [
     { name: "usuario", type: "user", required: true },
@@ -16,7 +16,7 @@ export function execute(context) {
         const { sender, target } = context.gamblingService.validateTransaction(context.users, context.username, targetName, amount);
 
         sender.money -= amount;
-        target.money += actualEarningsPayingDebt(amount, target);
+        target.money += calculateNetEarnings(amount, target);
 
         if (!sender.donated) sender.donated = 0;
         sender.donated += amount;

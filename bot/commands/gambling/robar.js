@@ -1,4 +1,4 @@
-import { actualEarningsPayingDebt } from "../../utility/actualEarningsPayingDebt.js";
+import { calculateNetEarnings } from "../../utility/calculateNetEarnings.js";
 
 export const params = [
     {name: "usuario", type: "user", required: true},
@@ -21,7 +21,7 @@ export function execute(context) {
 
         if (probability < 0.5) {
             target.money -= amount;
-            sender.money += actualEarningsPayingDebt(amount, sender);
+            sender.money += calculateNetEarnings(amount, sender);
             sender.moneySteal = (sender.moneySteal || 0) + amount;
 
             context.io.emit("sendmsg", { user: "🤖 Bot", message: `${context.username} ha robado ${amount}€ a ${targetName}`, timestamp: context.timestamp });

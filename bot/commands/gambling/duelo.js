@@ -1,4 +1,4 @@
-import { actualEarningsPayingDebt } from "../../utility/actualEarningsPayingDebt.js";
+import { calculateNetEarnings } from "../../utility/calculateNetEarnings.js";
 
 const pendingDuels = new Map();
 export const params = [
@@ -28,7 +28,7 @@ export function execute(context) {
             const result = Math.random();
 
             if (result < 0.5) {
-                accepter.money += actualEarningsPayingDebt(amount, accepter);
+                accepter.money += calculateNetEarnings(amount, accepter);
                 challenger.money = Math.max(0, challenger.money - amount);
                 accepter.duelWin = (accepter.duelWin || 0) + 1;
                 challenger.duelLose = (challenger.duelLose || 0) + 1;
@@ -36,7 +36,7 @@ export function execute(context) {
                 context.io.emit("sendmsg", { user: "🤖 Bot", message: `${context.username} ha ganado el duelo contra ${challengerName} y se lleva ${amount}€`, timestamp: context.timestamp });
             } else {
                 accepter.money = Math.max(0, accepter.money - amount);
-                challenger.money += actualEarningsPayingDebt(amount, challenger);
+                challenger.money += calculateNetEarnings(amount, challenger);
                 accepter.duelLose = (accepter.duelLose || 0) + 1;
                 challenger.duelWin = (accepter.duelWin || 0) + 1;
 

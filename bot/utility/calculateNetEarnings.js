@@ -1,11 +1,11 @@
 /**
- * Calcula la cantidad de ganancias netas. Si el usuario tiene una deuda pendiente, se le quitará el 20% pagando la deuda.
- * @param {number} earning - Cantidad de ganancias en bruto
- * @param {Object} user - Todos los datos del usuario
- * @returns {number} Cantidad de ganancias netas
+ * Calculates net earnings. If the user has a pending debt, 20% of the earnings 
+ * will be deducted to pay off the debt.
+ * @param {number} grossEarning - The gross amount of earnings
+ * @param {Object} user - The user object containing financial data
+ * @returns {number} The net earnings after debt deduction
  */
-
-export function actualEarningsPayingDebt(earning, user) {
+export function calculateNetEarnings(earning, user) {
     let debt = user.debt;
     if (debt > 0) {
         let payDebt = Math.floor(earning * 0.2);

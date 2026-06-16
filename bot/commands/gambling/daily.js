@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { actualEarningsPayingDebt } from "../../utility/actualEarningsPayingDebt.js";
+import { calculateNetEarnings } from "../../utility/calculateNetEarnings.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -137,7 +137,7 @@ export function execute(context) {
     const totalReward = baseAmount + streakBonus;
 
     // Aplicar recompensa
-    user.money += actualEarningsPayingDebt(totalReward, user);
+    user.money += calculateNetEarnings(totalReward, user);
     user.totalEarnings += totalReward;
     user.lastDaily = context.timestamp;
 

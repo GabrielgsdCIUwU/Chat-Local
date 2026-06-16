@@ -1,4 +1,4 @@
-import { actualEarningsPayingDebt } from "../../utility/actualEarningsPayingDebt.js";
+import { calculateNetEarnings } from "../../utility/calculateNetEarnings.js";
 export const params = [
     {name: "cantidad", type: "number", required: true}
 ];
@@ -22,7 +22,7 @@ export function execute(context) {
     const playerNumber = Math.floor(Math.random() * 6) + 1;
 
     if (playerNumber === winnerNumber) {
-        gambler.money += actualEarningsPayingDebt(bet * 5, gambler);
+        gambler.money += calculateNetEarnings(bet * 5, gambler);
         context.io.emit("sendmsg", { user: "🤖 Bot", message: `¡Felicidades ${context.username}! Has ganado ${bet * 5}€ en la lotería.`, timestamp: context.timestamp });
     } else {
         gambler.money -= bet;
