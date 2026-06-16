@@ -73,7 +73,6 @@ export function execute(context) {
 
     function isNonCountDay(date) {
         const formatted = date.toISOString().split("T")[0];
-        console.log(nonCountDays.includes(formatted));
         return nonCountDays.includes(formatted)
     }
 
@@ -87,8 +86,6 @@ export function execute(context) {
     } else {
         const lastDailyDate = new Date(user.lastDaily);
 
-        console.log(`${isBusinessDay(lastDailyDate)} : ${isNonCountDay(lastDailyDate)}`)
-        
         // Si el último daily fue en día laborable y que no sea festivo
         if (isBusinessDay(lastDailyDate) || isNonCountDay(lastDailyDate)) {
             const nextExpectedBusinessDay = getNextBusinessDay(lastDailyDate);
