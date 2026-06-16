@@ -40,17 +40,16 @@ export class AuthService {
             isMatch = (password === user.passwd);
             if (isMatch) {
                 user.passwd = await bcrypt.hash(password, 10);
-                await this.userRepository.save(user);
             }
         }
 
         if (!isMatch) throw new Error('Usuario o contraseña incorrecta!');
 
-        if (Array.isArray(user.location)) {
-            if (!user.location.includes(ip)) throw new Error("IP no autorizada para esta cuenta.");
-        } else if (user.location !== ip) {
-            throw new Error("Tienes que iniciar sesión en el mismo sitio que has creado la cuenta!");
+        if (user.location !== ip) {
+            user.location = ip;
         }
+
+        await this.userRepository.save(user);
 
         return {name: user.name, roles: user.roles, color: user.color};
     }
