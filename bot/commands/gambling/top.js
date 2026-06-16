@@ -1,9 +1,11 @@
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
-export function execute({  args, socket, io, username, currenData, userIndex, actualEarningsPayingDebt}) {
-    const timestamp = new Date().getTime();
-
-    const sorted = [...currenData].sort((a, b) => {
+/**
+ * 
+ * @param {import("./types/CommandContext.js").GamblingContext} context 
+ */
+export function execute(context) {
+    const sorted = [...context.users].sort((a, b) => {
         if (b.money !== a.money) {
             return b.money - a.money;
         }
@@ -18,20 +20,14 @@ export function execute({  args, socket, io, username, currenData, userIndex, ac
         return bWinRate - aWinRate;
     });
 
-    const topList = sorted.slice(0, 10).map((user, index) => {
+    const embed = new EmbedMessage();
+    
+    sorted.slice(0, 10).forEach((user, index) => {
         const totalDuels = (user.duelWin || 0) + (user.duelLose || 0);
-        const winRate = totalDuels > 0
-        ? ((user.duelWin / totalDuels) * 100).toFixed(2) + "%"
-        : "N/A";
+        const winRate = totalDuels > 0 ? ((user.duelWin / totalDuels) * 100).toFixed(2) + "%" : "N/A";
 
-        return {
-            name: `#${index + 1} ${user.name}`,
-            value: `💰 ${user.money}€ | 🥊 Éxito en duelos: ${winRate}`
-        };
+        embed.addField(`#${index + 1} ${user.name}`, `💰 ${user.money}€ | 🥊 Éxito en duelos: ${winRate}`);
     });
 
-    const embed = new EmbedMessage();
-    topList.forEach(entry => embed.addField(entry.name, entry.value));
-
-    io.emit("sendmsg", { user: "🤖 Bot", message: `🏆 Ranking de riqueza\n${embed.toString()}`, timestamp });
+    context.reply(`🏆 **Ranking de Riqueza**\n${embed.toString()}`)`;`
 }

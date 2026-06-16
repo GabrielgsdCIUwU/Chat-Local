@@ -1,70 +1,40 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath, pathToFileURL } from "url";
-import { actualEarningsPayingDebt } from "../utility/actualEarningsPayingDebt.js";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { CommandLoader } from "../../backend/core/CommandLoader.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const subcommandsPath = path.join(__dirname, "./gambling");
 
-// Función para cargar y ejecutar un subcomando
-async function loadSubcommand(subcommandName) {
-    try {
-        const subcommandPath = pathToFileURL(path.join(subcommandsPath, `${subcommandName}.js`)).href;
-        return await import(subcommandPath);
-    } catch (error) {
-        return null;
+/**
+ * 
+ * @param {import('../core/BotContext.js').BotContext} context 
+ */
+export async function execute(context) {
+    if (!context.subcommands || context.subcommands.length === 0) {
+        return context.reply("Debes especificar un subcomando.");
     }
-}
 
+    const subcommandName = context.subcommands[0];
+    const subcommandLoaded = await CommandLoader.load(subcommandsPath, subcommandName);
 
-export function execute({ args, socket, io, username }) {
+    if (!subcommandLoaded?.execute) {
+        return context.reply(`El subcomando "${subcommandName}" no existe.`);
+    }
 
-    const timestamp = new Date().getTime();
-    const gamblingFilePath = path.join(__dirname, "../../public/json/gambling.json");
+    try {
+        await context.container.gamblingRepository.executeTransaction((users) => {
+            const currentUser = context.container.gamblingService.ensureUserExists(users, context.username);
 
-    fs.readFile(gamblingFilePath, "utf-8", async (err, data) => {
-        if (err) {
-            console.error("Error al leer el archivo de gambling:", err);
-            io.emit("sendmsg", { user: "🤖 Bot", message: "Hubo un error al ejecutar el comando", timestamp })
-            return;
-        }
+            context.currentUser = currentUser;
+            context.users = users;
 
-        let currenData = JSON.parse(data);
-        const userIndex = currenData.findIndex((user) => user.name === username);
-
-        if (userIndex === -1) {
-            const newGambler = { name: username, money: 100, totalEarnings: 0, spend: 0, timesSteal: 0, moneySteal: 0, duelWin: 0, duelLose: 0, bankRupt: 0, debt: 0 };
-            currenData.push(newGambler);
-            fs.writeFile(gamblingFilePath, JSON.stringify(currenData, null, 2), "utf-8", (err) => {
-                if (err) {
-                    console.error("Error al guardar al nuevo gambler:", err);
-                    io.emit("sendmsg", { user: "🤖 Bot", message: "Hubo un error al ejecutar el comando", timestamp });
-                    return;
-                }
-                io.emit("sendmsg", { user: "🤖 Bot", message: "Se te acaba de registrar, ejecuta otra vez el comando. LET'S GO GAMBLING!", timestamp })
-            });
-            return;
-        }
-        
-        const subcommandName = args[0];
-        const subcommand = await loadSubcommand(subcommandName);
-        try {
-            if (subcommand && subcommand.execute) {
-                subcommand.execute({ args: args.slice(1), socket, io, username, currenData, userIndex, actualEarningsPayingDebt });
-            }
-        } catch (err) {
-            console.log(err)
-            io.emit("sendmsg", { user: "🤖 Bot", message: `El subcomando "${subcommandName}" no existe.`, timestamp });
-        }
-
-        //region actualizar datos
-        fs.writeFile(gamblingFilePath, JSON.stringify(currenData, null, 2), "utf-8", (err) => {
-            if (err) {
-                console.error("Error al actualizar los datos de gambling:", err);
-                return io.emit("sendmsg", { user: "🤖 Bot", message: "Hubo un error al guardar los cambios, se ha vuelto al estado anterior", timestamp });
-            }
+            subcommandLoaded.execute(context);
         });
-    });
+    } catch (err) {
+        console.error(`Error executing gambling subcommand ${subcommandName}:`, err);
+        context.reply("Hubo un error al ejecutar el comando.");
+    }
 }

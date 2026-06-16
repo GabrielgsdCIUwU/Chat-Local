@@ -1,5 +1,17 @@
-export function execute({ args, socket, io, msg }) {
-    const timestamp = new Date().getTime();
+export const params = [
+    {name: "valorar", type: "string", required: true}
+];
+/**
+ * 
+ * @param {import('../core/BotContext.js').BotContext} context 
+ */
+export function execute(context) {
+    const valoracion = context.args[0];
+
+    if(!valoracion) {
+        context.reply("Debes hacerme una pregunta.")
+        return;
+    }
 
 
     function random() {
@@ -8,9 +20,7 @@ export function execute({ args, socket, io, msg }) {
         return v;
     }
 
-    const texto = `${msg.replace("/bot rate", "").trim()}`
+    const response = `Yo le doy a ${valoracion.trim()} un ${random()}`
 
-    const response = `Yo le doy a ${texto} un ${random()}`
-
-    io.emit("sendmsg", { user: "🤖 Bot", message: response, timestamp });
+    context.reply(response);
 }
