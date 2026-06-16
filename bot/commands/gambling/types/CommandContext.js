@@ -1,10 +1,10 @@
 /**
- * @typedef {Object} CommandContext
- * @property {string[]} args
- * @property {*} io
- * @property {string} username
- * @property {Object} users
- * @property {import("../../../../backend/services/GamblingService.js").GamblingService} gamblingService
- * @property {number} timestamp
+ * 
+ * @typedef {import("../../../core/BotContext.js").BotContext} BotContext
+ * @typedef {import("../../../../backend/repositories/GamblingRepository.js").Gambler} Gambler
+ */
+
+/**
+ * @typedef {BotContext & {currentUser: Gambler, users: Gambler[] }} GamblingContext
  */
  export {};
