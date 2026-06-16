@@ -5,6 +5,7 @@ import fs from "fs";
 import multer from "multer";
 import sizeOf from "image-size";
 import { isAuthenticated } from "./middlewares/isAuthenticated.js";
+import { container } from "../backend/core/DIContainer.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,39 +29,7 @@ const upload = multer({ storage: storageEmoji });
 
 
 
-router.get("/emoji", isAuthenticated, (req, res) => {
-    const images = [];
-    const imgDir = path.join(__dirname, "../resources/emojis");
-
-    const files = fs.readdirSync(imgDir);
-    files.forEach((file) => {
-        const fullPath = path.join(imgDir, file);
-
-        const dimensions = sizeOf(fullPath);
-        images.push({
-            name: path.parse(file).name,
-            width: dimensions.width,
-            height: dimensions.height,
-            url: `/resources/emojis/${file}`
-        });
-    });
-
-    res.json(images)
-});
-
-router.post(
-    "/emoji",
-    upload.single("emoji"),
-    (req, res) => {
-        if (!req.file) return res.status(400).send("No se ha subido una imagen.");
-
-        const file = req.file
-        const targetPath = path.join(__dirname, "../resources/waitlist", file.originalname)
-
-        fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-
-        return res.status(200).send("Se ha subido la imagen correctamente")
-    }
-);
+router.get("/emoji", isAuthenticated, container.mediaController.getEmojis);
+router.post("/emoji", upload.single("emoji"), container.mediaController.uploadEmoji);
 
 export default router;
