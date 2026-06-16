@@ -1,25 +1,47 @@
 import { appState } from './core/state.js';
 import { ChatUI } from './ui/ChatUI.js';
 import { InputUI } from './ui/InputUI.js';
+import { EmojiUI } from './ui/EmojiUI.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
     const socket = io({ autoConnect: false });
 
-    const chatUI = new ChatUI(socket);
     const inputUI = new InputUI(socket);
     inputUI.init();
+
+    const emojiUI = new EmojiUI(socket, inputUI);
+    const chatUI = new ChatUI(socket, emojiUI);
 
     let donatorsLoaded = false;
     let historyQueue = [];
 
-    const attemptRenderHistory = () => {
-        if (donatorsLoaded && historyQueue.length > 0) {
-            historyQueue.sort((a, b) => b.timestamp - a.timestamp);
-            document.getElementById("mensajes").innerHTML = "";
-            historyQueue.forEach(msg => chatUI.renderMessage(msg, true));
-            chatUI.container.scrollTop = 0;
-            historyQueue = [];
+    const renderMessageReactions = (msg) => {
+        if (!msg.emojis || !Array.isArray(msg.emojis)) return;
+
+        for (const emojiData of msg.emojis) {
+            const matchedEmoji = appState.emojiCache.find(c => c.name === emojiData.name);
+            if (!matchedEmoji) continue;
+
+            for (const userName of emojiData.users) {
+                chatUI.renderReaction(msg.timestamp, matchedEmoji.name, matchedEmoji.url, userName);
+            }
         }
+    };
+
+    const attemptRenderHistory = () => {
+        if (!donatorsLoaded || historyQueue.length === 0) return;
+
+        historyQueue.sort((a, b) => b.timestamp - a.timestamp);
+        const container = document.getElementById("mensajes");
+        if (container) container.innerHTML = "";
+        
+        for (const msg of historyQueue) {
+            chatUI.renderMessage(msg, true);
+            renderMessageReactions(msg);
+        }
+
+        if (container) container.scrollTop = container.scrollHeight;
+        historyQueue = [];
     };
 
     socket.on("connect", () => {
@@ -40,6 +62,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     socket.on("messageHistory", (history) => {
         historyQueue = history;
         attemptRenderHistory();
+    });
+
+    socket.on("newReaction", (data) => {
+        chatUI.renderReaction(data.messageId, data.emojiName, data.emojiUrl, data.userName);
     });
 
     socket.on("sendmsg", (msg) => {
