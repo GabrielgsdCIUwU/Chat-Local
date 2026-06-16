@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import session from "express-session";
 import passport from "passport";
 import FileStoreFactory from "session-file-store";
+import rateLimit from "express-rate-limit";
 
 import webrouter from "./backend/api/router/paginas.js";
 import admin from "./backend/api/router/admin.js";
@@ -20,6 +21,13 @@ dotenv.config({ path: path.join(__dirname, ".env") });
 
 const app = express();
 app.set('trust proxy', 1);
+
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 20,
+    message: "Demasiados intentos, por favor espera 15 minutos"
+});
+
 app.use(express.json());
 app.disable("x-powered-by");
 
@@ -51,6 +59,9 @@ app.use("/resources", express.static(path.join(__dirname, "resources")));
 app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
+
+app.use("/login", authLimiter);
+app.use("/register", authLimiter);
 
 app.use(webrouter);
 app.use(admin);
