@@ -42,7 +42,7 @@ export class GamblingService {
         const target = users.find(u => u.name === targetName);
 
         if (!target) throw new Error(`El usuario ${targetName} no existe como gambler.`);
-        if (Number.isNaN(amount) || amount <= 0) throw new Error("La cantidad no es válida.");
+        if (Number.isSafeInteger(amount) || amount <= 0) throw new Error("La cantidad no es válida.");
         if (sender.money < amount) throw new Error(`No tienes sufciente dinero. Tienes ${sender.money}€.`);
 
         return { sender, target };
