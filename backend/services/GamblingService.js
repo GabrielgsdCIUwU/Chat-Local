@@ -21,7 +21,7 @@ export class GamblingService {
                 timesSteal: 0, moneySteal: 0, duelWin: 0, duelLose: 0,
                 bankRupt: 0, debt: 0
             };
-            user.push(user);
+            users.push(user);
         }
         return user;
     }
