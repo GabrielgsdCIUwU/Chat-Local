@@ -10,6 +10,8 @@ import { MessageRepository } from "../repositories/MessageRepository.js";
 import { AuthService } from "../services/AuthService.js";
 import { UserService } from "../services/UserService.js";
 import { GamblingService } from "../services/GamblingService.js";
+import { CommandService } from "../services/CommandService.js";
+import { EmojiService } from "../services/EmojiService.js";
 
 import { AuthController } from "../controllers/AuthController.js";
 import { ProfileController } from "../controllers/ProfileController.js";
