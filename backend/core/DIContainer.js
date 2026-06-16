@@ -12,6 +12,9 @@ import { UserService } from "../services/UserService.js";
 import { GamblingService } from "../services/GamblingService.js";
 
 import { AuthController } from "../controllers/AuthController.js";
+import { ProfileController } from "../controllers/ProfileController.js";
+import { ChatController } from "../controllers/ChatController.js";
+import { MediaController } from "../controllers/MediaController.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,6 +26,8 @@ class DIContainer {
         this.gamblingJsonPath = path.join(__dirname, "../../public/json/gambling.json");
         this.messagesJsonPath = path.join(__dirname, "../../public/json/messages.json");
         this.profileDir = path.join(__dirname, "../../resources/profiles");
+        this.commandsDir = path.join(__dirname, "../../bot/commands");
+        this.emojisDir = path.join(__dirname, "../../resources/emojis");
 
         this.userDbClient = new JsonDatabaseClient(this.usersJsonPath);
         this.bannedDbClient = new JsonDatabaseClient(this.bannedJsonPath);
@@ -37,8 +42,13 @@ class DIContainer {
         this.authService = new AuthService(this.userRepository, this.bannedIpRepository);
         this.userService = new UserService(this.userRepository, this.profileDir);
         this.gamblingService = new GamblingService(this.gamblingRepository);
+        this.commandService = new CommandService(this.commandsDir);
+        this.emojiService = new EmojiService(this.emojisDir);
 
         this.authController = new AuthController(this.authService, this.userRepository);
+        this.profileController = new ProfileController(this.userService);
+        this.chatController = new ChatController(this.commandService);
+        this.mediaController = new MediaController(this.emojiService);
     }
 }
 
