@@ -2,8 +2,9 @@ import { MessageFormatter } from '../utils/formatter.js';
 import { appState } from '../core/state.js';
 
 export class ChatUI {
-    constructor(socket) {
+    constructor(socket, emojiUI) {
         this.socket = socket;
+        this.emojiUI = emojiUI;
         this.container = document.getElementById("mensajes");
         this.unreadCount = 0;
         this.isTabActive = true;
@@ -90,6 +91,46 @@ export class ChatUI {
         }
     }
 
+    //region renderReaction
+     renderReaction(messageId, emojiName, emojiUrl, userName) {
+        const messageElement = this.container.querySelector(`[data-timestamp="${messageId}"]`);
+        if (!messageElement) return;
+
+        if (!appState.reactionsMap.has(messageId)) appState.reactionsMap.set(messageId, new Map());
+        const emojiMap = appState.reactionsMap.get(messageId);
+        if (!emojiMap.has(emojiName)) emojiMap.set(emojiName, new Set());
+        const userSet = emojiMap.get(emojiName);
+        userSet.add(userName);
+
+        let emojiContainer = messageElement.querySelector(".reactions-container");
+        if (!emojiContainer) {
+            emojiContainer = document.createElement("div");
+            emojiContainer.className = "reactions-container flex flex-wrap gap-2 mt-2";
+            messageElement.appendChild(emojiContainer);
+        }
+
+        let reactionBadge = emojiContainer.querySelector(`[data-emoji="${emojiName}"]`);
+        if (reactionBadge) {
+            reactionBadge.querySelector('.count').textContent = userSet.size;
+            reactionBadge.querySelector('.tooltip-text').textContent = Array.from(userSet).join(', ');
+        } else {
+            reactionBadge = document.createElement("div");
+            reactionBadge.className = "reaction-badge bg-gray-800 rounded-full px-2 py-1 flex items-center gap-1 cursor-pointer hover:bg-gray-600 relative group";
+            reactionBadge.dataset.emoji = emojiName;
+            
+            reactionBadge.innerHTML = `
+                <img src="${emojiUrl}" alt="${emojiName}" class="w-5 h-5">
+                <span class="text-xs text-gray-300 count">${userSet.size}</span>
+                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 hidden group-hover:block bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10 tooltip-text">
+                    ${Array.from(userSet).join(', ')}
+                </div>
+            `;
+
+            reactionBadge.onclick = () => this.socket.emit("addReaction", { messageId, emojiName, emojiUrl });
+            emojiContainer.appendChild(reactionBadge);
+        }
+    }
+    
     //region updateMessage
     updateMessage(data) {
         const item = this.container.querySelector(`[data-timestamp="${data.timestamp}"]`);
@@ -165,6 +206,12 @@ export class ChatUI {
             `<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>`,
             "Marcar como no leído",
             () => this.markAsUnread(item)
+        ));
+
+        menuContent.appendChild(createOption(
+            `<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
+            "Reaccionar",
+            () => this.emojiUI.openModal(msg.timestamp)
         ));
 
         if (msg.user === appState.currentUser) {
