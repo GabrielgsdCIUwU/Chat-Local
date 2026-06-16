@@ -1,0 +1,45 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { JsonDatabaseClient } from "../database/JsonDatabaseClient.js";
+import { UserRepository } from "../repositories/UserRepository.js";
+import { BannedIpRepository } from "../repositories/BannedIpRepository.js";
+import { GamblingRepository } from "../repositories/GamblingRepository.js";
+import { MessageRepository } from "../repositories/MessageRepository.js";
+
+import { AuthService } from "../services/AuthService.js";
+import { UserService } from "../services/UserService.js";
+import { GamblingService } from "../services/GamblingService.js";
+
+import { AuthController } from "../controllers/AuthController.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+class DIContainer {
+    constructor() {
+        this.usersJsonPath = path.join(__dirname, "../json/users.json");
+        this.bannedJsonPath = path.join(__dirname, "../json/usersban.json");
+        this.gamblingJsonPath = path.join(__dirname, "../../public/json/gambling.json");
+        this.messagesJsonPath = path.join(__dirname, "../../public/json/messages.json");
+        this.profileDir = path.join(__dirname, "../../resources/profiles");
+
+        this.userDbClient = new JsonDatabaseClient(this.usersJsonPath);
+        this.bannedDbClient = new JsonDatabaseClient(this.bannedJsonPath);
+        this.gamblingDbClient = new JsonDatabaseClient(this.gamblingJsonPath);
+        this.messageDbClient = new JsonDatabaseClient(this.messagesJsonPath);
+
+        this.userRepository = new UserRepository(this.userDbClient);
+        this.bannedIpRepository = new BannedIpRepository(this.bannedDbClient);
+        this.gamblingRepository = new GamblingRepository(this.gamblingDbClient);
+        this.messageRepository = new MessageRepository(this.messageDbClient);
+
+        this.authService = new AuthService(this.userRepository, this.bannedIpRepository);
+        this.userService = new UserService(this.userRepository, this.profileDir);
+        this.gamblingService = new GamblingService(this.gamblingRepository);
+
+        this.authController = new AuthController(this.authService, this.userRepository);
+    }
+}
+
+export const container = new DIContainer();
