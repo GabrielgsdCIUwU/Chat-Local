@@ -4,11 +4,11 @@ import { fileURLToPath } from "node:url";
 import fs from "node:fs";
 import multer from "multer";
 
-import { container } from "../backend/core/DIContainer.js";
+import { container } from "../../core/DIContainer.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);   
-const profileDir = path.join(__dirname, "../resources/profiles");     
+const profileDir = path.join(__dirname, "../../../resources/profiles");     
 
 const router = express.Router();
 

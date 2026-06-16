@@ -12,15 +12,15 @@ const router = express.Router();
 
 
 router.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "../public/views/index.html"));
+    res.sendFile(path.join(__dirname, "../../../public/views/index.html"));
 });
 
 router.get("/login", (req, res) => {
-    res.sendFile(path.join(__dirname, "../public/views/login.html"));
+    res.sendFile(path.join(__dirname, "../../../public/views/login.html"));
 });
 
 router.get("/register", (req, res) => {
-    res.sendFile(path.join(__dirname, "../public/views/register.html"));
+    res.sendFile(path.join(__dirname, "../../../public/views/register.html"));
 });
 
 router.get("/md/:user", (req, res) => {
@@ -34,14 +34,14 @@ router.get("/md/:user", (req, res) => {
 router.get("/perfil", isAuthenticated, async (req, res) => {
     const isDonor = await isUserDonate(req);
     if (isDonor) {
-        res.sendFile(path.join(__dirname, "../public/views/perfil.html"));
+        res.sendFile(path.join(__dirname, "../../../public/views/perfil.html"));
     } else {
         res.redirect("/donar");
     }
 });
 
 router.get("/donar", (req, res) => {
-    res.sendFile(path.join(__dirname, "../public/views/donar.html"));
+    res.sendFile(path.join(__dirname, "../../../public/views/donar.html"));
 });
 
 export default router;

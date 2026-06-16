@@ -24,14 +24,14 @@ const __dirname = path.dirname(__filename);
 
 class DIContainer {
     constructor() {
-        this.usersJsonPath = path.join(__dirname, "../json/users.json");
-        this.bannedJsonPath = path.join(__dirname, "../json/usersban.json");
-        this.gamblingJsonPath = path.join(__dirname, "../../public/json/gambling.json");
-        this.messagesJsonPath = path.join(__dirname, "../../public/json/messages.json");
+        this.usersJsonPath = path.join(__dirname, "../data/users.json");
+        this.bannedJsonPath = path.join(__dirname, "../data/usersban.json");
+        this.gamblingJsonPath = path.join(__dirname, "../data/gambling.json");
+        this.messagesJsonPath = path.join(__dirname, "../data/messages.json");
         this.profileDir = path.join(__dirname, "../../resources/profiles");
         this.commandsDir = path.join(__dirname, "../../bot/commands");
         this.emojisDir = path.join(__dirname, "../../resources/emojis");
-        this.spamJsonPath = path.join(__dirname, "../../public/json/spamer.json");
+        this.spamJsonPath = path.join(__dirname, "../data/spamer.json");
 
         this.userDbClient = new JsonDatabaseClient(this.usersJsonPath);
         this.bannedDbClient = new JsonDatabaseClient(this.bannedJsonPath);

@@ -5,7 +5,7 @@ import fs from "fs";
 import multer from "multer";
 import sizeOf from "image-size";
 import { isAuthenticated } from "./middlewares/isAuthenticated.js";
-import { container } from "../backend/core/DIContainer.js";
+import { container } from "../../core/DIContainer.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

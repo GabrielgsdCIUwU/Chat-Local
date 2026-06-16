@@ -1,12 +1,12 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { JsonDatabaseClient } from '../../backend/database/JsonDatabaseClient.js';
-import { ROLES } from '../../backend/core/constants.js';
+import { JsonDatabaseClient } from '../../../database/JsonDatabaseClient.js';
+import { ROLES } from '../../../core/constants.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const usersDb = new JsonDatabaseClient(path.join(__dirname, "../../backend/json/users.json"));
+const usersDb = new JsonDatabaseClient(path.join(__dirname, "../../../data/users.json"));
 
 /**
  * Checks if the user in the current session has Donor or Admin privileges.

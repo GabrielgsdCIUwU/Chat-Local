@@ -5,7 +5,7 @@ import path from "node:path";
 import { Server as SocketIOServer } from "socket.io";
 
 import { app, sessionMiddleware, __dirname } from "./app.js";
-import privateRouter from "./router/private.js";
+import privateRouter from "./backend/api/router/private.js";
 import setupSockets from "./socket/socketHandler.js";
 
 const USE_HTTPS = process.env.USE_HTTPS === "true";

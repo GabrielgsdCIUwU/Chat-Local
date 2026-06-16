@@ -13,7 +13,7 @@ export default function registerUserEvents(io, socket, user) {
     // Obtener Donadores
     socket.on("whoDonate", async () => {
         try {
-            const data = await fs.readFile(path.join(__dirname, "../../backend/json/users.json"), "utf8");
+            const data = await fs.readFile(path.join(__dirname, "../../backend/data/users.json"), "utf8");
             const users = JSON.parse(data);
             const donators = users
                 .filter(u => u.roles.includes("Donador") || u.roles.includes("Admin"))

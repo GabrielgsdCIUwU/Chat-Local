@@ -5,7 +5,7 @@ import { dirname, resolve } from "node:path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const filePath = resolve(__dirname, "../../public/json/chistes.json");
+const filePath = resolve(__dirname, "../../backend/data/chistes.json");
 const data = await readFile(filePath, "utf-8");
 const chistes = JSON.parse(data);
 

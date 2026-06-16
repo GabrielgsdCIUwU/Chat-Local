@@ -10,7 +10,7 @@ export default function(io) {
     router.get("/reload", (req, res) => {
         if (req.ip === "::1" || req.ip === "::ffff:127.0.0.1") {
             io.emit("reload");
-            res.sendFile(path.join(__dirname, "../public/views/reload.html"));
+            res.sendFile(path.join(__dirname, "../../../public/views/reload.html"));
         } else {
             res.status(403).send("Forbidden");
         }

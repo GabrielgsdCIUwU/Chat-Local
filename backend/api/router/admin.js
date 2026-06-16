@@ -1,5 +1,5 @@
 import express from "express";
-import { container } from "../backend/core/DIContainer.js";
+import { container } from "../../core/DIContainer.js";
 
 const router = express.Router();
 

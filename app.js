@@ -6,11 +6,11 @@ import session from "express-session";
 import passport from "passport";
 import FileStoreFactory from "session-file-store";
 
-import webrouter from "./router/paginas.js";
-import admin from "./router/admin.js";
-import chat from "./router/chat.js";
-import img from "./router/img.js";
-import perfil from "./router/perfil.js";
+import webrouter from "./backend/api/router/paginas.js";
+import admin from "./backend/api/router/admin.js";
+import chat from "./backend/api/router/chat.js";
+import img from "./backend/api/router/img.js";
+import perfil from "./backend/api/router/perfil.js";
 
 const FileStore = FileStoreFactory(session);
 const __filename = fileURLToPath(import.meta.url);
