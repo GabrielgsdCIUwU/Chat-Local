@@ -105,8 +105,15 @@ export class RPGService {
 
             const timePassed = now - profile.lastWork;
             if (timePassed < RPG_CONFIG.WORK_COOLDOWN_MS) {
-                const timeLeft = Math.ceil((RPG_CONFIG.WORK_COOLDOWN_MS - timePassed) / 1000);
-                throw new Error(`Estás cansado. Debes esperar ${timeLeft} segundos para volver a trabajar`);
+                const totalSeconds = Math.ceil((RPG_CONFIG.WORK_COOLDOWN_MS - timePassed) / 1000);
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                
+                let timeString = "";
+                if (minutes > 0) timeString += `${minutes} minuto(s) y `;
+                timeString += `${seconds} segundo(s)`;
+
+                throw new Error(`Estás cansado. Debes esperar ${timeString} para volver a trabajar.`);
             }
 
             profile.lastWork = now;
