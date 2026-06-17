@@ -17,6 +17,7 @@ import { EconomyService } from "../services/EconomyService.js";
 import { CommandService } from "../services/CommandService.js";
 import { EmojiService } from "../services/EmojiService.js";
 import { ChatFilterService } from "../services/ChatFilterService.js";
+import { RPGService } from "../services/RPGService.js";
 
 import { AuthController } from "../controllers/AuthController.js";
 import { ProfileController } from "../controllers/ProfileController.js";
@@ -64,6 +65,11 @@ class DIContainer {
         this.commandService = new CommandService(this.commandsDir);
         this.emojiService = new EmojiService(this.emojisDir);
         this.chatFilterService = new ChatFilterService(this.spamDbClient);
+        this.rpgService = new RPGService(
+            this.economyService,
+            this.inventoryRepository,
+            this.jobRepository
+        );
 
         this.authController = new AuthController(this.authService, this.userRepository);
         this.profileController = new ProfileController(this.userService);
