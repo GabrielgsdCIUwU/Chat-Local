@@ -9,6 +9,7 @@ import { EconomyRepository } from "../repositories/EconomyRepository.js";
 import { MessageRepository } from "../repositories/MessageRepository.js";
 import { InventoryRepository } from "../repositories/InventoryRepository.js";
 import { JobRepository } from "../repositories/JobRepository.js";
+import { AuctionRepository } from "../repositories/AuctionRepository.js";
 
 import { AuthService } from "../services/AuthService.js";
 import { UserService } from "../services/UserService.js";
@@ -18,6 +19,7 @@ import { CommandService } from "../services/CommandService.js";
 import { EmojiService } from "../services/EmojiService.js";
 import { ChatFilterService } from "../services/ChatFilterService.js";
 import { RPGService } from "../services/RPGService.js";
+import { MarketService } from "../services/MarketService.js";
 
 import { AuthController } from "../controllers/AuthController.js";
 import { ProfileController } from "../controllers/ProfileController.js";
@@ -40,6 +42,7 @@ class DIContainer {
         this.spamJsonPath = path.join(__dirname, "../data/spamer.json");
         this.inventoryJsonPath = path.join(__dirname, "../data/inventory.json");
         this.jobsJsonPath = path.join(__dirname, "../data/jobs.json");
+        this.auctionsJsonPath = path.join(__dirname, "../data/auctions.json");
 
         this.userDbClient = new JsonDatabaseClient(this.usersJsonPath);
         this.bannedDbClient = new JsonDatabaseClient(this.bannedJsonPath);
@@ -49,6 +52,7 @@ class DIContainer {
         this.spamDbClient = new JsonDatabaseClient(this.spamJsonPath);
         this.inventoryDbClient = new JsonDatabaseClient(this.inventoryJsonPath);
         this.jobsDbClient = new JsonDatabaseClient(this.jobsJsonPath);
+        this.auctionsDbClient = new JsonDatabaseClient(this.auctionsJsonPath);
 
         this.userRepository = new UserRepository(this.userDbClient);
         this.bannedIpRepository = new BannedIpRepository(this.bannedDbClient);
@@ -57,6 +61,7 @@ class DIContainer {
         this.messageRepository = new MessageRepository(this.messageDbClient);
         this.inventoryRepository = new InventoryRepository(this.inventoryDbClient);
         this.jobRepository = new JobRepository(this.jobsDbClient);
+        this.auctionRepository = new AuctionRepository(this.auctionsDbClient);
 
         this.authService = new AuthService(this.userRepository, this.bannedIpRepository);
         this.userService = new UserService(this.userRepository, this.profileDir);
@@ -69,6 +74,11 @@ class DIContainer {
             this.economyService,
             this.inventoryRepository,
             this.jobRepository
+        );
+        this.marketService = new MarketService(
+            this.economyService,
+            this.inventoryRepository,
+            this.auctionRepository
         );
 
         this.authController = new AuthController(this.authService, this.userRepository);
