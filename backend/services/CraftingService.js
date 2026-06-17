@@ -116,4 +116,28 @@ export class CraftingService {
 
         return activeBuffsInfo
     }
+
+    /**
+     * Consumes (removes) a specific buff from a user if it is currently active.
+     * @param {string} username - The user to check.
+     * @param {string} buffId - The ID of the buff to consume (e.g., "anti_rob").
+     * @returns {Promise<boolean>} True if the buff was active and consumed, false otherwise.
+     */
+    async consumeBuff(username, buffId) {
+        let wasConsumed = false;
+        const now = Date.now();
+
+        await this.jobRepo.executeTransaction((jobs) => {
+            const profile = jobs.find(j => j.name === username);
+            if (profile?.activeBuffs?.[buffId]) {
+                if (now < profile.activeBuffs[buffId]) {
+                    wasConsumed = true;
+                }
+                delete profile.activeBuffs[buffId];
+                return jobs;
+            }
+        });
+
+        return wasConsumed;
+    }
 }
