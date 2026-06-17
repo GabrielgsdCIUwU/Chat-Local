@@ -31,6 +31,7 @@ createFile('./backend/data/economy.json', []);
 createFile('./backend/data/inventory.json', []);
 createFile('./backend/data/jobs.json', []);
 createFile('./backend/data/auctions.json', []);
+createFile('./backend/data/guilds.json', []);
 createFile('./public/json/encuesta.json', { "pregunta": "Ejemplo", "opciones": [], "hiden": "True" });
 
 createFolder('./resources/emojis');
