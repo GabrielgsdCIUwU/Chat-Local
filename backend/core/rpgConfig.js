@@ -109,6 +109,22 @@ export const RPG_CONFIG = {
                 }
             }
         }
+    },
+    CRAFTING_RECIPES: {
+        "haste_potion": {
+            name: "Haste Potion",
+            description: "Reduce /rpg work cooldown en un 50% por 1 hora.",
+            cost: { "Piedra": 15, "Madera": 15 },
+            buffId: "haste",
+            durationMs: 60 * 60 * 1000
+        },
+        "thief_ward": {
+            name: "Thief Ward",
+            description: "Bloquea el siguiente intento de robar contra tí (dura 24 horas).",
+            cost: { "Hierro": 10, "Pez": 15 },
+            buffId: "anti_rob",
+            durationMs: 24 * 60 * 60 * 1000
+        }
     }
 };
 
@@ -137,4 +153,21 @@ export const RPG_CONFIG = {
 
  /**
  * @typedef {keyof typeof RPG_CONFIG.MARKET_PRICES} MarketItem
+ */
+
+/**
+ * @typedef {Object} CraftingRecipe
+ * @property {string} name
+ * @property {string} description
+ * @property {Partial<Record<MarketItem, number>>} cost
+ * @property {string} buffId
+ * @property {number} durationMs
+ */
+
+ /**
+ * @typedef {keyof typeof RPG_CONFIG.CRAFTING_RECIPES} CraftingItem
+ */
+
+/**
+ * @typedef {typeof RPG_CONFIG.CRAFTING_RECIPES[CraftingItem]} CraftingRecipe
  */

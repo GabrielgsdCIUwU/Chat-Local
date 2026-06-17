@@ -4,6 +4,7 @@
  * @property {string} job - Job ID (miner, lumberjack, fisherman)
  * @property {number} toolLevel - Current tool level
  * @property {number} lastWork - Timestamp of the last /rpg work execution
+ * @property {Object} activeBuffs - All current active buffs 
  */
 
 export class JobRepository {
