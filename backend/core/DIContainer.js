@@ -20,6 +20,7 @@ import { EmojiService } from "../services/EmojiService.js";
 import { ChatFilterService } from "../services/ChatFilterService.js";
 import { RPGService } from "../services/RPGService.js";
 import { MarketService } from "../services/MarketService.js";
+import { CraftingService } from "../services/CraftingService.js";
 
 import { AuthController } from "../controllers/AuthController.js";
 import { ProfileController } from "../controllers/ProfileController.js";
@@ -79,6 +80,10 @@ class DIContainer {
             this.economyService,
             this.inventoryRepository,
             this.auctionRepository
+        );
+        this.craftingService = new CraftingService(
+            this.inventoryRepository,
+            this.jobRepository
         );
 
         this.authController = new AuthController(this.authService, this.userRepository);
