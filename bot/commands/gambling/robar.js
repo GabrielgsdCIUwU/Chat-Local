@@ -21,6 +21,17 @@ export async function execute(context) {
         if (victimWallet.money < amount) return context.reply(`La víctima solo tiene ${victimWallet.money}€.`);
 
         gambler.timesSteal = (gambler.timesSteal || 0) + 1;
+
+        const wardConsumed = await context.container.craftingService.consumeBuff(targetName, "anti_rob");
+
+        if (wardConsumed) {
+            const moneyLost = amount + Math.floor(Math.random() * (amount / 4));
+            const actuallyLost = await eco.forceRemoveFunds(context.username, moneyLost);
+            gambler.spend = (gambler.spend || 0) + actuallyLost;
+
+            return context.reply(`🛡️ **¡THIEF WARD ACTIVADO!**\n¡**${targetName}** estaba protegido por una poderosa barrera mágica! La protección se rompió al bloquear el robo y **${context.username}** fue repelido violentamente, teniendo que pagar una multa de **${actuallyLost}€**.`);
+        }
+
         const probability = Math.random();
 
         if (probability < 0.5) {
