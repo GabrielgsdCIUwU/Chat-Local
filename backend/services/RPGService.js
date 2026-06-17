@@ -28,6 +28,7 @@ export class RPGService {
             profile = { name: username, job: null, toolLevel: 1, lastWork: 0 };
             jobs.push(profile);
         }
+        return profile;
     }
 
     /**
@@ -42,7 +43,7 @@ export class RPGService {
      */
     #ensureInventory(inventories, username) {
         let inventory = inventories.find(i => i.name === username);
-        if (inventory) {
+        if (!inventory) {
             inventory = { name: username, items: {} };
             inventories.push(inventory);
         }
