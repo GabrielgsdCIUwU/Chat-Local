@@ -45,7 +45,7 @@ export class AuctionRepository {
     async removeAuction(id) {
         let wasRemoved = false;
         await this.db.update((auctions) => {
-            const index = auctions.indIndex(a => a.id === id);
+            const index = auctions.findIndex(a => a.id === id);
             if (index !== -1) {
                 auctions.splice(index, 1);
                 wasRemoved = true;
