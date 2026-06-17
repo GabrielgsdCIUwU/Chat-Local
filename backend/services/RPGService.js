@@ -103,9 +103,18 @@ export class RPGService {
             const profile = this.#ensureJobProfile(jobs, username);
             if (!profile.job) throw new Error("Aun no tienes oficio. Usa `/rpg unirse`");
 
+            let currentCooldownMs = RPG_CONFIG.WORK_COOLDOWN_MS;
+            if (profile.activeBuffs?.["haste"]) {
+                if (now < profile.activeBuffs["haste"]) {
+                    currentCooldownMs = Math.floor(currentCooldownMs / 2);
+                } else {
+                    delete profile.activeBuffs["haste"];
+                }
+            }
+
             const timePassed = now - profile.lastWork;
-            if (timePassed < RPG_CONFIG.WORK_COOLDOWN_MS) {
-                const totalSeconds = Math.ceil((RPG_CONFIG.WORK_COOLDOWN_MS - timePassed) / 1000);
+            if (timePassed < currentCooldownMs) {
+                const totalSeconds = Math.ceil((currentCooldownMs - timePassed) / 1000);
                 const minutes = Math.floor(totalSeconds / 60);
                 const seconds = totalSeconds % 60;
                 
