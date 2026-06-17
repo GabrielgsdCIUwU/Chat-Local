@@ -111,3 +111,30 @@ export const RPG_CONFIG = {
         }
     }
 };
+
+/**
+ * @typedef {Object} LootDrop
+ * @property {string} item
+ * @property {number} chance
+ * @property {number} min
+ * @property {number} max
+ */
+
+/**
+ * @typedef {Object} ToolConfig
+ * @property {string} name
+ * @property {{money:number, items:Record<string, number>}} upgradeCost
+ * @property {LootDrop[]} lootTable
+ */
+
+/**
+ * @typedef {Object} JobConfig
+ * @property {string} name
+ * @property {string} emoji
+ * @property {string} actionText
+ * @property {Record<number, ToolConfig>} tools
+ */
+
+ /**
+ * @typedef {keyof typeof RPG_CONFIG.MARKET_PRICES} MarketItem
+ */
