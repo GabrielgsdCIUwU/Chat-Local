@@ -6,28 +6,36 @@ import { EmbedMessage } from "../../utility/EmbedMessage.js";
  */
 export function execute(context) {
     const sorted = [...context.users].sort((a, b) => {
-        if (b.money !== a.money) {
-            return b.money - a.money;
+        const aEarnings = a.totalEarnings || 0;
+        const bEarnings = b.totalEarnings || 0;
+
+        if (bEarnings !== aEarnings) {
+            return bEarnings - aEarnings;
         }
 
-        // Calcular % exito en duelos
-        const aDuels = (a.duelWin || 0) + (a.duelLose || 0);
-        const bDuels = (b.duelWin || 0) + (b.duelLose || 0);
+        const aTotal = aEarnings + (a.spend || 0);
+        const bTotal = bEarnings + (b.spend || 0);
+        
+        const aSuccess = aTotal > 0 ? (aEarnings / aTotal) * 100 : 0;
+        const bSuccess = bTotal > 0 ? (bEarnings / bTotal) * 100 : 0;
 
-        const aWinRate = aDuels > 0 ? a.duelWin / aDuels : 0;
-        const bWinRate = bDuels > 0 ? b.duelWin / bDuels : 0;
-
-        return bWinRate - aWinRate;
+        return bSuccess - aSuccess;
     });
 
     const embed = new EmbedMessage();
     
     sorted.slice(0, 10).forEach((user, index) => {
-        const totalDuels = (user.duelWin || 0) + (user.duelLose || 0);
-        const winRate = totalDuels > 0 ? ((user.duelWin / totalDuels) * 100).toFixed(2) + "%" : "N/A";
+        const earnings = user.totalEarnings || 0;
+        const spend = user.spend || 0;
+        const totalGames = earnings + spend;
+        
+        const success = totalGames > 0 ? ((earnings / totalGames) * 100).toFixed(2) + "%" : "0.00%";
 
-        embed.addField(`#${index + 1} ${user.name}`, `💰 ${user.money}€ | 🥊 Éxito en duelos: ${winRate}`);
+        embed.addField(
+            `#${index + 1} ${user.name}`, 
+            `💶 Ganado en apuestas: ${earnings}€ | 📊 Éxito: ${success}`
+        );
     });
 
-    context.reply(`🏆 **Ranking de Riqueza**\n${embed.toString()}`)`;`
+    context.reply(`🏆 **Top Ludópatas (Ranking del Casino)**\n${embed.toString()}`);
 }

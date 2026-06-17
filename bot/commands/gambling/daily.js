@@ -124,16 +124,17 @@ export function execute(context) {
     const randomBonusFactor = Math.floor(Math.random() * (100 - 25 + 1)) + 25;
     const streakBonus = user.dailyStreak * randomBonusFactor;
     const totalReward = baseAmount + streakBonus;
+    const actualEarnings = context.container.economyService.addFunds(context.username, totalReward);
 
     // Aplicar recompensa
-    user.money += calculateNetEarnings(totalReward, user);
+    user.money += actualEarnings;
     user.totalEarnings += totalReward;
     user.lastDaily = context.timestamp;
 
     // Mensaje de confirmación
     const message = user.dailyStreak === 1
-        ? `${context.username} ha reclamado su daily. Tu racha ha comenzado de nuevo. Bonus: +${streakBonus}€. Total recibido: ${totalReward}€`
-        : `${context.username} ha reclamado su daily. Racha actual: ${user.dailyStreak} días. Bonus: +${streakBonus}€. Total recibido: ${totalReward}€`;
+        ? `${context.username} ha reclamado su daily. Tu racha ha comenzado de nuevo. Bonus: +${streakBonus}€. Total recibido: ${actualEarnings}€`
+        : `${context.username} ha reclamado su daily. Racha actual: ${user.dailyStreak} días. Bonus: +${streakBonus}€. Total recibido: ${actualEarnings}€`;
 
     context.reply(message)
 }

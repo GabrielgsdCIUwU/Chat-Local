@@ -1,32 +1,32 @@
-import { calculateNetEarnings } from "../../utility/calculateNetEarnings.js";
 export const params = [
-    {name: "cantidad", type: "number", required: true}
+    { name: "cantidad", type: "number", required: true }
 ];
 
 /**
  * @param {import("./types/CommandContext.js").GamblingContext} context 
  */
-export function execute(context) {
+export async function execute(context) {
     const gambler = context.currentUser;
+    const eco = context.container.economyService;
     const bet = Number.parseInt(context.args[0]);
 
-    if (Number.isNaN(bet) || bet <= 0 || bet > gambler.money) {
-        const msg = bet > gambler.money 
-            ? "¡No puedes hacer gambling si NO TIENES ese dinero!" 
-            : `Apuesta no válida: ${bet}`;
+    if (Number.isNaN(bet) || bet <= 0) return context.reply("Apuesta no válida.");
 
-        return context.reply(msg);
-    }
-
-    const winnerNumber = Math.floor(Math.random() * 6) + 1;
-    const playerNumber = Math.floor(Math.random() * 6) + 1;
-
-    if (playerNumber === winnerNumber) {
-        gambler.money += calculateNetEarnings(bet * 5, gambler);
-        return context.reply(`¡Felicidades ${context.username}! Has ganado ${bet * 5}€ en la lotería.`);
-    } else {
-        gambler.money -= bet;
+    try {
+        await eco.removeFunds(context.username, bet);
         gambler.spend = (gambler.spend || 0) + bet;
-        context.reply(`Lo siento ${context.username}, has perdido ${bet}€ en la lotería.`)
+
+        const winnerNumber = Math.floor(Math.random() * 6) + 1;
+        const playerNumber = Math.floor(Math.random() * 6) + 1;
+
+        if (playerNumber === winnerNumber) {
+            const actualEarnings = await eco.addFunds(context.username, bet * 5);
+            gambler.totalEarnings = (gambler.totalEarnings || 0) + actualEarnings;
+            return context.reply(`🎉 ¡Felicidades ${context.username}! Has ganado ${actualEarnings}€ netos en la lotería.`);
+        } else {
+            return context.reply(`💸 Lo siento ${context.username}, has perdido ${bet}€ en la lotería.`);
+        }
+    } catch (error) {
+        return context.reply(`❌ ${context.username}: ${error.message}`);
     }
 }
