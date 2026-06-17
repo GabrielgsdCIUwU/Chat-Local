@@ -1,9 +1,11 @@
 export class GamblingService {
     /**
      * @param {import('../repositories/GamblingRepository.js').GamblingRepository} gamblingRepository 
+     * @param {import('./EconomyService.js').EconomyService} economyService
      */
-    constructor(gamblingRepository) {
+    constructor(gamblingRepository, economyService) {
         this.repo = gamblingRepository;
+        this.economy = economyService;
     }
 
     /**
@@ -17,34 +19,12 @@ export class GamblingService {
         let user = users.find(u => u.name === username);
         if (!user) {
             user = {
-                name: username, money: 100, totalEarnings: 0, spend: 0,
+                name: username, totalEarnings: 0, spend: 0,
                 timesSteal: 0, moneySteal: 0, duelWin: 0, duelLose: 0,
-                bankRupt: 0, debt: 0
+                bankRupt: 0
             };
             users.push(user);
         }
         return user;
-    }
-
-    /**
-     * Validates if a transaction between two users is valid.
-     * @param {import('../repositories/GamblingRepository.js').Gambler[]} users 
-     * @param {string} senderName 
-     * @param {string} targetName 
-     * @param {number} amount
-     * @throws {Error} If validation fails.
-     * @returns {{sender: import('../repositories/GamblingRepository.js').Gambler, target: import('../repositories/GamblingRepository.js').Gambler}}
-     */
-    validateTransaction(users, senderName, targetName, amount) {
-        if (senderName === targetName) throw new Error("No puedes interacturar contigo mismo.");
-
-        const sender = users.find(u => u.name === senderName);
-        const target = users.find(u => u.name === targetName);
-
-        if (!target) throw new Error(`El usuario ${targetName} no existe como gambler.`);
-        if (Number.isSafeInteger(amount) || amount <= 0) throw new Error("La cantidad no es válida.");
-        if (sender.money < amount) throw new Error(`No tienes sufciente dinero. Tienes ${sender.money}€.`);
-
-        return { sender, target };
     }
 }
