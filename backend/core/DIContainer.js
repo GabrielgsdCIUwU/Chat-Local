@@ -7,6 +7,8 @@ import { BannedIpRepository } from "../repositories/BannedIpRepository.js";
 import { GamblingRepository } from "../repositories/GamblingRepository.js";
 import { EconomyRepository } from "../repositories/EconomyRepository.js";
 import { MessageRepository } from "../repositories/MessageRepository.js";
+import { InventoryRepository } from "../repositories/InventoryRepository.js";
+import { JobRepository } from "../repositories/JobRepository.js";
 
 import { AuthService } from "../services/AuthService.js";
 import { UserService } from "../services/UserService.js";
@@ -35,6 +37,8 @@ class DIContainer {
         this.commandsDir = path.join(__dirname, "../../bot/commands");
         this.emojisDir = path.join(__dirname, "../../resources/emojis");
         this.spamJsonPath = path.join(__dirname, "../data/spamer.json");
+        this.inventoryJsonPath = path.join(__dirname, "../data/inventory.json");
+        this.jobsJsonPath = path.join(__dirname, "../data/jobs.json");
 
         this.userDbClient = new JsonDatabaseClient(this.usersJsonPath);
         this.bannedDbClient = new JsonDatabaseClient(this.bannedJsonPath);
@@ -42,12 +46,16 @@ class DIContainer {
         this.economyDbClient = new JsonDatabaseClient(this.economyJsonPath);
         this.messageDbClient = new JsonDatabaseClient(this.messagesJsonPath);
         this.spamDbClient = new JsonDatabaseClient(this.spamJsonPath);
+        this.inventoryDbClient = new JsonDatabaseClient(this.inventoryJsonPath);
+        this.jobsDbClient = new JsonDatabaseClient(this.jobsJsonPath);
 
         this.userRepository = new UserRepository(this.userDbClient);
         this.bannedIpRepository = new BannedIpRepository(this.bannedDbClient);
         this.gamblingRepository = new GamblingRepository(this.gamblingDbClient);
         this.economyRepository = new EconomyRepository(this.economyDbClient);
         this.messageRepository = new MessageRepository(this.messageDbClient);
+        this.inventoryRepository = new InventoryRepository(this.inventoryDbClient);
+        this.jobRepository = new JobRepository(this.jobsDbClient);
 
         this.authService = new AuthService(this.userRepository, this.bannedIpRepository);
         this.userService = new UserService(this.userRepository, this.profileDir);
