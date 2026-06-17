@@ -51,7 +51,7 @@ export class EconomyService {
      * The rest is credited to the user's balance.
      * @param {string} username - Username of the wallet owner
      * @param {number} amount - Positive integer amount to add
-     * @returns {number} - The net amount credited to the user's balance after debt repayment
+     * @returns {Promise<number>} - The net amount credited to the user's balance after debt repayment
      * @throws If the amount is not a positive safe integer
      */
     async addFunds(username, amount) {
