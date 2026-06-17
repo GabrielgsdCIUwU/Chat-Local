@@ -16,7 +16,7 @@ export async function execute(context) {
 
         const embed = new EmbedMessage()
             .addField("📌 Usuario", wallet.name)
-            .addField("💰 Dinero actual", `${wallet.money}€`);
+            .addField("💰 Dinero actual", `${wallet.money.toLocaleString('es-ES')}€`);
         
         if (wallet.debt > 0) {
             embed.addField("💳 Deuda pendiente", `${wallet.debt}€`);
