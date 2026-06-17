@@ -28,6 +28,8 @@ createFile('./backend/data/users.json', []);
 createFile('./backend/data/usersban.json', []);
 createFile('./backend/data/gambling.json', []);
 createFile('./backend/data/economy.json', []);
+createFile('./backend/data/inventory.json', []);
+createFile('./backend/data/jobs.json', []);
 createFile('./public/json/encuesta.json', { "pregunta": "Ejemplo", "opciones": [], "hiden": "True" });
 
 createFolder('./resources/emojis');
