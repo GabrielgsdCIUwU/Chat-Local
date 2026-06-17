@@ -29,5 +29,5 @@ export function execute(context) {
         embed.addField(`#${index + 1} ${user.name}`, `💰 ${user.money}€ | 🥊 Éxito en duelos: ${winRate}`);
     });
 
-    context.reply(`🏆 **Ranking de Riqueza**\n${embed.toString()}`)`;`
+    context.reply(`🏆 **Ranking de Riqueza**\n${embed.toString()}`);
 }
