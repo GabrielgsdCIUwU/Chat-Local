@@ -1,14 +1,19 @@
 /**
  * @param {import("./types/CommandContext.js").GamblingContext} context 
  */
-export function execute(context) {
+export async function execute(context) {
     const gamblerBankRupt = context.currentUser;
-    if (gamblerBankRupt.money === 0) {
+    const eco = context.container.economyService;
+
+    try {
         gamblerBankRupt.bankRupt = (gamblerBankRupt.bankRupt || 0) + 1;
-        gamblerBankRupt.debt = (gamblerBankRupt.debt || 0) + 100 + Math.floor(Math.random() * Number.parseInt(gamblerBankRupt.bankRupt) * 10);
-        gamblerBankRupt.money = 100;
-        return context.reply(`${context.username} acaba de llamar al banco y ha vuelto a tener ${gamblerBankRupt.money}, ha llamado a la banca un total de ${gamblerBankRupt.bankRupt} veces`)
-    } else {
-        return context.reply(`${username} tienes ${gamblerBankRupt.money}€, no puedes darte como banca rota`)
+        await eco.declareBankruptcy(context.username, gamblerBankRupt.bankRupt);
+
+        context.reply(`🏦 ${context.username} acaba de llamar al banco y ha vuelto a tener 100€. Ha llamado a la banca un total de ${gambler.bankRupt} veces.`);
+    } catch (error) {
+        gamblerBankRupt.bankRupt -= 1;
+        context.reply(`❌ ${context.username}, ${error.message}`);
     }
+    
+    
 }
