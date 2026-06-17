@@ -22,11 +22,11 @@ const createFolder = (folderPath) => {
 
 console.log('⚙️ Iniciando configuración del entorno...');
 
-createFile('./backend/json/messages.json', []);
-createFile('./backend/json/spamer.json', []);
-createFile('./backend/json/users.json', []);
-createFile('./backend/json/usersban.json', []);
-createFile('./backend/json/gambling.json', []);
+createFile('./backend/data/messages.json', []);
+createFile('./backend/data/spamer.json', []);
+createFile('./backend/data/users.json', []);
+createFile('./backend/data/usersban.json', []);
+createFile('./backend/data/gambling.json', []);
 createFile('./public/json/encuesta.json', { "pregunta": "Ejemplo", "opciones": [], "hiden": "True" });
 
 createFolder('./resources/emojis');
