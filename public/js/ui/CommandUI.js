@@ -13,6 +13,12 @@ export class CommandUI {
         this.suggestionBox.className = "absolute bg-gray-700 text-white rounded-lg shadow-xl hidden z-50 border border-gray-600";
         this.suggestionBoxContainer.appendChild(this.suggestionBox);
 
+        this.paramSuggestionBox = document.createElement("div");
+        this.paramSuggestionBox.className = "absolute bg-gray-800 text-white rounded-md shadow-2xl hidden z-[100] border border-gray-600 max-h-40 overflow-y-auto min-w-[120px]";
+        document.body.appendChild(this.paramSuggestionBox);
+
+        this.paramSelectedIndex = -1;
+
         this.reset();
     }
 
@@ -211,12 +217,15 @@ export class CommandUI {
             const input = document.createElement("input");
             input.type = "text";
             input.className = "bg-transparent text-white text-xs w-20 focus:outline-none placeholder-gray-400 border-none";
-            input.placeholder = p.type === "user" ? "Usuario..." : "...";
+            input.placeholder = p.type === "user" ? "Usuario..." : (p.values ? "Opciones..." : "...");
             input.dataset.paramName = p.name;
+            input.autocomplete = "off";
 
+            input.addEventListener("focus", () => this.showParamAutocomplete(input, p));
             input.addEventListener("input", () => {
                 this.paramValues[p.name] = input.value;
                 this.validateParameters();
+                this.showParamAutocomplete(input, p);
             });
 
             input.addEventListener("keydown", (e) => {
@@ -241,13 +250,95 @@ export class CommandUI {
         this.parameterChips.querySelector("input")?.focus();
     }
 
+    showParamAutocomplete(input, paramDef) {
+        let options = [];
+        
+        if (paramDef.type === "user") {
+            options = appState.userNames;
+        } else if (paramDef.values && Array.isArray(paramDef.values)) {
+            options = paramDef.values;
+        }
+
+        if (!options || options.length === 0) {
+            this.hideParamAutocomplete();
+            return;
+        }
+
+        const query = input.value.toLowerCase();
+        const filtered = options.filter(opt => opt.toLowerCase().includes(query));
+
+        if (!filtered.length) {
+            this.hideParamAutocomplete();
+            return;
+        }
+
+        this.paramSuggestionBox.innerHTML = "";
+        this.paramSelectedIndex = -1;
+
+        filtered.forEach((opt, idx) => {
+            const item = document.createElement("div");
+            item.className = "px-3 py-2 cursor-pointer hover:bg-gray-600 text-sm";
+            item.textContent = opt;
+            
+            item.addEventListener("click", () => {
+                input.value = opt;
+                this.paramValues[paramDef.name] = opt;
+                this.validateParameters();
+                this.hideParamAutocomplete();
+                
+                const inputs = Array.from(this.parameterChips.querySelectorAll("input"));
+                const currentIndex = inputs.indexOf(input);
+                if (currentIndex < inputs.length - 1) {
+                    inputs[currentIndex + 1].focus();
+                } else {
+                    this.textarea.focus();
+                }
+            });
+            
+            this.paramSuggestionBox.appendChild(item);
+        });
+
+        const rect = input.getBoundingClientRect();
+        this.paramSuggestionBox.style.top = `${rect.bottom + window.scrollY + 5}px`;
+        this.paramSuggestionBox.style.left = `${rect.left + window.scrollX}px`;
+        
+        this.paramSuggestionBox.classList.remove("hidden");
+    }
+
+    hideParamAutocomplete() {
+        this.paramSuggestionBox.classList.add("hidden");
+        this.paramSelectedIndex = -1;
+    }
+
+    highlightParamSuggestion() {
+        Array.from(this.paramSuggestionBox.children).forEach((el, idx) => {
+            el.classList.toggle("bg-gray-600", idx === this.paramSelectedIndex);
+        });
+        
+        if (this.paramSelectedIndex >= 0) {
+            const activeEl = this.paramSuggestionBox.children[this.paramSelectedIndex];
+            activeEl.scrollIntoView({ block: "nearest" });
+        }
+    }
+
     validateParameters() {
         if (!this.activeParams.length) {
             if (this.btnSend) this.btnSend.disabled = false;
             return;
         }
-        const missing = this.activeParams.filter(p => p.required && (!this.paramValues[p.name]?.trim()));
-        if (this.btnSend) this.btnSend.disabled = missing.length > 0;
+        const hasError = this.activeParams.some(p => {
+            const val = (this.paramValues[p.name] || "").trim().toLowerCase();
+            
+            if (p.required && !val) return true;
+            
+            if (val && p.values) {
+                const lowerValues = p.values.map(v => v.toLowerCase());
+                if (!lowerValues.includes(val)) return true;
+            }
+            
+            return false;
+        });
+        if (this.btnSend) this.btnSend.disabled = hasError;
     }
 
     sendCommand() {
