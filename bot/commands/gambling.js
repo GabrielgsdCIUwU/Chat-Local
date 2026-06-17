@@ -25,13 +25,13 @@ export async function execute(context) {
     }
 
     try {
-        await context.container.gamblingRepository.executeTransaction((users) => {
+        await context.container.gamblingRepository.executeTransaction(async (users) => {
             const currentUser = context.container.gamblingService.ensureUserExists(users, context.username);
 
             context.currentUser = currentUser;
             context.users = users;
 
-            subcommandLoaded.execute(context);
+            await subcommandLoaded.execute(context);
         });
     } catch (err) {
         console.error(`Error executing gambling subcommand ${subcommandName}:`, err);
