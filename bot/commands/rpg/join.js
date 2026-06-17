@@ -1,5 +1,8 @@
+import { RPG_CONFIG } from '../../../backend/core/rpgConfig.js';
+
+const availableJobs = Object.keys(RPG_CONFIG.JOBS);
 export const params = [
-    {name: "oficio", "type": "string", required: true}
+    {name: "oficio", "type": "string", required: true, values: availableJobs}
 ];
 
 /**
