@@ -1,5 +1,3 @@
-import { calculateNetEarnings } from "../../utility/calculateNetEarnings.js";
-
 const pendingDuels = new Map();
 export const params = [
     {name: "usuario", type: "user", required: false},
@@ -10,9 +8,10 @@ export const params = [
 /**
  * @param {import("./types/CommandContext.js").GamblingContext} context 
  */
-export function execute(context) {
+export async function execute(context) {
 
     const action = context.args[0];
+    const eco = context.container.economyService;
     
     if (action === "aceptar") {
         if (!pendingDuels.has(context.username)) {
@@ -23,50 +22,49 @@ export function execute(context) {
         pendingDuels.delete(context.username);
 
         try {
-            const { sender: challenger, target: accepter } = context.container.gamblingService.validateTransaction(context.users, challengerName, context.username, amount);
+            const challengerWallet = await eco.getBalance(challengerName);
+            const accepterWallet = await eco.getBalance(context.username);
+            
+            if (challengerWallet.money < amount) return context.reply(`El duelo se cancela: ${challengerName} ya no tiene fondos.`);
+            if (accepterWallet.money < amount) return context.reply(`El duelo se cancela: ${context.username} no tiene fondos.`);
 
             const result = Math.random();
+            const accepterGambler = context.currentUser;
+            const challengerGambler = context.container.gamblingService.ensureUserExists(context.users, challengerName);
 
             if (result < 0.5) {
-                accepter.money += calculateNetEarnings(amount, accepter);
-                challenger.money = Math.max(0, challenger.money - amount);
-                accepter.duelWin = (accepter.duelWin || 0) + 1;
-                challenger.duelLose = (challenger.duelLose || 0) + 1;
-
-                return context.reply(`${context.username} ha ganado el duelo contra ${challengerName} y se lleva ${amount}€`);
+                await eco.transferFunds(challengerName, context.username, amount);
+                accepterGambler.duelWin = (accepterGambler.duelWin || 0) + 1;
+                challengerGambler.duelLose = (challengerGambler.duelLose || 0) + 1;
+                return context.reply(`⚔️ **${context.username}** ha ganado el duelo contra **${challengerName}** y se lleva ${amount}€`);
             } else {
-                accepter.money = Math.max(0, accepter.money - amount);
-                challenger.money += calculateNetEarnings(amount, challenger);
-                accepter.duelLose = (accepter.duelLose || 0) + 1;
-                challenger.duelWin = (accepter.duelWin || 0) + 1;
-
-                return context.reply(`${context.username} ha perdido el duelo contra ${challengerName} y le entrega ${amount}€`)
+                await eco.transferFunds(context.username, challengerName, amount);
+                accepterGambler.duelLose = (accepterGambler.duelLose || 0) + 1;
+                challengerGambler.duelWin = (challengerGambler.duelWin || 0) + 1;
+                return context.reply(`⚔️ **${context.username}** ha perdido el duelo contra **${challengerName}** y le entrega ${amount}€`);
             }
         } catch (error) {
             return context.reply(`El duelo fue cancelado: ${error.message}`);
         }
+        
     } else if (action === "rechazar") {
         if (pendingDuels.has(context.username)) {
             pendingDuels.delete(context.username);
             return context.reply(`${context.username} ha rechazado el duelo.`);
-        } else {
-            context.reply(`No tienes duelos pendientes @${context.username}.`);
         }
     } else {
         const targetName = context.args.slice(0, -1).join(" ");
         const amount = Number.parseInt(context.args.at(-1));
 
-        try {
-            context.container.gamblingService.validateTransaction(context.users, context.username, targetName, amount);
+        if (context.username === targetName) return context.reply("No puedes retarte a ti mismo.");
+        if (Number.isNaN(amount) || amount <= 0) return context.reply("Cantidad no válida.");
 
-            if (pendingDuels.has(targetName)) {
-                return context.reply(`${context.username} el usuario ${targetName} ya tiene un duelo pendiente.`);
-            }
+        const senderWallet = await eco.getBalance(context.username);
+        if (senderWallet.money < amount) return context.reply(`No tienes suficiente dinero para apostar ${amount}€.`);
 
-            pendingDuels.set(targetName, { challengerName: context.username, amount });
-            return context.reply(`**${context.username}** ha retado a ${targetName} con ${amount}€, usa el comando /gambling duelo (**aceptar** || **rechazar**)`);
-        } catch (error) {
-            return context.reply(`${context.username}, ${error.message}`)
-        }
+        if (pendingDuels.has(targetName)) return context.reply(`${context.username} el usuario ${targetName} ya tiene un duelo pendiente.`);
+
+        pendingDuels.set(targetName, { challengerName: context.username, amount });
+        return context.reply(`⚔️ **${context.username}** ha retado a **${targetName}** con ${amount}€. Usa \`/gambling duelo aceptar\` o \`/gambling duelo rechazar\`.`);
     }
 }
