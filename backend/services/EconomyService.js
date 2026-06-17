@@ -138,4 +138,49 @@ export class EconomyService {
         const wallets = await this.repo.getAll();
         return wallets.toSorted((a, b) => b.money - a.money).slice(0, limit);
     }
+
+    /**
+     * Removes funds from a user's wallet, up to the available balance.
+     *
+     * This method never causes the wallet balance to become negative.
+     * If the requested amount exceeds the user's balance, only the
+     * available funds are removed.
+     *
+     * @param {string} username - Username of the wallet owner.
+     * @param {number} amount - Amount to remove.
+     * @returns {Promise<number>} The actual amount removed from the wallet.
+     */
+    async forceRemoveFunds(username, amount) {
+        let removedAmount = 0;
+        await this.repo.executeTransaction((wallets) => {
+            const wallet = this.ensureWalletExists(wallets, username);
+            removedAmount = Math.min(wallet.money, amount);
+            wallet.money -= removedAmount;
+        });
+        return removedAmount;
+    }
+
+    /**
+     * Declares bankruptcy for a user.
+     *
+     * Bankruptcy can only be declared when the user's balance is zero.
+     * The user receives the default starting balance, and an additional
+     * debt is incurred. The debt amount increases based on the number
+     * of previous bankruptcies.
+     *
+     * @param {string} username - Username declaring bankruptcy.
+     * @param {number} bankRuptCount - Number of previous bankruptcies used to scale the new debt.
+     * @returns {Promise<void>}
+     * @throws {Error} If the user still has funds available.
+     */
+    async declareBankruptcy(username, bankRuptCount) {
+        await this.repo.executeTransaction((wallets) => {
+            const wallet = this.ensureWalletExists(wallets, username);
+            if (wallet.money > 0) throw new Error(`Tienes ${wallet.money}€, no puedes declarate en bancarrota`);
+
+            wallet.money = 100;
+
+            wallet.debt += 100 + Math.floor(Math.random() * bankRuptCount * 10);
+        });
+    }
 }
