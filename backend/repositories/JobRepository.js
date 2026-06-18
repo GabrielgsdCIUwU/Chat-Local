@@ -5,6 +5,7 @@
  * @property {number} toolLevel - Current tool level
  * @property {number} lastWork - Timestamp of the last /rpg work execution
  * @property {Object} activeBuffs - All current active buffs 
+ * @property {number} prestigeLevel - Current prestige level
  */
 
 export class JobRepository {
