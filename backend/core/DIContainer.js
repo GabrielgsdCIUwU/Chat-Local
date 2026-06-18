@@ -1,6 +1,8 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { CronManager } from "./CronManager.js";
+
 import { JsonDatabaseClient } from "../database/JsonDatabaseClient.js";
 import { UserRepository } from "../repositories/UserRepository.js";
 import { BannedIpRepository } from "../repositories/BannedIpRepository.js";
@@ -96,6 +98,8 @@ class DIContainer {
         this.profileController = new ProfileController(this.userService);
         this.chatController = new ChatController(this.commandService);
         this.mediaController = new MediaController(this.emojiService);
+
+        this.cronManager = new CronManager(this.marketService);
     }
 }
 
