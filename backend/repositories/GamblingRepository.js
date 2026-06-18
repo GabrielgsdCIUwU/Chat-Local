@@ -23,6 +23,12 @@
         this.db = dbClient;
     }
 
+    /**
+     * Ensures a gambler exists. If not, initializes a new profile.
+     * @param {Gambler[]} users 
+     * @param {string} username 
+     * @returns {Gambler}
+     */
     ensureUser(users, username) {
         let user = users.find(u => u.name === username);
         if (!user) {
