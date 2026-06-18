@@ -23,6 +23,19 @@
         this.db = dbClient;
     }
 
+    ensureUser(users, username) {
+        let user = users.find(u => u.name === username);
+        if (!user) {
+            user = {
+                name: username, totalEarnings: 0, spend: 0,
+                timesSteal: 0, moneySteal: 0, duelWin: 0, duelLose: 0,
+                bankRupt: 0
+            };
+            users.push(user);
+        }
+        return user;
+    }
+
     /**
      * Executes a transaction on the gambling database safely.
      * @param {funtion(Gambler[]: void)} callback - Callback that mutates the users array.
@@ -30,7 +43,7 @@
      */
     async executeTransaction(callback) {
         await this.db.update((users) => {
-            callback(users);
+            await callback(users);
             return users;
         })
     }
