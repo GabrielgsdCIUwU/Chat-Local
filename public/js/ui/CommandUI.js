@@ -233,10 +233,52 @@ export class CommandUI {
             });
 
             input.addEventListener("keydown", (e) => {
-                if (e.key === "Enter") {
+                const isSuggestionOpen = !this.paramSuggestionBox.classList.contains("hidden") && this.paramSuggestionBox.children.length > 0;
+
+                if (isSuggestionOpen) {
+                    if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        this.paramSelectedIndex = (this.paramSelectedIndex + 1) % this.paramSuggestionBox.children.length;
+                        this.highlightParamSuggestion();
+                        return;
+                    } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        this.paramSelectedIndex = this.paramSelectedIndex <= 0 ? this.paramSuggestionBox.children.length - 1 : this.paramSelectedIndex - 1;
+                        this.highlightParamSuggestion();
+                        return;
+                    } else if (e.key === "Enter") {
+                        if (this.paramSelectedIndex >= 0) {
+                            e.preventDefault();
+                            this.paramSuggestionBox.children[this.paramSelectedIndex].click();
+                            return;
+                        }
+                        this.hideParamAutocomplete();
+                    } else if (e.key === "Tab") {
+                        e.preventDefault();
+                        const selectIndex = this.paramSelectedIndex >= 0 ? this.paramSelectedIndex : 0;
+                        this.paramSuggestionBox.children[selectIndex].click();
+                        return;
+                    } else if (e.key === "Escape") {
+                        e.preventDefault();
+                        this.hideParamAutocomplete();
+                        return;
+                    }
+                }
+
+                if (e.key === "Enter" && !e.defaultPrevented) {
                     e.preventDefault();
                     if (!this.btnSend.disabled) {
                         this.sendCommand();
+                    }
+                } else if (e.key === "Tab" && !e.defaultPrevented) {
+                    e.preventDefault();
+                    const inputs = Array.from(this.parameterChips.querySelectorAll("input"));
+                    const currentIndex = inputs.indexOf(input);
+                    const nextIndex = e.shiftKey ? currentIndex - 1 : currentIndex + 1;
+                    if (nextIndex >= 0 && nextIndex < inputs.length) {
+                        inputs[nextIndex].focus();
+                    } else {
+                        this.textarea.focus();
                     }
                 }
             });
@@ -271,7 +313,7 @@ export class CommandUI {
         const query = input.value.toLowerCase();
         const filtered = options.filter(opt => opt.toLowerCase().includes(query));
 
-        if (!filtered.length) {
+        if (!filtered.length || (filtered.length === 1 && filtered[0].toLowerCase() === query)) {
             this.hideParamAutocomplete();
             return;
         }
