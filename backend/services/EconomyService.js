@@ -8,25 +8,6 @@ export class EconomyService {
     }
 
     /**
-     * Ensures that a wallet exists for the specified user.
-     *
-     * If no wallet is found, a new one is created with the default
-     * starting balance and no debt, then added to the collection.
-     *
-     * @param {import('../repositories/EconomyRepository.js').Wallet[]} wallets - Wallets available in the current transaction.
-     * @param {string} username - Username whose wallet should be retrieved.
-     * @returns {import('../repositories/EconomyRepository.js').Wallet} The existing or newly created wallet.
-     */
-    ensureWalletExists(wallets, username) {
-        let wallet = wallets.find(w => w.name === username);
-        if (!wallet) {
-            wallet = { name: username, money: 100, debt: 0 };
-            wallets.push(wallet);
-        }
-        return wallet;
-    }
-
-    /**
      * Retrieves the current wallet information for a user.
      *
      * If the user does not already have a wallet, one is automatically
@@ -38,7 +19,7 @@ export class EconomyService {
     async getBalance(username) {
         let userWallet;
         await this.repo.executeTransaction((wallets) => {
-            userWallet = { ...this.ensureWalletExists(wallets, username) };
+            userWallet = { ...this.repo.ensureWallet(wallets, username) };
         });
         return userWallet;
     }
@@ -59,7 +40,7 @@ export class EconomyService {
 
         let actualEarnings = amount;
         await this.repo.executeTransaction((wallets) => {
-            const wallet = this.ensureWalletExists(wallets, username);
+            const wallet = this.repo.ensureWallet(wallets, username);
 
             if (wallet.debt > 0) {
                 let payDebt = Math.floor(amount * 0.2);
@@ -89,7 +70,7 @@ export class EconomyService {
         if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error("La cantidad no es válida");
 
         await this.repo.executeTransaction((wallets) => {
-            const wallet = this.ensureWalletExists(wallets, username);
+            const wallet = this.repo.ensureWallet(wallets, username);
             if (wallet.money < amount) throw new Error(`No tienes suficience dinero. Tienes ${wallet.money}€`);
             wallet.money -= amount;
         });
@@ -114,8 +95,8 @@ export class EconomyService {
         if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error("La cantidad no es válida");
 
         await this.repo.executeTransaction((wallets) => {
-            const sender = this.ensureWalletExists(wallets, senderName);
-            const target = this.ensureWalletExists(wallets, targetName);
+            const sender = this.repo.ensureWallet(wallets, senderName);
+            const target = this.repo.ensureWallet(wallets, targetName);
 
             if (sender.money < amount) throw new Error(`No tienes suficiente dinero. Tienes ${sender.money}€`);
 
@@ -153,7 +134,7 @@ export class EconomyService {
     async forceRemoveFunds(username, amount) {
         let removedAmount = 0;
         await this.repo.executeTransaction((wallets) => {
-            const wallet = this.ensureWalletExists(wallets, username);
+            const wallet = this.repo.ensureWallet(wallets, username);
             removedAmount = Math.min(wallet.money, amount);
             wallet.money -= removedAmount;
         });
@@ -175,7 +156,7 @@ export class EconomyService {
      */
     async declareBankruptcy(username, bankRuptCount) {
         await this.repo.executeTransaction((wallets) => {
-            const wallet = this.ensureWalletExists(wallets, username);
+            const wallet = this.repo.ensureWallet(wallets, username);
             if (wallet.money > 0) throw new Error(`Tienes ${wallet.money}€, no puedes declarate en bancarrota`);
 
             wallet.money = 100;

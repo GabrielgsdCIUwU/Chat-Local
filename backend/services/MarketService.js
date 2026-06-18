@@ -16,20 +16,6 @@ export class MarketService {
         this.inventoryRepository = inventoryRepository;
         this.auctionRepository = auctionRepository;
     }
-    /**
-     * 
-     * @param {import('../repositories/InventoryRepository.js').UserInventory[]} inventories 
-     * @param {string} username 
-     * @returns {import('../repositories/InventoryRepository.js').UserInventory}
-     */
-    #ensureInventory(inventories, username) {
-        let inventory = inventories.find(i => i.name === username);
-        if (!inventory) {
-            inventory = { name: username, items: {} };
-            inventories.push(inventory);
-        }
-        return inventory;
-    }
 
     /**
      * Publishes a new item on the global auction house.
@@ -45,7 +31,7 @@ export class MarketService {
         if (!Number.isSafeInteger(price) || price <= 0) throw new Error("Precio inválido.");
 
         await this.inventoryRepository.executeTransaction((inventories) => {
-            const inventory = this.#ensureInventory(inventories, sellerName);
+            const inventory = this.inventoryRepository.ensureInventory(inventories, sellerName);
 
             const actualItem = Object.keys(inventory.items).find(k => k.toLowerCase() === itemName.toLowerCase());
             if (!actualItem || inventory.items[actualItem] < amount) {
@@ -100,7 +86,7 @@ export class MarketService {
         await this.economyService.addFunds(auction.seller, auction.price);
 
         await this.inventoryRepository.executeTransaction((inventories) => {
-            const inventory = this.#ensureInventory(inventories, buyerName);
+            const inventory = this.inventoryRepository.ensureInventory(inventories, buyerName);
             inventory.items[auction.itemName] = (inventory.items[auction.itemName] || 0) + auction.amount;
         });
 

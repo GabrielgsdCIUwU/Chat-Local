@@ -13,44 +13,6 @@ export class RPGService {
     }
 
     /**
-     * Ensures that a job profile exists for the specified user.
-     *
-     * If no profile is found, a new one is created with no assigned job,
-     * a level 1 tool, and no previous work activity, then added to the collection.
-     *
-     * @param {import('../repositories/JobRepository.js').JobProfile[]} jobs - Job profiles available in the current transaction.
-     * @param {string} username - Username whose job profile should be retrieved.
-     * @returns {import('../repositories/JobRepository.js').JobProfile} The existing or newly created job profile.
-     */
-    #ensureJobProfile(jobs, username) {
-        let profile = jobs.find(j => j.name === username);
-        if (!profile) {
-            profile = { name: username, job: null, toolLevel: 1, lastWork: 0 };
-            jobs.push(profile);
-        }
-        return profile;
-    }
-
-    /**
-     * Ensures that an inventory exists for the specified user.
-     *
-     * If no inventory is found, a new empty inventory is created and
-     * added to the collection.
-     *
-     * @param {import('../repositories/InventoryRepository.js').UserInventory[]} inventories - Inventories available in the current transaction.
-     * @param {string} username - Username whose inventory should be retrieved.
-     * @returns {import('../repositories/InventoryRepository.js').UserInventory} The existing or newly created inventory.
-     */
-    #ensureInventory(inventories, username) {
-        let inventory = inventories.find(i => i.name === username);
-        if (!inventory) {
-            inventory = { name: username, items: {} };
-            inventories.push(inventory);
-        }
-        return inventory;
-    }
-
-    /**
      * Assigns a profession to a user.
      *
      * If the user already has the specified profession, the operation fails.
@@ -69,7 +31,7 @@ export class RPGService {
         }
 
         await this.jobRepo.executeTransaction((jobs) => {
-            const profile = this.#ensureJobProfile(jobs, username);
+            const profile = this.jobRepo.ensureJobProfile(jobs, username);
             if (profile.job === jobKeyLowerCase) {
                 throw new Error(`Ya eres ${RPG_CONFIG.JOBS[jobKeyLowerCase].name}`);
             }
@@ -100,8 +62,8 @@ export class RPGService {
         const now = Date.now();
 
         await this.jobRepo.executeTransaction((jobs) => {
-            const profile = this.#ensureJobProfile(jobs, username);
-            if (!profile.job) throw new Error("Aun no tienes oficio. Usa `/rpg unirse`");
+            const profile = this.jobRepo.ensureJobProfile(jobs, username);
+            if (!profile.job) throw new Error("Aun no tienes oficio. Usa `/rpg join`");
 
             let currentCooldownMs = RPG_CONFIG.WORK_COOLDOWN_MS;
             if (profile.activeBuffs?.["haste"]) {
@@ -146,7 +108,7 @@ export class RPGService {
         }
 
         await this.inventoryRepo.executeTransaction((inventories) => {
-            const inv = this.#ensureInventory(inventories, username);
+            const inv = this.inventoryRepo.ensureInventory(inventories, username);
             for (const [item, amount] of Object.entries(obtainedItems)) {
                 inv.items[item] = (inv.items[item] || 0) + amount;
             }
@@ -206,7 +168,7 @@ export class RPGService {
         await this.economy.removeFunds(username, costMoney);
 
         await this.inventoryRepo.executeTransaction((inventories) => {
-            const inventory = this.#ensureInventory(inventories, username);
+            const inventory = this.inventoryRepo.ensureInventory(inventories, username);
             for (const [reqItem, reqAmount] of Object.entries(costItems)) {
                 inventory.items[reqItem] -= reqAmount;
                 if (inventory.items[reqItem] === 0) delete inventory.items[reqItem];
@@ -214,7 +176,7 @@ export class RPGService {
         });
 
         await this.jobRepo.executeTransaction((jobs) => {
-            const profile = this.#ensureJobProfile(jobs, username);
+            const profile = this.jobRepo.ensureJobProfile(jobs, username);
             profile.toolLevel = nextLevel;
         });
 
@@ -250,7 +212,7 @@ export class RPGService {
         const totalValue = pricePerUnit * amount;
 
         await this.inventoryRepo.executeTransaction((inventories) => {
-            const inventory = this.#ensureInventory(inventories, username);
+            const inventory = this.inventoryRepo.ensureInventory(inventories, username);
             const userAmount = inventory.items[actualItemName] || 0;
 
             if (userAmount < amount) {
@@ -306,13 +268,13 @@ export class RPGService {
         }
 
         await this.inventoryRepo.executeTransaction((inventories) => {
-            const inventory = this.#ensureInventory(inventories, username);
+            const inventory = this.inventoryRepo.ensureInventory(inventories, username);
             inventory.items = {};
         });
 
         let newPrestigeLevel = 1;
         await this.jobRepo.executeTransaction((jobs) => {
-            const profile = this.#ensureJobProfile(jobs, username);
+            const profile = this.jobRepo.ensureJobProfile(jobs, username);
             profile.toolLevel = 1;
             profile.prestigeLevel = (profile.prestigeLevel || 0) + 1;
             newPrestigeLevel = profile.prestigeLevel;
