@@ -21,15 +21,26 @@ export class EmojiService {
 
         files.forEach((file) => {
             const fullPath = path.join(this.emojisDir, file);
-            const dimensions = sizeOf(fullPath);
-            images.push({
-                name: path.parse(file).name,
-                width: dimensions.width,
-                height: dimensions.height,
-                url: `/resources/emojis/${file}`
-            });
+
+            try {
+                const fileBuffer = fs.readFileSync(fullPath);
+                const dimensions = sizeOf(fileBuffer);
+
+                if (!dimensions || typeof dimensions.width !== "number" || typeof dimensions.height !== "number") {
+                    return;
+                }
+
+                images.push({
+                    name: path.parse(file).name,
+                    width: dimensions.width,
+                    height: dimensions.height,
+                    url: `/resources/emojis/${file}`
+                });
+            } catch (error) {
+                console.warn(`No se pudo leer el emoji ${file}:`, error.message);
+            }
         });
-        
+
         return images;
     }
 }
