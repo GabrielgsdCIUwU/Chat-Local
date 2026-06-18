@@ -127,7 +127,7 @@ export class CraftingService {
         let wasConsumed = false;
         const now = Date.now();
 
-        await this.jobRepo.executeTransaction((jobs) => {
+        await this.jobRepository.executeTransaction((jobs) => {
             const profile = jobs.find(j => j.name === username);
             if (profile?.activeBuffs?.[buffId]) {
                 if (now < profile.activeBuffs[buffId]) {
