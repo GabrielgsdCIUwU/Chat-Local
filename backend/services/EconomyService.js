@@ -1,3 +1,5 @@
+import { GAME_CONFIG } from '../core/constants.js';
+
 export class EconomyService {
     /**
      * 
@@ -159,9 +161,11 @@ export class EconomyService {
             const wallet = this.repo.ensureWallet(wallets, username);
             if (wallet.money > 0) throw new Error(`Tienes ${wallet.money}€, no puedes declarate en bancarrota`);
 
-            wallet.money = 100;
+            const base_money = GAME_CONFIG.BANKRUPT_BASE_MONEY;
 
-            wallet.debt += 100 + Math.floor(Math.random() * bankRuptCount * 10);
+            wallet.money = base_money;
+
+            wallet.debt += base_money + Math.floor(Math.random() * bankRuptCount * 10);
         });
     }
 }

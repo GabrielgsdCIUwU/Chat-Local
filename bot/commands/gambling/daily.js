@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { calculateNetEarnings } from "../../utility/calculateNetEarnings.js";
+import { GAME_CONFIG } from "../../../backend/core/constants.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -15,7 +16,7 @@ const nonCountDays = JSON.parse(data);
  */
 
 export function execute(context) {
-    const baseAmount = 250;
+    const baseAmount = GAME_CONFIG.DAILY_BASE_REWARD;
     const twelveHours = 12 * 60 * 60 * 1000;
     const twentyFourHours = 24 * 60 * 60 * 1000;
 

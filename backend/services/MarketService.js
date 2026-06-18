@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { GAME_CONFIG } from "../core/constants.js";
 
 /**
  * @typedef {import('../repositories/AuctionRepository.js').AuctionItem} AuctionItem
@@ -49,7 +50,7 @@ export class MarketService {
             itemName: itemName,
             amount: amount,
             price: price,
-            expiresAt: Date.now() + (24 * 60 * 60 * 1000),
+            expiresAt: Date.now() + (GAME_CONFIG.AUCTION_EXPIRATION_MS),
         };
 
         await this.auctionRepository.executeTransaction((auctions) => {

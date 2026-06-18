@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { GAME_CONFIG } from "../core/constants.js";
 
 export class GuildService {
     /**
@@ -9,7 +10,6 @@ export class GuildService {
     constructor(economyService, guildRepository) {
         this.economyService = economyService;
         this.guildRepository = guildRepository;
-        this.GUILD_CREATION_COST = 50000;
     }
 
     /**
@@ -35,7 +35,7 @@ export class GuildService {
             throw new Error("Ya eres miembro de una guild.");
         }
 
-        await this.economyService.removeFunds(founderName, this.GUILD_CREATION_COST);
+        await this.economyService.removeFunds(founderName, GAME_CONFIG.GUILD_CREATION_COST);
 
         const newGuild = {
             id: crypto.randomBytes(4).toString("hex"),

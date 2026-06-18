@@ -1,3 +1,5 @@
+import { GAME_CONFIG } from "../../../backend/core/constants.js";
+
 /**
  * @param {import("./types/CommandContext.js").GamblingContext} context 
  */
@@ -9,7 +11,7 @@ export async function execute(context) {
         gamblerBankRupt.bankRupt = (gamblerBankRupt.bankRupt || 0) + 1;
         await eco.declareBankruptcy(context.username, gamblerBankRupt.bankRupt);
 
-        context.reply(`🏦 ${context.username} acaba de llamar al banco y ha vuelto a tener 100€. Ha llamado a la banca un total de ${gamblerBankRupt.bankRupt} veces.`);
+        context.reply(`🏦 ${context.username} acaba de llamar al banco y ha vuelto a tener ${GAME_CONFIG.BANKRUPT_BASE_MONEY}€. Ha llamado a la banca un total de ${gamblerBankRupt.bankRupt} veces.`);
     } catch (error) {
         gamblerBankRupt.bankRupt -= 1;
         context.reply(`❌ ${context.username}, ${error.message}`);
