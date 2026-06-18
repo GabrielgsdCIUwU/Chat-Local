@@ -20,7 +20,11 @@ export class UserService {
     async getUserData(username) {
         const user = await this.userRepo.findByName(username);
         if (!user) throw new Error("Usuario no encontrado");
-        return { nombre: user.name, color: user.color || "#FFFFFF" };
+        return {
+            nombre: user.name,
+            color: user.color || "#FFFFFF",
+            img: user.img || null
+        };
     }
 
     async changeColor(username, newColor) {
