@@ -1,7 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { calculateNetEarnings } from "../../utility/calculateNetEarnings.js";
 import { GAME_CONFIG } from "../../../backend/core/constants.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -17,7 +16,7 @@ export const description = "Reclama tu recompensa diaria de dinero. ¡Manten la 
  * @param {import("./types/CommandContext.js").GamblingContext} context 
  */
 
-export function execute(context) {
+export async function execute(context) {
     const baseAmount = GAME_CONFIG.DAILY_BASE_REWARD;
     const twelveHours = 12 * 60 * 60 * 1000;
     const twentyFourHours = 24 * 60 * 60 * 1000;
@@ -127,7 +126,7 @@ export function execute(context) {
     const randomBonusFactor = Math.floor(Math.random() * (100 - 25 + 1)) + 25;
     const streakBonus = user.dailyStreak * randomBonusFactor;
     const totalReward = baseAmount + streakBonus;
-    const actualEarnings = context.container.economyService.addFunds(context.username, totalReward);
+    const actualEarnings = await context.container.economyService.addFunds(context.username, totalReward);
 
     // Aplicar recompensa
     user.money += actualEarnings;
