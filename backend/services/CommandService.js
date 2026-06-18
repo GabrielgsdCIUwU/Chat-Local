@@ -40,9 +40,16 @@ export class CommandService {
                 const module = await import(pathToFileURL(fullPath).href).catch(() => null);
 
                 if (commands[commandName]) {
-                    commands[commandName] = { ...commands[commandName], params: module?.params || [] };
+                    commands[commandName] = {
+                        ...commands[commandName],
+                        params: module?.params || [],
+                        description: module?.description || "Sin descripción."
+                    };
                 } else {
-                    commands[commandName] = { params: module?.params || [] };
+                    commands[commandName] = {
+                        params: module?.params || [],
+                        description: module?.description || "Sin descripción."
+                    };
                 }
             }
         }

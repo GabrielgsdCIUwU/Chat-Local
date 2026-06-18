@@ -1,6 +1,7 @@
+export const description = "Vende tus materiales rápidamente al sistema por un precio base fijo.";
 export const params = [
-    {name: "item", type: "string", required: true},
-    {name: "cantidad", type: "number", required: true}
+    { name: "item", type: "string", required: true, description: "El material que quieres vender." },
+    { name: "cantidad", type: "number", required: true, description: "La cantidad que vas a vender." }
 ];
 
 

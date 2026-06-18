@@ -1,7 +1,8 @@
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
+export const description = "Muestra tu saldo actual y tus deudas pendientes.";
 export const params = [
-    {name: "usuario", type: "user", required: false}
+    { name: "usuario", type: "user", required: false, description: "Usuario del que quieres ver el balance (opcional)." }
 ];
 
 /**

@@ -1,7 +1,8 @@
+export const description = "Intenta robar dinero a otro jugador. Cuidado con la policía.";
 export const params = [
-    {name: "usuario", type: "user", required: true},
-    {name: "dinero", type: "number", required: true}
-]
+    { name: "usuario", type: "user", required: true, description: "Víctima a la que deseas robar." },
+    { name: "dinero", type: "number", required: true, description: "Cantidad que vas a intentar robar." }
+];
 
 /**
  * 

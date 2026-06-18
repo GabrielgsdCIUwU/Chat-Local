@@ -1,6 +1,8 @@
 import { RPG_CONFIG } from "../../../backend/core/rpgConfig.js";
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
+export const description = "Muestra tus efectos mágicos y pociones activas y su tiempo restante.";
+
 /**
  * @param {import('../../core/BotContext.js').BotContext} context 
  */

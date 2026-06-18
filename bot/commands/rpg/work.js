@@ -1,3 +1,5 @@
+export const description = "Trabaja en tu oficio para obtener materiales (tiene tiempo de enfriamiento).";
+
 /**
  * 
  * @param {import('../../core/BotContext.js').BotContext} context 

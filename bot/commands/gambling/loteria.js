@@ -1,5 +1,6 @@
+export const description = "Compra un ticket de lotería. ¡Si aciertas, multiplicas tu apuesta x5!";
 export const params = [
-    { name: "cantidad", type: "number", required: true }
+    { name: "cantidad", type: "number", required: true, description: "Cantidad de dinero a apostar." }
 ];
 
 /**

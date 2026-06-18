@@ -1,5 +1,6 @@
+export const description = "Calcula tu horóscopo aleatorio para el día de hoy.";
 export const params = [
-    { name: "usuario", type: "user", required: false }
+    { name: "usuario", type: "user", required: false, description: "Usuario al que le quieres leer el horóscopo." }
 ];
 
 /**

@@ -1,5 +1,7 @@
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
+export const description = "Muestra la información de tu gremio actual.";
+
 /**
  * @param {import('../../core/BotContext.js').BotContext} context 
  */

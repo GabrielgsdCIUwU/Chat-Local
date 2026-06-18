@@ -11,6 +11,8 @@ const filePath = resolve(__dirname, "../../../public/json/nonCountDays.json");
 const data = await readFile(filePath, "utf-8");
 const nonCountDays = JSON.parse(data);
 
+export const description = "Reclama tu recompensa diaria de dinero. ¡Manten la racha para ganar bonus!";
+
 /**
  * @param {import("./types/CommandContext.js").GamblingContext} context 
  */

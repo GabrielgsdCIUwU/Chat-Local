@@ -1,5 +1,6 @@
+export const description = "Crea pociones y objetos mágicos gastando materiales de tu mochila.";
 export const params = [
-    {name: "recipe_id", type: "string", required: true}
+    { name: "recipe_id", type: "string", required: true, description: "El código de la receta (ej: haste_potion)." }
 ];
 
 /**

@@ -1,5 +1,6 @@
+export const description = "Funda un nuevo gremio invirtiendo dinero.";
 export const params = [
-    { name: "guild_name", type: "string", required: true }
+    { name: "guild_name", type: "string", required: true, description: "El nombre de tu nuevo gremio." }
 ];
 
 /**

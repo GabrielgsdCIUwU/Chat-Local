@@ -6,6 +6,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const subcommandsPath = path.join(__dirname, "./market");
 
+export const description = "Mercado global. Compra y vende materiales con otros jugadores.";
+
 /**
  * @param {import('../core/BotContext.js').BotContext} context 
  */

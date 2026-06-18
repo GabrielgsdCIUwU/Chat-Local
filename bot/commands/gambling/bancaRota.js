@@ -1,5 +1,7 @@
 import { GAME_CONFIG } from "../../../backend/core/constants.js";
 
+export const description = "Declárate en bancarrota si te quedaste sin dinero (añade deuda).";
+
 /**
  * @param {import("./types/CommandContext.js").GamblingContext} context 
  */

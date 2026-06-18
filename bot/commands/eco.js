@@ -6,6 +6,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const subcommandsPath = path.join(__dirname, "./eco");
 
+export const description = "Módulo principal de economía. Usa subcomandos para gestionar tu dinero.";
+
 /**
  * @param {import('../core/BotContext.js').BotContext} context 
  */

@@ -1,6 +1,7 @@
+export const description = "Transfiere dinero de tu cartera a otro jugador.";
 export const params = [
-    { name: "usuario", type: "user", required: true },
-    { name: "cantidad", type: "number", required: true },
+    { name: "usuario", type: "user", required: true, description: "Usuario que recibirá el dinero." },
+    { name: "cantidad", type: "number", required: true, description: "Cantidad a transferir." }
 ];
 
 /**

@@ -1,5 +1,7 @@
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
+export const description = "Muestra el ranking de los jugadores más ricos del servidor.";
+
 /**
  * 
  * @param {import('../../core/BotContext.js').BotContext} context 

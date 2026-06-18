@@ -1,3 +1,5 @@
+export const description = "Mejora tu herramienta al siguiente nivel gastando dinero y materiales.";
+
 /**
  * 
  * @param {import('../../core/BotContext.js').BotContext} context 

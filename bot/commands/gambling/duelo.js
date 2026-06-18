@@ -1,8 +1,9 @@
 const pendingDuels = new Map();
+export const description = "Reta a otro jugador a un duelo a muerte por dinero.";
 export const params = [
-    {name: "usuario", type: "user", required: false},
-    {name: "cantidad", type: "number", required: false},
-    {name: "acción", type: "string", required: false, values: ["aceptar", "rechazar"]}
+    { name: "usuario", type: "user", required: false, description: "Usuario a retar." },
+    { name: "cantidad", type: "number", required: false, description: "Cantidad a apostar." },
+    { name: "acción", type: "string", required: false, values: ["aceptar", "rechazar"], description: "Acepta o rechaza un duelo pendiente." }
 ];
 
 /**
