@@ -10,11 +10,11 @@ export function execute(context) {
 
     let finalUser;
 
-    const targetName = args[0];
+    const targetName = context.args[0];
     if (targetName) {
         finalUser = targetName;
     } else {
-        finalUser = username;
+        finalUser = context.username;
     }
 
 

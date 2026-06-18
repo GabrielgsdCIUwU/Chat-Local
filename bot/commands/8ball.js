@@ -23,7 +23,7 @@ export function execute(context) {
         "¡NI DE COÑA!",
         "Sí",
         "Me encantaría saberlo la verdad",
-        `Qué buena pregunta ${username}`,
+        `Qué buena pregunta ${context.username}`,
         "Emm... ok? O-O",
         "Pues estaría nice",
         "Yo opino que XD",
