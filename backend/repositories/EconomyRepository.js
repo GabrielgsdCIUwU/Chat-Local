@@ -32,4 +32,19 @@ export class EconomyRepository {
     async getAll() {
         return await this.db.read();
     }
+
+    /**
+     * Ensures that the wallet exists within the current transaction.
+     * @param {Wallet[]} wallets 
+     * @param {string} username 
+     * @returns {Wallet}
+     */
+    ensureWallet(wallets, username) {
+        let wallet = wallets.find(w => w.name === username);
+        if (!wallet) {
+            wallet = { name: username, money: 100, debt: 0 };
+            wallets.push(wallet);
+        }
+        return wallet;
+    }
 }

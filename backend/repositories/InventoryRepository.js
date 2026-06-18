@@ -41,4 +41,20 @@ export class InventoryRepository {
         const inventories = await this.db.read();
         return inventories.find(i => i.name === username) || { name: username, items: {} };
     }
+
+    /**
+     * Ensures that the inventory exists within the current transaction.
+     * @param {UserInventory[]} inventories
+     * @param {string} username
+     * @returns {UserInventory}
+     */
+    ensureInventory(inventories, username) {
+        let inventory = inventories.find(i => i.name === username);
+        if (!inventory) {
+            inventory = { name: username, items: {} };
+            inventories.push(inventory);
+        }
+        return inventory;
+    }
+
 }

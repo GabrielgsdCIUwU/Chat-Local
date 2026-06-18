@@ -44,4 +44,20 @@ export class JobRepository {
         const jobs = await this.db.read();
         return jobs.find(j => j.name === username);
     }
+
+    /**
+     * Ensures that the job exists within the current transaction.
+     * @param {JobProfile[]} jobs 
+     * @param {string} username 
+     * @returns {JobProfile}
+     */
+    ensureJobProfile(jobs, username) {
+        let profile = jobs.find(j => j.name === username);
+        if (!profile) {
+            profile = { name: username, job: null, toolLevel: 1, lastWork: 0, activeBuffs: {} };
+            jobs.push(profile);
+        }
+        if (!profile.activeBuffs) profile.activeBuffs = {};
+        return profile;
+    }
 }
