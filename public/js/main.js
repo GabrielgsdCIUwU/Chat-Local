@@ -81,6 +81,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         else display.textContent = `${users.join(", ")} están escribiendo...`;
     });
 
+    socket.on("error", (err) => {
+        console.error("Server Error:", err);
+        
+        chatUI.renderMessage({
+            id: "error-" + Date.now(),
+            user: "⚠️ Sistema",
+            message: err.message || (typeof err === 'string' ? err : "Ocurrió un error inesperado."),
+            timestamp: Date.now()
+        }, false);
+    });
+
     document.getElementById("clear").addEventListener("click", () => {
         document.getElementById("mensajes").innerHTML = "";
     });
