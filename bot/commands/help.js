@@ -1,3 +1,4 @@
+import { ROLES } from "../../backend/core/constants.js";
 import { EmbedMessage } from "../utility/EmbedMessage.js";
 
 export const description = "Muestra la lista de comandos disponibles o detalles de un comando específico.";
@@ -19,10 +20,13 @@ export async function execute(context) {
     const tree = await context.container.commandService.getCommandTree();
     const embed = new EmbedMessage();
 
+    const user = await context.container.userRepository.findByName(context.username);
+    const isAdmin = user?.roles.includes(ROLES.ADMIN) || false;
+
     const query = context.args.join(" ").toLowerCase().trim();
 
     if (!query) {
-        buildCommandList(embed, tree);
+        buildCommandList(embed, tree, isAdmin);
         return context.reply(embed.toString());
     }
 
@@ -34,7 +38,11 @@ export async function execute(context) {
         );
     }
 
-    buildCommandDetails(embed, result.node, result.path);
+    if (result.node.adminOnly && !isAdmin) {
+        return context.reply(`❌ No tienes permisos para ver información sobre este comando.`);
+    }
+
+    buildCommandDetails(embed, result.node, result.path, isAdmin);
 
     return context.reply(embed.toString());
 }
@@ -44,15 +52,16 @@ export async function execute(context) {
  */
 function isCommandGroup(node) {
     return Object.keys(node).some(
-        key => key !== "params" && key !== "description"
+        key => key !== "params" && key !== "description" && key !== "adminOnly"
     );
 }
 
 /**
  * @param {EmbedMessage} embed
  * @param {object} tree
+ * @param {boolean} isAdmin 
  */
-function buildCommandList(embed, tree) {
+function buildCommandList(embed, tree, isAdmin) {
     embed.addField(
         "📜 Lista de Comandos",
         "Usa `/help [comando]` para más detalles."
@@ -60,6 +69,8 @@ function buildCommandList(embed, tree) {
 
     for (const [cmdName, cmdData] of Object.entries(tree)) {
         if (cmdName === "types") continue;
+
+        if (cmdData.adminOnly && !isAdmin) continue;
 
         const desc =
             cmdData.description ||
@@ -100,15 +111,20 @@ function findCommandNode(tree, query) {
 /**
  * @param {EmbedMessage} embed
  * @param {object} node
+ * @param {boolean} isAdmin 
  */
-function addSubcommandsSection(embed, node) {
+function addSubcommandsSection(embed, node, isAdmin) {
     const subcommands = Object.keys(node).filter(
-        key => key !== "params" && key !== "description"
+        key => key !== "params" && key !== "description" && key !== "adminOnly"
     );
 
     if (!subcommands.length) return;
 
-    const content = subcommands
+    const allowedSubcommands = subcommands.filter(
+        sub => !(node[sub].adminOnly && !isAdmin)
+    );
+
+    const content = allowedSubcommands
         .map(
             sub =>
                 `• **${sub}**: ${node[sub].description || "Sin descripción."
@@ -144,13 +160,14 @@ function addParametersSection(embed, params) {
  * @param {EmbedMessage} embed
  * @param {object} node
  * @param {string} path
+ * @param {boolean} isAdmin 
  */
-function buildCommandDetails(embed, node, path) {
+function buildCommandDetails(embed, node, path, isAdmin) {
     embed.addField(
         `📖 Ayuda: /${path}`,
         node.description || "Sin descripción detallada."
     );
 
-    addSubcommandsSection(embed, node);
+    addSubcommandsSection(embed, node, isAdmin);
     addParametersSection(embed, node.params);
 }

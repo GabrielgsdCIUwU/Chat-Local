@@ -43,12 +43,14 @@ export class CommandService {
                     commands[commandName] = {
                         ...commands[commandName],
                         params: module?.params || [],
-                        description: module?.description || "Sin descripción."
+                        description: module?.description || "Sin descripción.",
+                        adminOnly: module?.adminOnly || false
                     };
                 } else {
                     commands[commandName] = {
                         params: module?.params || [],
-                        description: module?.description || "Sin descripción."
+                        description: module?.description || "Sin descripción.",
+                        adminOnly: module?.adminOnly || false
                     };
                 }
             }

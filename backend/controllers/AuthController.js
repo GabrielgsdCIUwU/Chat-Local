@@ -30,7 +30,10 @@ export class AuthController {
 
             const userDTO = await this.authService.login(name, passwd, location);
 
-            req.session.user = { name: userDTO.name };
+            req.session.user = {
+                name: userDTO.name,
+                roles: userDTO.roles
+            };
             return ApiResponse.success(res, "Login exitoso!", userDTO);
         } catch (error) {
             const statusCode = error.message.includes('baneado') ? 403 : 401;
