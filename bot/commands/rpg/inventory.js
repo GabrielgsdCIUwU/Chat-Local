@@ -1,6 +1,8 @@
 import { RPG_CONFIG } from '../../../backend/core/rpgConfig.js';
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
+export const description = "Muestra tu mochila, materiales obtenidos y nivel de herramienta.";
+
 /**
  * 
  * @param {import('../../core/BotContext.js').BotContext} context 

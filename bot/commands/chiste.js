@@ -9,6 +9,8 @@ const filePath = resolve(__dirname, "../../backend/data/chistes.json");
 const data = await readFile(filePath, "utf-8");
 const chistes = JSON.parse(data);
 
+export const description = "Cuenta un chiste aleatorio para animar el chat.";
+
 /**
  * 
  * @param {import('../core/BotContext.js').BotContext} context 

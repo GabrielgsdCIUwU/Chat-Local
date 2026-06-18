@@ -1,5 +1,6 @@
+export const description = "Compra un lote de materiales del mercado usando su ID.";
 export const params = [
-    {name: "ID_Subasta", type: "string", required: true}
+    { name: "ID_Subasta", type: "string", required: true, description: "El código de la subasta a comprar." }
 ];
 
 /**

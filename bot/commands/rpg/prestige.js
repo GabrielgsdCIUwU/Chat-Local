@@ -1,3 +1,8 @@
+export const description = "Reinicia tu progreso a cambio de un multiplicador permanente. Requiere herramienta máxima.";
+export const params = [
+    { name: "confirmación", type: "string", required: false, description: "Escribe 'confirm' si estás 100% seguro." }
+];
+
 /**
  * @param {import('../../core/BotContext.js').BotContext} context 
  */

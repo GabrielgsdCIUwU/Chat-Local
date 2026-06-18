@@ -1,8 +1,7 @@
-import { ROLES } from "../../../backend/core/constants.js";
-
+export const description = "Comando de administrador para inyectar dinero a un usuario.";
 export const params = [
-    { name: "usuario", type: "user", required: true },
-    { name: "cantidad", type: "number", required: true }
+    { name: "usuario", type: "user", required: true, description: "Usuario al que se le dará el dinero." },
+    { name: "cantidad", type: "number", required: true, description: "Cantidad de dinero a añadir." }
 ];
 
 export async function execute(context) {

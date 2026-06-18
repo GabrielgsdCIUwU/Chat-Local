@@ -8,6 +8,8 @@ const __dirname = path.dirname(__filename);
 
 const subcommandsPath = path.join(__dirname, "./gambling");
 
+export const description = "Módulo del casino y apuestas. ¡Juega bajo tu propio riesgo!";
+
 /**
  * 
  * @param {import('../core/BotContext.js').BotContext} context 

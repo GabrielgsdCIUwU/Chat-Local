@@ -1,6 +1,8 @@
 import { RPG_CONFIG } from '../../../backend/core/rpgConfig.js';
 import { EmbedMessage } from '../../utility/EmbedMessage.js';
 
+export const description = "Muestra la lista de oficios disponibles para elegir.";
+
 /**
  * 
  * @param {import('../../core/BotContext.js').BotContext} context 

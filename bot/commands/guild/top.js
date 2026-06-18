@@ -1,5 +1,7 @@
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
+export const description = "Muestra el ranking de los gremios más poderosos y ricos.";
+
 /**
  * @param {import('../../core/BotContext.js').BotContext} context 
  */

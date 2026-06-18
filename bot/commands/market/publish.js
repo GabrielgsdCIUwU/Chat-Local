@@ -1,7 +1,8 @@
+export const description = "Publica materiales de tu inventario en el mercado global.";
 export const params = [
-    { name: "item", type: "string", required: true },
-    { name: "cantidad", type: "number", required: true },
-    { name: "precio_total", type: "number", required: true }
+    { name: "item", type: "string", required: true, description: "Nombre del material a vender." },
+    { name: "cantidad", type: "number", required: true, description: "Cantidad de material a vender." },
+    { name: "precio_total", type: "number", required: true, description: "Precio total por el lote entero." }
 ];
 
 /**

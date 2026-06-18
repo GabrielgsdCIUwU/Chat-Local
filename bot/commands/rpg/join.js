@@ -1,8 +1,10 @@
 import { RPG_CONFIG } from '../../../backend/core/rpgConfig.js';
 
+export const description = "Únete a un oficio para poder empezar a trabajar.";
+
 const availableJobs = Object.keys(RPG_CONFIG.JOBS);
 export const params = [
-    {name: "oficio", "type": "string", required: true, values: availableJobs}
+    { name: "oficio", type: "string", required: true, values: availableJobs, description: "Elige entre minero, leñador o pescador." }
 ];
 
 /**

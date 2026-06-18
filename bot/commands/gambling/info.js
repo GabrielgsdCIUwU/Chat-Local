@@ -1,7 +1,8 @@
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
+export const description = "Muestra las estadísticas de apuestas, robos y duelos de un jugador.";
 export const params = [
-    {name: "usuario", type: "user", required: false}
+    { name: "usuario", type: "user", required: false, description: "Usuario del que quieres ver las estadísticas." }
 ];
 
 /**

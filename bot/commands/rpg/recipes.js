@@ -1,6 +1,8 @@
 import { RPG_CONFIG } from "../../../backend/core/rpgConfig.js";
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
+export const description = "Muestra todas las recetas de crafteo disponibles y su coste de materiales.";
+
 /**
  * @param {import('../../core/BotContext.js').BotContext} context 
  */

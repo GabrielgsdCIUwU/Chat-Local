@@ -1,5 +1,7 @@
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
+export const description = "Muestra el ranking de los ludópatas más exitosos del casino.";
+
 /**
  * 
  * @param {import("./types/CommandContext.js").GamblingContext} context 

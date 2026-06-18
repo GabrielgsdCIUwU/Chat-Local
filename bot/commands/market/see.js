@@ -1,5 +1,7 @@
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
+export const description = "Muestra las subastas activas más baratas del mercado.";
+
 /**
  * @param {import('../../core/BotContext.js').BotContext} context 
  */

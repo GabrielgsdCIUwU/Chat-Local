@@ -6,6 +6,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const subcommandsPath = path.join(__dirname, "./rpg");
 
+export const description = "Módulo de rol. Trabaja, craftea y mejora tus herramientas.";
+
 /**
  * @param {import('../core/BotContext.js').BotContext} context 
  */

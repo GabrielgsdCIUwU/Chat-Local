@@ -1,5 +1,6 @@
+export const description = "El bot valorará del 1 al 10 lo que le pidas.";
 export const params = [
-    {name: "valorar", type: "string", required: true}
+    { name: "valorar", type: "string", required: true, description: "Lo que quieres que el bot valore." }
 ];
 /**
  * 

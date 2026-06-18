@@ -1,5 +1,6 @@
+export const description = "Pregúntale a la bola mágica 8 sobre tu futuro.";
 export const params = [
-    {name: "pregunta", type: "string", required: true}
+    { name: "pregunta", type: "string", required: true, description: "La pregunta de sí o no que deseas hacer." }
 ];
 
 /**
