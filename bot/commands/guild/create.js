@@ -1,3 +1,5 @@
+import { GAME_CONFIG } from '../../../backend/core/constants.js';
+
 export const description = "Funda un nuevo gremio invirtiendo dinero.";
 export const params = [
     { name: "guild_name", type: "string", required: true, description: "El nombre de tu nuevo gremio." }
@@ -11,5 +13,5 @@ export async function execute(context) {
 
     const newGuild = await context.container.guildService.createGuild(context.username, guildName);
 
-    context.reply(`🏰 **¡SE HA FUNDADO UN NUEVO GREMIO!**\n**${context.username}** ha invertido 50.000€ para fundar el gremio **[${newGuild.name}]**. ¡Que su legado perdure a través de las eras!`);
+    context.reply(`🏰 **¡SE HA FUNDADO UN NUEVO GREMIO!**\n**${context.username}** ha invertido ${GAME_CONFIG.GUILD_CREATION_COST.toLocaleString("es-ES")}€ para fundar el gremio **[${newGuild.name}]**. ¡Que su legado perdure a través de las eras!`);
 }
