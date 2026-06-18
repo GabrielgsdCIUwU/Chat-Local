@@ -102,4 +102,34 @@ export class MarketService {
         const now = Date.now();
         return auctions.filter(a => a.expiresAt > now);
     }
+
+    /**
+     * Checks for expired auctions, removes them, and returns the items.
+     * @returns {Promise<void>}
+     */
+    async checkExpiredAuctions() {
+        const now = Date.now();
+        let expiredAuctions = [];
+
+        await this.auctionRepository.executeTransaction((auctions) => {
+            expiredAuctions = auctions.filter(a => a.expiresAt <= now);
+            
+            for (let i = auctions.length - 1; i >= 0; i--) {
+                if (auctions[i].expiresAt <= now) {
+                    auctions.splice(i, 1);
+                }
+            }
+        });
+
+        if (expiredAuctions.length === 0) return;
+
+        await this.inventoryRepository.executeTransaction((inventories) => {
+            for (const auction of expiredAuctions) {
+                const inventory = this.inventoryRepository.ensureInventory(inventories, auction.seller);
+                inventory.items[auction.itemName] = (inventory.items[auction.itemName] || 0) + auction.amount;
+            }
+        });
+
+        console.log(`[Market] Se han devuelto ${expiredAuctions.length} subastas expiradas a sus dueños.`);
+    }
 }
