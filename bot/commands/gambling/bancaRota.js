@@ -6,16 +6,16 @@ export const description = "Declárate en bancarrota si te quedaste sin dinero (
  * @param {import("./types/CommandContext.js").GamblingContext} context 
  */
 export async function execute(context) {
-    const gamblerBankRupt = context.currentUser;
+    const gambler = context.currentUser;
     const eco = context.container.economyService;
 
     try {
-        gamblerBankRupt.bankRupt = (gamblerBankRupt.bankRupt || 0) + 1;
-        await eco.declareBankruptcy(context.username, gamblerBankRupt.bankRupt);
+        gambler.bankRupt = (gambler.bankRupt || 0) + 1;
+        await eco.declareBankruptcy(context.username, gambler.bankRupt);
 
-        context.reply(`🏦 ${context.username} acaba de llamar al banco y ha vuelto a tener ${GAME_CONFIG.BANKRUPT_BASE_MONEY}€. Ha llamado a la banca un total de ${gamblerBankRupt.bankRupt} veces.`);
+        context.reply(`🏦 ${context.username} acaba de llamar al banco y ha vuelto a tener ${GAME_CONFIG.BANKRUPT_BASE_MONEY}€. Ha llamado a la banca un total de ${gambler.bankRupt} veces.`);
     } catch (error) {
-        gamblerBankRupt.bankRupt -= 1;
+        gambler.bankRupt -= 1;
         context.reply(`❌ ${context.username}, ${error.message}`);
     }
     
