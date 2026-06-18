@@ -7,6 +7,7 @@ import { Server as SocketIOServer } from "socket.io";
 import { app, sessionMiddleware, __dirname } from "./app.js";
 import privateRouter from "./backend/api/router/private.js";
 import setupSockets from "./socket/socketHandler.js";
+import { container } from "./backend/core/DIContainer.js";
 
 const USE_HTTPS = process.env.USE_HTTPS === "true";
 const HTTP_PORT = process.env.PORT || 3000;
@@ -44,4 +45,6 @@ const ACTIVE_PORT = USE_HTTPS ? HTTPS_PORT : HTTP_PORT;
 
 server.listen(ACTIVE_PORT, () => {
     console.log(`Servidor escuchando en el puerto: ${ACTIVE_PORT}`);
+
+    container.cronManager.startAll();
 });
