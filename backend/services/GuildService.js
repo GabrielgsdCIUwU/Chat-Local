@@ -62,4 +62,20 @@ export class GuildService {
         const guilds = await this.guildRepository.getAll();
         return guilds.find(g => g.members.some(m => m.name === username));
     }
+
+    /**
+     * Retrieves the top guilds sorted by Level, then by Bank Money.
+     * @param {number} limit - The maximum number of guilds to return.
+     * @returns {Promise<import('../repositories/GuildRepository.js').Guild[]>}
+     */
+    async getTopGuilds(limit = 10) {
+        const guilds = await this.guildRepository.getAll();
+
+        return guilds.toSorted((a, b) => {
+            if (b.level !== a.level) {
+                return b.level - a.level;
+            }
+            return b.bankMoney - a.bankMoney;
+        }).slice(0, limit);
+    }
 }
