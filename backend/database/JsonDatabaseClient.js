@@ -36,13 +36,13 @@ export class JsonDatabaseClient {
     }
 
     /**
-     * Executes a blocking transaction
+     * Executes a blocking transaction safely.
      * @param {Function} callback - A function that receives current data and returns modified data.
      * @returns {Promise<any>} The modifed data after successful write. 
      */
     async update(callback) {
         return new Promise((resolve, reject) => {
-            this.queue = this.queue.then(async () => {
+            const currentTask = this.queue.then(async () => {
                 try {
                     const data = await this.read();
                     const modifiedData = await callback(data);
@@ -54,6 +54,7 @@ export class JsonDatabaseClient {
                     reject(error);
                 }
             });
-        })
+            this.queue = currentTask.catch(() => {});
+        });
     }
 }
