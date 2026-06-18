@@ -29,11 +29,14 @@ export default function registerChatEvents(io, socket, user, container) {
         const timestamp = Date.now();
         const id = crypto.randomUUID();
         try {
+            const profile = await container.jobRepository.getProfile(user.name);
+            const prestigeLevel = profile?.prestigeLevel ? profile.prestigeLevel : 0;
             const newMessage = { 
                 id,
                 user: user.name, 
                 message: msg, 
                 timestamp, 
+                prestige: prestigeLevel,
                 ...(reply && { reply: { replyUser: reply.user, replyMessage: reply.message } })
             };
             
