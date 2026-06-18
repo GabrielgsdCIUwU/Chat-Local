@@ -48,7 +48,7 @@
      * @returns {Promise<void>} 
      */
     async executeTransaction(callback) {
-        await this.db.update((users) => {
+        await this.db.update(async (users) => {
             await callback(users);
             return users;
         })
