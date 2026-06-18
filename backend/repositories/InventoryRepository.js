@@ -39,6 +39,6 @@ export class InventoryRepository {
      */
     async getInventory(username) {
         const inventories = await this.db.read();
-        return inventories.find(i => i.name === username || { name: username, items: {} });
+        return inventories.find(i => i.name === username) || { name: username, items: {} };
     }
 }
