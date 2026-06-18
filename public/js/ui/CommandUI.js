@@ -10,7 +10,7 @@ export class CommandUI {
         this.parameterChips = document.getElementById("parameterChips");
         
         this.suggestionBox = document.createElement("div");
-        this.suggestionBox.className = "absolute bg-gray-700 text-white rounded-lg shadow-xl hidden z-50 border border-gray-600";
+        this.suggestionBox.className = "absolute top-full mt-1 w-full bg-gray-700 text-white rounded-lg shadow-xl hidden z-50 border border-gray-600 max-h-64 overflow-y-auto";
         this.suggestionBoxContainer.appendChild(this.suggestionBox);
 
         this.paramSuggestionBox = document.createElement("div");
@@ -166,13 +166,17 @@ export class CommandUI {
 
         this.suggestionBox.style.minWidth = Math.max(this.suggestionBoxContainer.clientWidth, 240) + "px";
         this.suggestionBox.classList.remove("hidden");
-        this.suggestionBox.classList.add("top-full");
     }
 
     highlightSuggestion() {
         Array.from(this.suggestionBox.children).forEach((el, idx) => {
             el.classList.toggle("bg-gray-600", idx === this.selectedIndex);
         });
+
+        if (this.selectedIndex >= 0) {
+            const activeEl = this.suggestionBox.children[this.selectedIndex];
+            activeEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
     }
 
     selectSuggestion(s) {
@@ -299,6 +303,7 @@ export class CommandUI {
         });
 
         const rect = input.getBoundingClientRect();
+        this.paramSuggestionBox.style.bottom = 'auto';
         this.paramSuggestionBox.style.top = `${rect.bottom + window.scrollY + 5}px`;
         this.paramSuggestionBox.style.left = `${rect.left + window.scrollX}px`;
         
