@@ -60,7 +60,12 @@ export class ChatUI {
             replyHtml = `<div class="text-sm text-gray-400 mb-2 border-l-2 border-gray-500 pl-2">Respondiendo a ${safeUser}: ${safePreview}...</div>`;
         }
 
-        item.innerHTML = `${replyHtml}<div style="display: flex; align-items: center; padding-bottom: 10px;">${avatarHtml}<p class="msg-name font-bold text-xl text-white" style="${nameStyle}">${msg.user}${editedMark}</p></div><p class="msg-content text-white text-lg" style="word-wrap: break-word; white-space: pre-wrap; overflow-wrap: break-word;">${formattedText}</p><p class="text-gray-400 mt-1 text-sm">${time}</p>`;
+        let prestigeBadge = "";
+        if (msg.prestige && msg.prestige > 0) {
+            prestigeBadge = `<span style="color: #fbbf24; font-weight: bold; margin-right: 6px; font-size: 0.9em; text-shadow: 0px 0px 5px rgba(251, 191, 36, 0.5);" title="Prestige Level ${msg.prestige}">[★${msg.prestige}]</span>`;
+        }
+
+        item.innerHTML = `${replyHtml}<div style="display: flex; align-items: center; padding-bottom: 10px;">${avatarHtml}${prestigeBadge}<p class="msg-name font-bold text-xl text-white" style="${nameStyle}">${msg.user}${editedMark}</p></div><p class="msg-content text-white text-lg" style="word-wrap: break-word; white-space: pre-wrap; overflow-wrap: break-word;">${formattedText}</p><p class="text-gray-400 mt-1 text-sm">${time}</p>`;
 
         const optionsButton = document.createElement("button");
         optionsButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" /></svg>`;

@@ -274,12 +274,50 @@ export class RPGService {
      * @param {string} username - Username whose RPG profile should be retrieved.
      * @returns {Promise<{
      *   profile: import('../repositories/JobRepository.js').JobProfile | null,
-     *   inventory: import('../repositories/InventoryRepository.js').Inventory
+     *   inventory: import('../repositories/InventoryRepository.js').UserInventory
      * }>} The user's profession profile and inventory data.
      */
     async getFullProfile(username) {
         const profile = await this.jobRepo.getProfile(username);
         const inventory = await this.inventoryRepo.getInventory(username);
         return { profile, inventory };
+    }
+
+    /**
+     * Resets the player's progress in exchange for a Prestige Level.
+     * @param {string} username - The user executing prestige.
+     * @returns {Promise<number>} The new prestige level.
+     * @throws {Error} If tool is not maxed out.
+     */
+    async executePrestige(username) {
+        const profile = await this.jobRepo.getProfile(username);
+        if (!profile?.job) throw new Error("No tienes un trabajo");
+
+        const jobConfig = RPG_CONFIG.JOBS[profile.job];
+        const maxToolLevel = Object.keys(jobConfig.tools).length;
+
+        if (profile.toolLevel < maxToolLevel) {
+            throw new Error(`Debes mejorar tu herramienta al máximo nivel (${maxToolLevel}) primero.`);
+        }
+
+        const wallet = await this.economy.getBalance(username);
+        if (wallet.money > 0) {
+            await this.economy.removeFunds(username, wallet.money);
+        }
+
+        await this.inventoryRepo.executeTransaction((inventories) => {
+            const inventory = this.#ensureInventory(inventories, username);
+            inventory.items = {};
+        });
+
+        let newPrestigeLevel = 1;
+        await this.jobRepo.executeTransaction((jobs) => {
+            const profile = this.#ensureJobProfile(jobs, username);
+            profile.toolLevel = 1;
+            profile.prestigeLevel = (profile.prestigeLevel || 0) + 1;
+            newPrestigeLevel = profile.prestigeLevel;
+        });
+
+        return newPrestigeLevel;
     }
 }
