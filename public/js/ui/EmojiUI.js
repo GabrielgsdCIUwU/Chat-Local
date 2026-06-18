@@ -40,7 +40,7 @@ export class EmojiUI {
         });
 
         this.clearCacheBtn?.addEventListener("click", () => {
-            sessionStorage.removeItem("emojiCache");
+            localStorage.removeItem("emojiBlobCache");
             alert("Se ha vaciado la caché de emojis. La página se recargará.");
             globalThis.location.reload();
         });
