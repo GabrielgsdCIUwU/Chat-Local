@@ -17,7 +17,7 @@ const router = express.Router();
 
 const storageEmoji = multer.diskStorage({
     destination: (req, file, cb) => {
-        let uploadPath = path.join(__dirname, "../resources/waitlist");
+        let uploadPath = path.join(__dirname, "../../../resources/waitlist");
         cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
