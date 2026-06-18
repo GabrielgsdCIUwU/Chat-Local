@@ -10,6 +10,10 @@ export class ProfileController {
 
     getProfileData = async (req, res) => {
         try {
+            if (!req.session?.user?.name) {
+                return ApiResponse.error(res, "Sesión inválida", 401);
+            }
+
             const data = await this.userService.getUserData(req.session.user.name);
             return res.json(data);
         } catch (error) {
@@ -33,8 +37,15 @@ export class ProfileController {
         }
 
         try {
-            const extension = req.file.originalname.split(".").pop();
-            await this.userService.changeProfileImage(req,session.user.name, `.${extension}`);
+            if (!req.session?.user?.name) {
+                return ApiResponse.error(res, "Sesión inválida", 401);
+            }
+
+            const extension = req.file.originalname.includes(".")
+                ? req.file.originalname.slice(req.file.originalname.lastIndexOf("."))
+                : ".jpg";
+
+            await this.userService.changeProfileImage(req.session.user.name, extension);
             return ApiResponse.success(res, "Imagen de perfil subida correctamente", { filename: req.file.filename });
         } catch (error) {
             return ApiResponse.error(res, error.message, 403);
@@ -48,7 +59,12 @@ export class ProfileController {
             req.session.user.name = newName;
             return ApiResponse.success(res, "Nombre actualizado correctamente", { nombre: newName });
         } catch (error) {
-            const status = error.message.includes("utilizado") ? 409 : (error.message.includes("permisos") ? 403 : 500);
+            let status = 500;
+            if (error.message.includes("utilizado")) {
+                status = 409;
+            } else if (error.message.includes("permisos")) {
+                status = 403;
+            }
             return ApiResponse.error(res, error.message, status);
         }
     }
