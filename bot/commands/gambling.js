@@ -28,7 +28,7 @@ export async function execute(context) {
 
     try {
         await context.container.gamblingRepository.executeTransaction(async (users) => {
-            const currentUser = context.container.gamblingService.ensureUserExists(users, context.username);
+            const currentUser = context.container.gamblingRepository.ensureUser(users, context.username);
 
             context.currentUser = currentUser;
             context.users = users;

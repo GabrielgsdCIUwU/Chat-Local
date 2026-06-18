@@ -31,7 +31,7 @@ export async function execute(context) {
 
             const result = Math.random();
             const accepterGambler = context.currentUser;
-            const challengerGambler = context.container.gamblingService.ensureUserExists(context.users, challengerName);
+            const challengerGambler = context.container.gamblingRepository.ensureUser(context.users, challengerName);
 
             if (result < 0.5) {
                 await eco.transferFunds(challengerName, context.username, amount);
