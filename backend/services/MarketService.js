@@ -133,4 +133,87 @@ export class MarketService {
 
         console.log(`[Market] Se han devuelto ${expiredAuctions.length} subastas expiradas a sus dueños.`);
     }
+
+    /**
+     * Creates a temporal propose trade.
+     * @param {string} senderName 
+     * @param {string} targetName 
+     * @param {string} sendItem 
+     * @param {number} sendAmount 
+     * @param {string} reqItem 
+     * @param {number} reqAmount 
+     */
+    async proposeTrade(senderName, targetName, sendItem, sendAmount, reqItem, reqAmount) {
+        if (senderName === targetName) throw new Error("No puedes intercambiar contigo mismo.");
+        if (sendAmount <= 0 || reqAmount <= 0) throw new Error("Cantidades inválidas.");
+
+        const sItemActual = Object.keys(RPG_CONFIG.MARKET_PRICES).find(k => k.toLowerCase() === sendItem.toLowerCase());
+        const rItemActual = Object.keys(RPG_CONFIG.MARKET_PRICES).find(k => k.toLowerCase() === reqItem.toLowerCase());
+
+        if (!sItemActual || !rItemActual) throw new Error("Uno de los ítems no existe en el juego.");
+
+        const senderInv = await this.inventoryRepository.getInventory(senderName);
+        if ((senderInv.items[sItemActual] || 0) < sendAmount) {
+            throw new Error(`No tienes suficientes ${sItemActual}. Tienes ${senderInv.items[sItemActual] || 0}.`);
+        }
+
+        const existingTrade = this.pendingTrades.get(targetName);
+        if (existingTrade) {
+            if (Date.now() > existingTrade.expiresAt) {
+                this.pendingTrades.delete(targetName);
+            } else {
+                throw new Error(`El usuario ${targetName} ya tiene un intercambio pendiente, debe responder primero.`);
+            }
+        }
+
+        this.pendingTrades.set(targetName, {
+            senderName,
+            sendItem: sItemActual,
+            sendAmount,
+            reqItem: rItemActual,
+            reqAmount,
+            expiresAt: Date.now() + GAME_CONFIG.PROPOSE_TRAIDING_EXPIRATION
+        });
+
+        return { sItemActual, rItemActual };
+    }
+
+    /**
+     * Resolves a trade propose (accept or deny as a transaction).
+     * @param {string} targetName 
+     * @param {boolean} accept 
+     */
+    async resolveTrade(targetName, accept) {
+        const trade = this.pendingTrades.get(targetName);
+        if (!trade || Date.now() > trade.expiresAt) {
+            this.pendingTrades.delete(targetName);
+            throw new Error("No tienes intercambios pendientes o la oferta ha caducado.");
+        }
+
+        this.pendingTrades.delete(targetName);
+        if (!accept) return false;
+
+        await this.inventoryRepository.executeTransaction((inventories) => {
+            const senderInv = this.inventoryRepository.ensureInventory(inventories, trade.senderName);
+            const targetInv = this.inventoryRepository.ensureInventory(inventories, targetName);
+
+            if ((senderInv.items[trade.sendItem] || 0) < trade.sendAmount) {
+                throw new Error(`El intercambio falló: ${trade.senderName} ya no tiene suficientes ${trade.sendItem}.`);
+            }
+            if ((targetInv.items[trade.reqItem] || 0) < trade.reqAmount) {
+                throw new Error(`No tienes suficientes ${trade.reqItem} para completar este intercambio.`);
+            }
+
+            senderInv.items[trade.sendItem] -= trade.sendAmount;
+            if (senderInv.items[trade.sendItem] === 0) delete senderInv.items[trade.sendItem];
+
+            targetInv.items[trade.reqItem] -= trade.reqAmount;
+            if (targetInv.items[trade.reqItem] === 0) delete targetInv.items[trade.reqItem];
+
+            senderInv.items[trade.reqItem] = (senderInv.items[trade.reqItem] || 0) + trade.reqAmount;
+            targetInv.items[trade.sendItem] = (targetInv.items[trade.sendItem] || 0) + trade.sendAmount;
+        });
+
+        return trade;
+    }
 }
