@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (!matchedEmoji) continue;
 
             for (const userName of emojiData.users) {
-                chatUI.renderReaction(msg.timestamp, matchedEmoji.name, matchedEmoji.url, userName);
+                chatUI.renderReaction(msg.id, matchedEmoji.name, matchedEmoji.url, userName);
             }
         }
     };
