@@ -147,6 +147,49 @@ export const RPG_CONFIG = {
                 { item: "Diamante", min: 1, max: 5 }
             ]
         }
+    },
+    EGG_PRICE: 2500,
+    PETS: {
+        "lobo_huargo": {
+            name: "Lobo Huargo",
+            emoji: "🐺",
+            rarity: "COMMON",
+            effectType: "WORK_COOLDOWN", 
+            value: 10,
+            description: "Un lobo leal. Reduce el tiempo de espera para trabajar un 10%."
+        },
+        "gato_ladron": {
+            name: "Gato Ladrón",
+            emoji: "🐈",
+            rarity: "COMMON",
+            effectType: "GAMBLING_BONUS",
+            value: 5,
+            description: "A este michi le gusta el dinero. +5% de ganancias en casino/robos."
+        },
+        "buho_sabio": {
+            name: "Búho Sabio",
+            emoji: "🦉",
+            rarity: "EPIC",
+            effectType: "WORK_COOLDOWN",
+            value: 25, 
+            description: "Conoce los secretos del tiempo. Reduce el tiempo de espera un 25%."
+        },
+        "zorro_dorado": {
+            name: "Zorro Dorado",
+            emoji: "🦊",
+            rarity: "EPIC",
+            effectType: "GAMBLING_BONUS",
+            value: 15,
+            description: "Atrae la fortuna. +15% de ganancias en casino/robos."
+        },
+        "dragon_celestial": {
+            name: "Dragón Celestial",
+            emoji: "🐉",
+            rarity: "LEGENDARY",
+            effectType: "ALL_BONUS",
+            value: 40,
+            description: "Una criatura mítica imparable. +40% de dinero y -40% tiempo de espera."
+        }
     }
 };
 
