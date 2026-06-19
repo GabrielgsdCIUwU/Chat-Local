@@ -323,9 +323,11 @@ export class RPGService {
     async processFinishedExpeditions() {
         const now = Date.now();
         const notifications = [];
+        const rewardsToDistribute = [];
 
-        await this.jobRepo.executeTransaction(async (jobs) => {
+        await this.jobRepo.executeTransaction((jobs) => {
             for (const profile of jobs) {
+                
                 if (profile.activeExpedition && now >= profile.activeExpedition.endTime) {
                     const config = RPG_CONFIG.EXPEDITIONS[profile.activeExpedition.zoneId];
                     
@@ -335,14 +337,7 @@ export class RPGService {
                         obtainedItems[drop.item] = amount;
                     }
 
-                    await this.inventoryRepo.executeTransaction((inventories) => {
-                        const inv = this.inventoryRepo.ensureInventory(inventories, profile.name);
-                        for (const [item, amount] of Object.entries(obtainedItems)) {
-                            inv.items[item] = (inv.items[item] || 0) + amount;
-                        }
-                    });
-
-                    notifications.push({
+                    rewardsToDistribute.push({
                         username: profile.name,
                         zoneName: config.name,
                         loot: obtainedItems
@@ -351,8 +346,21 @@ export class RPGService {
                     profile.activeExpedition = null;
                 }
             }
-            return jobs;
         });
+
+        if (rewardsToDistribute.length > 0) {
+            await this.inventoryRepo.executeTransaction((inventories) => {
+                for (const reward of rewardsToDistribute) {
+                    const inv = this.inventoryRepo.ensureInventory(inventories, reward.username);
+                    
+                    for (const [item, amount] of Object.entries(reward.loot)) {
+                        inv.items[item] = (inv.items[item] || 0) + amount;
+                    }
+                    
+                    notifications.push(reward);
+                }
+            });
+        }
 
         return notifications;
     }
