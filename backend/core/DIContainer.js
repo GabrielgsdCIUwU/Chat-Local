@@ -86,7 +86,8 @@ class DIContainer {
         this.rpgService = new RPGService(
             this.economyService,
             this.inventoryRepository,
-            this.jobRepository
+            this.jobRepository,
+            this.petService
         );
         this.marketService = new MarketService(
             this.economyService,
