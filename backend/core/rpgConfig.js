@@ -125,6 +125,28 @@ export const RPG_CONFIG = {
             buffId: "anti_rob",
             durationMs: 24 * 60 * 60 * 1000
         }
+    },
+    EXPEDITIONS: {
+        "bosque_oscuro": {
+            name: "Bosque Oscuro",
+            cost: 500,
+            durationMs: 2 * 60 * 60 * 1000,
+            lootTable: [
+                { item: "Madera", min: 50, max: 100 },
+                { item: "Roble", min: 20, max: 50 },
+                { item: "Caoba", min: 5, max: 15 }
+            ]
+        },
+        "mina_abandonada": {
+            name: "Mina Abandonada",
+            cost: 1000,
+            durationMs: 4 * 60 * 60 * 1000,
+            lootTable: [
+                { item: "Hierro", min: 30, max: 80 },
+                { item: "Oro", min: 10, max: 30 },
+                { item: "Diamante", min: 1, max: 5 }
+            ]
+        }
     }
 };
 
