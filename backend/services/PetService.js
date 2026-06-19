@@ -96,4 +96,27 @@ export class PetService {
 
         return equippedPet;
     }
+
+    /**
+     * Retrieves the active bonus percentage for a specific effect type.
+     * @param {string} username - The user to check.
+     * @param {import('../core/rpgConfig.js').PetEffectType} effectType - The type of bonus requested.
+     * @returns {Promise<number>} The percentage of the bonus (0 if none).
+     */
+    async getBonus(username, effectType) {
+        const profile = await this.petRepo.getProfile(username);
+        if (!profile.equipped) return 0;
+        
+        const petInstance = profile.pets.find(p => p.id === profile.equipped);
+        if (!petInstance) return 0;
+
+        const petConfig = RPG_CONFIG.PETS[petInstance.type];
+        if (!petConfig) return 0;
+
+        if (petConfig.effectType === effectType || petConfig.effectType === "ALL_BONUS") {
+            return petConfig.value;
+        }
+        
+        return 0;
+    }
 }
