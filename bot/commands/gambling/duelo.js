@@ -7,16 +7,16 @@ export const params = [
 ];
 
 /**
- * @param {import("./types/CommandContext.js").GamblingContext} context 
+ * 
+ * @param {import("../../core/BotContext.js").BotContext} context 
  */
 export async function execute(context) {
-
     const action = context.args[0];
     const eco = context.container.economyService;
     
     if (action === "aceptar") {
         if (!pendingDuels.has(context.username)) {
-            return context.reply(`${context.username} No tienes ningún duelo pendiente`)
+            return context.reply(`${context.username} No tienes ningún duelo pendiente.`)
         }
 
         const { challengerName, amount } = pendingDuels.get(context.username);
@@ -30,20 +30,26 @@ export async function execute(context) {
             if (accepterWallet.money < amount) return context.reply(`El duelo se cancela: ${context.username} no tiene fondos.`);
 
             const result = Math.random();
-            const accepterGambler = context.currentUser;
-            const challengerGambler = context.container.gamblingRepository.ensureUser(context.users, challengerName);
+            let finalMessage = "";
 
-            if (result < 0.5) {
-                await eco.transferFunds(challengerName, context.username, amount);
-                accepterGambler.duelWin = (accepterGambler.duelWin || 0) + 1;
-                challengerGambler.duelLose = (challengerGambler.duelLose || 0) + 1;
-                return context.reply(`⚔️ **${context.username}** ha ganado el duelo contra **${challengerName}** y se lleva ${amount}€`);
-            } else {
-                await eco.transferFunds(context.username, challengerName, amount);
-                accepterGambler.duelLose = (accepterGambler.duelLose || 0) + 1;
-                challengerGambler.duelWin = (challengerGambler.duelWin || 0) + 1;
-                return context.reply(`⚔️ **${context.username}** ha perdido el duelo contra **${challengerName}** y le entrega ${amount}€`);
-            }
+            await context.container.gamblingRepository.executeTransaction(async (users) => {
+                const accepterGambler = context.container.gamblingRepository.ensureUser(users, context.username);
+                const challengerGambler = context.container.gamblingRepository.ensureUser(users, challengerName);
+
+                if (result < 0.5) {
+                    await eco.transferFunds(challengerName, context.username, amount);
+                    accepterGambler.duelWin = (accepterGambler.duelWin || 0) + 1;
+                    challengerGambler.duelLose = (challengerGambler.duelLose || 0) + 1;
+                    finalMessage = `⚔️ **${context.username}** ha ganado el duelo contra **${challengerName}** y se lleva ${amount}€`;
+                } else {
+                    await eco.transferFunds(context.username, challengerName, amount);
+                    accepterGambler.duelLose = (accepterGambler.duelLose || 0) + 1;
+                    challengerGambler.duelWin = (challengerGambler.duelWin || 0) + 1;
+                    finalMessage = `⚔️ **${context.username}** ha perdido el duelo contra **${challengerName}** y le entrega ${amount}€`;
+                }
+            });
+
+            return context.reply(finalMessage);
         } catch (error) {
             return context.reply(`El duelo fue cancelado: ${error.message}`);
         }
@@ -63,7 +69,7 @@ export async function execute(context) {
         const senderWallet = await eco.getBalance(context.username);
         if (senderWallet.money < amount) return context.reply(`No tienes suficiente dinero para apostar ${amount}€.`);
 
-        if (pendingDuels.has(targetName)) return context.reply(`${context.username} el usuario ${targetName} ya tiene un duelo pendiente.`);
+        if (pendingDuels.has(targetName)) return context.reply(`El usuario ${targetName} ya tiene un duelo pendiente.`);
 
         pendingDuels.set(targetName, { challengerName: context.username, amount });
         return context.reply(`⚔️ **${context.username}** ha retado a **${targetName}** con ${amount}€. Usa \`/gambling duelo aceptar\` o \`/gambling duelo rechazar\`.`);

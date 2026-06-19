@@ -6,11 +6,14 @@ export const params = [
 ];
 
 /**
- * @param {import("./types/CommandContext.js").GamblingContext} context 
+ * 
+ * @param {import("../../core/BotContext.js").BotContext} context 
  */
 export async function execute(context) {
     const targetName = context.args.join(" ") || context.username;
-    const gambler = context.users.find(u => u.name === targetName);
+    
+    const users = await context.container.gamblingRepository.db.read();
+    const gambler = users.find(u => u.name === targetName);
     
     if (!gambler) {
         return context.reply(`${targetName} no tiene estadísticas de apuestas registradas.`);
@@ -27,15 +30,15 @@ export async function execute(context) {
         .addField("📌 Nombre", gambler.name)
         .addField("💰 Dinero actual", `${wallet.money}€`)
         .addField("💳 Deuda actual", `${wallet.debt}€`)
-        .addField("💶 Total ganado", `${gambler.totalEarnings}€`)
-        .addField("💸 Total gastado", `${gambler.spend}€`)
+        .addField("💶 Total ganado", `${gambler.totalEarnings || 0}€`)
+        .addField("💸 Total gastado", `${gambler.spend || 0}€`)
         .addField("📊 Porcentaje de éxito", `${success.toFixed(2)}%`)
-        .addField("🕵️ Veces que robó", `${gambler.timesSteal} veces`)
-        .addField("🏴‍☠️ Dinero robado", `${gambler.moneySteal}€`)
-        .addField("🤺 Duelos ganados", gambler.duelWin)
-        .addField("💀 Duelos perdidos", gambler.duelLose)
+        .addField("🕵️ Veces que robó", `${gambler.timesSteal || 0} veces`)
+        .addField("🏴‍☠️ Dinero robado", `${gambler.moneySteal || 0}€`)
+        .addField("🤺 Duelos ganados", gambler.duelWin || 0)
+        .addField("💀 Duelos perdidos", gambler.duelLose || 0)
         .addField("📊 Éxito de duelos", `${duelSuccess.toFixed(2)}%`)
-        .addField("🏦 Veces en Banca rota", `${gambler.bankRupt} veces`);
+        .addField("🏦 Veces en Banca rota", `${gambler.bankRupt || 0} veces`);
 
     return context.reply(embed.toString());
 }

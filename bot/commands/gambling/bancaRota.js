@@ -3,21 +3,29 @@ import { GAME_CONFIG } from "../../../backend/core/constants.js";
 export const description = "Declárate en bancarrota si te quedaste sin dinero (añade deuda).";
 
 /**
- * @param {import("./types/CommandContext.js").GamblingContext} context 
+ * 
+ * @param {import("../../core/BotContext.js").BotContext} context 
  */
 export async function execute(context) {
-    const gambler = context.currentUser;
     const eco = context.container.economyService;
 
     try {
-        gambler.bankRupt = (gambler.bankRupt || 0) + 1;
-        await eco.declareBankruptcy(context.username, gambler.bankRupt);
+        let currentBankRupt = 0;
+        
+        await context.container.gamblingRepository.executeTransaction(async (users) => {
+            const gambler = context.container.gamblingRepository.ensureUser(users, context.username);
+            gambler.bankRupt = (gambler.bankRupt || 0) + 1;
+            currentBankRupt = gambler.bankRupt;
+        });
 
-        context.reply(`🏦 ${context.username} acaba de llamar al banco y ha vuelto a tener ${GAME_CONFIG.BANKRUPT_BASE_MONEY}€. Ha llamado a la banca un total de ${gambler.bankRupt} veces.`);
+        await eco.declareBankruptcy(context.username, currentBankRupt);
+
+        context.reply(`🏦 ${context.username} acaba de llamar al banco y ha vuelto a tener ${GAME_CONFIG.BANKRUPT_BASE_MONEY}€. Ha llamado a la banca un total de ${currentBankRupt} veces.`);
     } catch (error) {
-        gambler.bankRupt -= 1;
+        await context.container.gamblingRepository.executeTransaction(async (users) => {
+            const gambler = context.container.gamblingRepository.ensureUser(users, context.username);
+            if (gambler.bankRupt > 0) gambler.bankRupt -= 1;
+        });
         context.reply(`❌ ${context.username}, ${error.message}`);
     }
-    
-    
 }

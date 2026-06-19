@@ -7,13 +7,12 @@ export const params = [
  * @param {import('../core/BotContext.js').BotContext} context 
  */
 export function execute(context) {
-    const valoracion = context.args[0];
+    const valoracion = context.args.join(" ");
 
     if(!valoracion) {
-        context.reply("Debes hacerme una pregunta.")
+        context.reply("Debes decirme qué quieres que valore.");
         return;
     }
-
 
     function random() {
         let max = 10;
@@ -21,7 +20,7 @@ export function execute(context) {
         return v;
     }
 
-    const response = `Yo le doy a ${valoracion.trim()} un ${random()}`
+    const response = `Yo le doy a ${valoracion.trim()} un ${random()}/10`;
 
     context.reply(response);
 }

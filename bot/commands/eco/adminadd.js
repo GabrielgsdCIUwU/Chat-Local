@@ -1,3 +1,5 @@
+import { ROLES } from "../../../backend/core/constants.js"; 
+
 export const description = "Comando de administrador para inyectar dinero a un usuario.";
 export const adminOnly = true;
 export const params = [
@@ -5,6 +7,9 @@ export const params = [
     { name: "cantidad", type: "number", required: true, description: "Cantidad de dinero a añadir." }
 ];
 
+/**
+ * @param {import('../../core/BotContext.js').BotContext} context 
+ */
 export async function execute(context) {
     const user = await context.container.userRepository.findByName(context.username);
     if (!user?.roles.includes(ROLES.ADMIN)) {

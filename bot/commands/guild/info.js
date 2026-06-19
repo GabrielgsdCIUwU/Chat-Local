@@ -19,8 +19,7 @@ export async function execute(context) {
         .addField("👑 Líder", leader.name)
         .addField("⭐ Nivel", guild.level.toString())
         .addField("🏦 Saldo del Banco", `${guild.bankMoney.toLocaleString('es-ES')}€`)
-        .addField(`👥 Miembros (${guild.members.length})`, membersList);
+        .addField(`👥 Miembros (${guild.members.length})`, members); 
 
     context.reply(`🏰 **Perfil del Gremio: [${guild.name}]**\n${embed.toString()}`);
-
 }

@@ -8,8 +8,7 @@ export const params = [
  * @param {import('../core/BotContext.js').BotContext} context 
  */
 export function execute(context) {
-
-    const pregunta = context.args[0];
+    const pregunta = context.args.join(" ");
 
     if(!pregunta) {
         context.reply("Debes hacerme una pregunta.")
@@ -40,5 +39,5 @@ export function execute(context) {
 
     const respuesta = respuestas[Math.floor(Math.random() * respuestas.length)];
 
-    context.reply(`**Pregunta:**\n${pregunta}\n\n**Respuesta:**\n${respuesta}`)
+    context.reply(`**Pregunta:**\n${pregunta}\n\n**Respuesta:**\n${respuesta}`);
 }

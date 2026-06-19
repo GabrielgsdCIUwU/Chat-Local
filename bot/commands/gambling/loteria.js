@@ -4,10 +4,10 @@ export const params = [
 ];
 
 /**
- * @param {import("./types/CommandContext.js").GamblingContext} context 
+ * 
+ * @param {import("../../core/BotContext.js").BotContext} context 
  */
 export async function execute(context) {
-    const gambler = context.currentUser;
     const eco = context.container.economyService;
     const bet = Number.parseInt(context.args[0]);
 
@@ -15,19 +15,26 @@ export async function execute(context) {
 
     try {
         await eco.removeFunds(context.username, bet);
-        gambler.spend = (gambler.spend || 0) + bet;
 
         const winnerNumber = Math.floor(Math.random() * 6) + 1;
         const playerNumber = Math.floor(Math.random() * 6) + 1;
+        let finalMessage = "";
 
-        if (playerNumber === winnerNumber) {
-            const baseWinnings = bet * 5;
-            const {actualEarnings, petMsg } = await context.container.gamblingService.addRewardWithBonus(context.username, baseWinnings);
-            gambler.totalEarnings = (gambler.totalEarnings || 0) + actualEarnings;
-            return context.reply(`🎉 ¡Felicidades ${context.username}! Has ganado ${actualEarnings}€ netos en la lotería.${petMsg}`);
-        } else {
-            return context.reply(`💸 Lo siento ${context.username}, has perdido ${bet}€ en la lotería.`);
-        }
+        await context.container.gamblingRepository.executeTransaction(async (users) => {
+            const gambler = context.container.gamblingRepository.ensureUser(users, context.username);
+            gambler.spend = (gambler.spend || 0) + bet;
+
+            if (playerNumber === winnerNumber) {
+                const baseWinnings = bet * 5;
+                const { actualEarnings, petMsg } = await context.container.gamblingService.addRewardWithBonus(context.username, baseWinnings);
+                gambler.totalEarnings = (gambler.totalEarnings || 0) + actualEarnings;
+                finalMessage = `🎉 ¡Felicidades ${context.username}! Has ganado ${actualEarnings}€ netos en la lotería.${petMsg}`;
+            } else {
+                finalMessage = `💸 Lo siento ${context.username}, has perdido ${bet}€ en la lotería.`;
+            }
+        });
+
+        return context.reply(finalMessage);
     } catch (error) {
         return context.reply(`❌ ${context.username}: ${error.message}`);
     }
