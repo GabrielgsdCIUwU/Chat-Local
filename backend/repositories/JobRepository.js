@@ -54,10 +54,11 @@ export class JobRepository {
     ensureJobProfile(jobs, username) {
         let profile = jobs.find(j => j.name === username);
         if (!profile) {
-            profile = { name: username, job: null, toolLevel: 1, lastWork: 0, activeBuffs: {} };
+            profile = { name: username, job: null, toolLevel: 1, lastWork: 0, activeBuffs: {},  activeExpedition: null };
             jobs.push(profile);
         }
         if (!profile.activeBuffs) profile.activeBuffs = {};
+        if (profile.activeExpedition === undefined) profile.activeExpedition = null; 
         return profile;
     }
 }

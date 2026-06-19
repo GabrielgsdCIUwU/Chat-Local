@@ -99,7 +99,7 @@ class DIContainer {
         this.chatController = new ChatController(this.commandService);
         this.mediaController = new MediaController(this.emojiService);
 
-        this.cronManager = new CronManager(this.marketService);
+        this.cronManager = new CronManager(this.marketService, this.rpgService);
     }
 }
 

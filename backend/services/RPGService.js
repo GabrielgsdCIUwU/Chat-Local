@@ -282,4 +282,86 @@ export class RPGService {
 
         return newPrestigeLevel;
     }
+
+
+    /**
+     * Start an indle expedition.
+     * @param {string} username 
+     * @param {string} zoneKey 
+     * @returns {Object}
+     */
+    async startExpedition(username, zoneKey) {
+        const zoneKeyLower = zoneKey.toLowerCase();
+        const expeditionConfig = RPG_CONFIG.EXPEDITIONS[zoneKeyLower];
+        if (!expeditionConfig) throw new Error("La zona de expedición no existe.");
+
+        await this.jobRepo.executeTransaction((jobs) => {
+            const profile = this.jobRepo.ensureJobProfile(jobs, username);
+            
+            if (profile.activeExpedition) {
+                throw new Error("Ya tienes una expedición en curso.");
+            }
+        });
+
+        await this.economy.removeFunds(username, expeditionConfig.cost);
+
+        await this.jobRepo.executeTransaction((jobs) => {
+            const profile = this.jobRepo.ensureJobProfile(jobs, username);
+            profile.activeExpedition = {
+                zoneId: zoneKeyLower,
+                endTime: Date.now() + expeditionConfig.durationMs
+            };
+        });
+
+        return expeditionConfig;
+    }
+
+    /**
+     * Claim expeditions when ended
+     * @returns {Promise<Array>} Loot notifications
+     */
+    async processFinishedExpeditions() {
+        const now = Date.now();
+        const notifications = [];
+        const rewardsToDistribute = [];
+
+        await this.jobRepo.executeTransaction((jobs) => {
+            for (const profile of jobs) {
+                
+                if (profile.activeExpedition && now >= profile.activeExpedition.endTime) {
+                    const config = RPG_CONFIG.EXPEDITIONS[profile.activeExpedition.zoneId];
+                    
+                    const obtainedItems = {};
+                    for (const drop of config.lootTable) {
+                        const amount = Math.floor(Math.random() * (drop.max - drop.min + 1)) + drop.min;
+                        obtainedItems[drop.item] = amount;
+                    }
+
+                    rewardsToDistribute.push({
+                        username: profile.name,
+                        zoneName: config.name,
+                        loot: obtainedItems
+                    });
+
+                    profile.activeExpedition = null;
+                }
+            }
+        });
+
+        if (rewardsToDistribute.length > 0) {
+            await this.inventoryRepo.executeTransaction((inventories) => {
+                for (const reward of rewardsToDistribute) {
+                    const inv = this.inventoryRepo.ensureInventory(inventories, reward.username);
+                    
+                    for (const [item, amount] of Object.entries(reward.loot)) {
+                        inv.items[item] = (inv.items[item] || 0) + amount;
+                    }
+                    
+                    notifications.push(reward);
+                }
+            });
+        }
+
+        return notifications;
+    }
 }
