@@ -13,6 +13,7 @@ import { InventoryRepository } from "../repositories/InventoryRepository.js";
 import { JobRepository } from "../repositories/JobRepository.js";
 import { AuctionRepository } from "../repositories/AuctionRepository.js";
 import { GuildRepository } from "../repositories/GuildRepository.js";
+import { PetRepository } from "../repositories/PetRepository.js";
 
 import { AuthService } from "../services/AuthService.js";
 import { UserService } from "../services/UserService.js";
@@ -25,6 +26,7 @@ import { RPGService } from "../services/RPGService.js";
 import { MarketService } from "../services/MarketService.js";
 import { CraftingService } from "../services/CraftingService.js";
 import { GuildService } from "../services/GuildService.js";
+import { PetService } from "../services/PetService.js";
 
 import { AuthController } from "../controllers/AuthController.js";
 import { ProfileController } from "../controllers/ProfileController.js";
@@ -49,6 +51,7 @@ class DIContainer {
         this.jobsJsonPath = path.join(__dirname, "../data/jobs.json");
         this.auctionsJsonPath = path.join(__dirname, "../data/auctions.json");
         this.guildsJsonPath = path.join(__dirname, "../data/guilds.json");
+        this.petsJsonPath = path.join(__dirname, "../data/pets.json");
 
         this.userDbClient = new JsonDatabaseClient(this.usersJsonPath);
         this.bannedDbClient = new JsonDatabaseClient(this.bannedJsonPath);
@@ -60,6 +63,7 @@ class DIContainer {
         this.jobsDbClient = new JsonDatabaseClient(this.jobsJsonPath);
         this.auctionsDbClient = new JsonDatabaseClient(this.auctionsJsonPath);
         this.guildsDbClient = new JsonDatabaseClient(this.guildsJsonPath);
+        this.petsDbClient = new JsonDatabaseClient(this.petsJsonPath);
 
         this.userRepository = new UserRepository(this.userDbClient);
         this.bannedIpRepository = new BannedIpRepository(this.bannedDbClient);
@@ -70,18 +74,21 @@ class DIContainer {
         this.jobRepository = new JobRepository(this.jobsDbClient);
         this.auctionRepository = new AuctionRepository(this.auctionsDbClient);
         this.guildRepository = new GuildRepository(this.guildsDbClient);
+        this.petRepository = new PetRepository(this.petsDbClient);
 
         this.authService = new AuthService(this.userRepository, this.bannedIpRepository);
         this.userService = new UserService(this.userRepository, this.profileDir);
         this.economyService = new EconomyService(this.economyRepository);
-        this.gamblingService = new GamblingService(this.gamblingRepository, this.economyService);
+        this.petService = new PetService(this.petRepository, this.economyService);
+        this.gamblingService = new GamblingService(this.gamblingRepository, this.economyService, this.petService);
         this.commandService = new CommandService(this.commandsDir);
         this.emojiService = new EmojiService(this.emojisDir);
         this.chatFilterService = new ChatFilterService(this.spamDbClient);
         this.rpgService = new RPGService(
             this.economyService,
             this.inventoryRepository,
-            this.jobRepository
+            this.jobRepository,
+            this.petService
         );
         this.marketService = new MarketService(
             this.economyService,

@@ -32,6 +32,7 @@ createFile('./backend/data/inventory.json', []);
 createFile('./backend/data/jobs.json', []);
 createFile('./backend/data/auctions.json', []);
 createFile('./backend/data/guilds.json', []);
+createFile('./backend/data/pets.json', []);
 createFile('./public/json/encuesta.json', { "pregunta": "Ejemplo", "opciones": [], "hiden": "True" });
 
 createFolder('./resources/emojis');

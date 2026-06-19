@@ -5,11 +5,13 @@ export class RPGService {
      * @param {import('./EconomyService.js').EconomyService} economyService 
      * @param {import('../repositories/InventoryRepository.js').InventoryRepository} inventoryRepository 
      * @param {import('../repositories/JobRepository.js').JobRepository} jobRepository 
+     * @param {import('./PetService.js').PetService} petService 
      */
-    constructor(economyService, inventoryRepository, jobRepository) {
+    constructor(economyService, inventoryRepository, jobRepository, petService) {
         this.economy = economyService;
         this.inventoryRepo = inventoryRepository;
         this.jobRepo = jobRepository;
+        this.petService = petService;
     }
 
     /**
@@ -61,6 +63,8 @@ export class RPGService {
         let profileInfo;
         const now = Date.now();
 
+        const petBonus = await this.petService.getBonus(username, "WORK_COOLDOWN");
+
         await this.jobRepo.executeTransaction((jobs) => {
             const profile = this.jobRepo.ensureJobProfile(jobs, username);
             if (!profile.job) throw new Error("Aun no tienes oficio. Usa `/rpg join`");
@@ -72,6 +76,10 @@ export class RPGService {
                 } else {
                     delete profile.activeBuffs["haste"];
                 }
+            }
+
+            if (petBonus > 0) {
+                currentCooldownMs -= Math.floor(currentCooldownMs * (petBonus / 100));
             }
 
             const timePassed = now - profile.lastWork;

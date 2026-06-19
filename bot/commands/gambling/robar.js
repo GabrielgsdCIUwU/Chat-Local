@@ -36,10 +36,11 @@ export async function execute(context) {
         const probability = Math.random();
 
         if (probability < 0.5) {
-            await eco.transferFunds(targetName, context.username, amount);
-            gambler.moneySteal = (gambler.moneySteal || 0) + amount;
-            gambler.totalEarnings = (gambler.totalEarnings || 0) + amount;
-            return context.reply(`🕵️ ${context.username} ha robado ${amount}€ a ${targetName} con éxito.`);
+            const { totalEarned, petMsg } = await context.container.gamblingService.processRobberyWin(context.username, targetName, amount);
+
+            gambler.moneySteal = (gambler.moneySteal || 0) + totalEarned;
+            gambler.totalEarnings = (gambler.totalEarnings || 0) + totalEarned;
+            return context.reply(`🕵️ ${context.username} ha robado ${amount}€ a ${targetName} con éxito${petMsg}.`);
         } else {
             const moneyLost = amount + Math.floor(Math.random() * (amount / 4));
             const actuallyLost = await eco.forceRemoveFunds(context.username, moneyLost);
