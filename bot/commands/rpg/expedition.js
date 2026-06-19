@@ -13,6 +13,20 @@ export async function execute(context) {
 
     const config = await context.container.rpgService.startExpedition(context.username, zoneKey);
 
-    const hours = config.durationMs / (1000 * 60 * 60);
-    context.reply(`🏕️ **¡VIAJE INICIADO!**\n**${context.username}** ha pagado **${config.cost}€** y se ha adentrado en **${config.name}**.\nRegresará en **${hours} hora(s)** con su botín. Se te notificará automáticamente en el chat.`);
+     const totalSeconds = Math.floor(config.durationMs / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    let timeParts = [];
+    if (hours > 0) timeParts.push(`${hours} hora(s)`);
+    if (minutes > 0) timeParts.push(`${minutes} minuto(s)`);
+    
+    if (hours === 0 && minutes === 0) {
+        timeParts.push(`${seconds} segundo(s)`);
+    }
+
+    const timeString = timeParts.join(" y ");
+
+    context.reply(`🏕️ **¡VIAJE INICIADO!**\n**${context.username}** ha pagado **${config.cost}€** y se ha adentrado en **${config.name}**.\nRegresará en **${timeString}** con su botín. Se te notificará automáticamente en el chat.`);
 }
