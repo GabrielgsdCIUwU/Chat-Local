@@ -87,7 +87,7 @@ export class PetService {
                 return;
             }
 
-            const petExists = profile.pets.find(p => p.id === petId);
+            const petExists = profile.pets.find(p => p.id.startsWith(petId));
             if (!petExists) throw new Error("No posees una mascota con ese ID.");
 
             profile.equipped = petId;
