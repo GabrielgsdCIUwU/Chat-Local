@@ -60,7 +60,7 @@ export class BotContext {
      * Helper to easily reply as the Bot.
      * @param {string} message - The message content.
      */
-    reply(message) {
+    async reply(message) {
         const botMessage = {
             id: crypto.randomUUID(),
             user: "🤖 Bot",
@@ -69,7 +69,7 @@ export class BotContext {
         };
 
         await this.container.messageRepository.saveMessage(botMessage);
-        
+
         this.io.emit("sendmsg", { user: "🤖 Bot", message, timestamp: this.timestamp });
     }
 }
