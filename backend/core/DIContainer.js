@@ -79,7 +79,7 @@ class DIContainer {
         this.authService = new AuthService(this.userRepository, this.bannedIpRepository);
         this.userService = new UserService(this.userRepository, this.profileDir);
         this.economyService = new EconomyService(this.economyRepository);
-        this.gamblingService = new GamblingService(this.gamblingRepository, this.economyService);
+        this.gamblingService = new GamblingService(this.gamblingRepository, this.economyService, this.petService);
         this.commandService = new CommandService(this.commandsDir);
         this.emojiService = new EmojiService(this.emojisDir);
         this.chatFilterService = new ChatFilterService(this.spamDbClient);
