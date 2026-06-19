@@ -46,5 +46,5 @@ const ACTIVE_PORT = USE_HTTPS ? HTTPS_PORT : HTTP_PORT;
 server.listen(ACTIVE_PORT, () => {
     console.log(`Servidor escuchando en el puerto: ${ACTIVE_PORT}`);
 
-    container.cronManager.startAll();
+    container.cronManager.startAll(io);
 });
