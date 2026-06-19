@@ -395,6 +395,7 @@ export class CommandUI {
         const tokens = this.#tokenizeCommand(rawCommand);
         if (!tokens.length) {
             this.reset();
+            this.textarea.focus();
             return;
         }
 
@@ -403,6 +404,7 @@ export class CommandUI {
         this.socket.emit("sendcmd", { command, subcommands, params, raw: rawCommand });
         this.textarea.value = "";
         this.reset();
+        this.textarea.focus();
     }
 
     #buildRawCommand() {

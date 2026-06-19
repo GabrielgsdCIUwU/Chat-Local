@@ -77,5 +77,6 @@ export class InputUI {
         this.input.value = "";
         this.autoResize();
         this.socket.emit("typing", false);
+        this.input.focus();
     }
 }
