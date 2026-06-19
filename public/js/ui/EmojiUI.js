@@ -101,8 +101,7 @@ export class EmojiUI {
         if (this.currentReactionMessageId) {
             this.socket.emit("addReaction", { 
                 messageId: this.currentReactionMessageId, 
-                emojiName: emoji.name, 
-                emojiUrl: emoji.url 
+                emojiName: emoji.name 
             });
         } else {
             const format = this.stickerModeActive ? `;${emoji.name};` : `:${emoji.name}:`;

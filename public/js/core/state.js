@@ -10,6 +10,7 @@ export class State {
         this.replyMessage = null;
         this.isEditingMessage = false;
         this.editingMessageId = null;
+        this.showBot = localStorage.getItem("showBot") !== "false";
     }
 
     #blobToBase64(blob) {

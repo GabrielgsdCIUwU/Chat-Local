@@ -33,6 +33,14 @@ export class ChatUI {
         item.style.marginBottom = "1rem";
         item.dataset.id = msg.id;
 
+        item.dataset.user = msg.user;
+        if (msg.user === "🤖 Bot") {
+            item.classList.add("bot-message");
+            if (!appState.showBot) {
+                item.classList.add("hidden");
+            }
+        }
+
         const donator = appState.donators.find(d => d.name === msg.user);
         let avatarHtml = "";
         let nameStyle = "";

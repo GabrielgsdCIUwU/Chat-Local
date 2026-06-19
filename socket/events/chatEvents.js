@@ -69,7 +69,7 @@ export default function registerChatEvents(io, socket, user, container) {
     socket.on("addReaction", async (data) => {
         try {
             await container.messageRepository.addReaction(data.messageId, data.emojiName, user.name);
-            io.emit("newReaction", { messageId: data.messageId, emojiName: data.emojiName, emojiUrl: data.emojiUrl, userName: user.name });
+            io.emit("newReaction", { messageId: data.messageId, emojiName: data.emojiName, userName: user.name });
         } catch (err) { console.error("Error al reaccionar:", err); }
     });
 
