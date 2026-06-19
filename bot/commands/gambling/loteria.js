@@ -21,9 +21,10 @@ export async function execute(context) {
         const playerNumber = Math.floor(Math.random() * 6) + 1;
 
         if (playerNumber === winnerNumber) {
-            const actualEarnings = await eco.addFunds(context.username, bet * 5);
+            const baseWinnings = bet * 5;
+            const {actualEarnings, petMsg } = await context.container.gamblingService.addRewardWithBonus(context.username, baseWinnings);
             gambler.totalEarnings = (gambler.totalEarnings || 0) + actualEarnings;
-            return context.reply(`🎉 ¡Felicidades ${context.username}! Has ganado ${actualEarnings}€ netos en la lotería.`);
+            return context.reply(`🎉 ¡Felicidades ${context.username}! Has ganado ${actualEarnings}€ netos en la lotería.${petMsg}`);
         } else {
             return context.reply(`💸 Lo siento ${context.username}, has perdido ${bet}€ en la lotería.`);
         }
