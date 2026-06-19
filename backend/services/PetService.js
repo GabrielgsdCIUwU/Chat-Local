@@ -119,4 +119,36 @@ export class PetService {
         
         return 0;
     }
+
+    /**
+     * Releases a pet into the wild, removing it from the user and refunding a percentage of its value.
+     * @param {string} username - The user releasing the pet.
+     * @param {string} petId - The UUID (or start of it) of the pet.
+     * @returns {Promise<{petConfig: PetConfig, refundAmount: number}>} The released pet configuration and the refunded money.
+     * @throws {Error} If the pet does not exist or is currently equipped.
+     */
+    async releasePet(username, petId) {
+        let releasedPetConfig = null;
+        const refundAmount = Math.floor(RPG_CONFIG.EGG_PRICE * 0.5);
+
+        await this.petRepo.executeTransaction((profiles) => {
+            const profile = this.petRepo.ensureProfile(profiles, username);
+            
+            const petIndex = profile.pets.findIndex(p => p.id.startsWith(petId));
+            if (petIndex === -1) throw new Error("No posees una mascota con ese ID.");
+
+            const petInstance = profile.pets[petIndex];
+
+            if (profile.equipped === petInstance.id) {
+                throw new Error("No puedes liberar una mascota que tienes equipada. Desequípala usando '/pet equip none' primero.");
+            }
+
+            releasedPetConfig = RPG_CONFIG.PETS[petInstance.type];
+            profile.pets.splice(petIndex, 1);
+        });
+
+        await this.economy.addFunds(username, refundAmount);
+
+        return { petConfig: releasedPetConfig, refundAmount };
+    }
 }
