@@ -79,6 +79,7 @@ class DIContainer {
         this.authService = new AuthService(this.userRepository, this.bannedIpRepository);
         this.userService = new UserService(this.userRepository, this.profileDir);
         this.economyService = new EconomyService(this.economyRepository);
+        this.petService = new PetService(this.petRepository, this.economyService);
         this.gamblingService = new GamblingService(this.gamblingRepository, this.economyService, this.petService);
         this.commandService = new CommandService(this.commandsDir);
         this.emojiService = new EmojiService(this.emojisDir);
@@ -99,7 +100,6 @@ class DIContainer {
             this.jobRepository
         );
         this.guildService = new GuildService(this.economyService, this.guildRepository);
-        this.petService = new PetService(this.petRepository, this.economyService);
 
         this.authController = new AuthController(this.authService, this.userRepository);
         this.profileController = new ProfileController(this.userService);
