@@ -149,6 +149,7 @@ export const RPG_CONFIG = {
         }
     },
     EGG_PRICE: 2500,
+    /** @type {Record<string, PetConfig>} */
     PETS: {
         "lobo_huargo": {
             name: "Lobo Huargo",
@@ -235,4 +236,22 @@ export const RPG_CONFIG = {
 
 /**
  * @typedef {typeof RPG_CONFIG.CRAFTING_RECIPES[CraftingItem]} CraftingRecipe
+ */
+
+/**
+ * @typedef {"COMMON" | "EPIC" | "LEGENDARY"} PetRarity
+ */
+
+/**
+ * @typedef {"WORK_COOLDOWN" | "GAMBLING_BONUS" | "ALL_BONUS"} PetEffectType
+ */
+
+/**
+ * @typedef {Object} PetConfig
+ * @property {string} name - Display name of the pet.
+ * @property {string} emoji - Emoji representation.
+ * @property {PetRarity} rarity - Rarity level determining the drop chance.
+ * @property {PetEffectType} effectType - The kind of buff the pet provides.
+ * @property {number} value - The percentage value of the buff.
+ * @property {string} description - Lore and effect description.
  */
