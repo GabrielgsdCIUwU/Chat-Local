@@ -76,30 +76,28 @@ class DIContainer {
         this.guildRepository = new GuildRepository(this.guildsDbClient);
         this.petRepository = new PetRepository(this.petsDbClient);
 
-        this.authService = new AuthService(this.userRepository, this.bannedIpRepository);
-        this.userService = new UserService(this.userRepository, this.profileDir);
+        // Base Services (No dependencies or just repositories)
         this.economyService = new EconomyService(this.economyRepository);
-        this.petService = new PetService(this.petRepository, this.economyService);
-        this.gamblingService = new GamblingService(this.gamblingRepository, this.economyService, this.petService);
         this.commandService = new CommandService(this.commandsDir);
         this.emojiService = new EmojiService(this.emojisDir);
         this.chatFilterService = new ChatFilterService(this.spamDbClient);
+        this.authService = new AuthService(this.userRepository, this.bannedIpRepository);
+        this.userService = new UserService(this.userRepository, this.profileDir);
+        
+        // Mid-level Services (Depend on Base Services)
+        this.petService = new PetService(this.petRepository, this.economyService);
+        this.guildService = new GuildService(this.economyService, this.guildRepository);
+        this.craftingService = new CraftingService(this.inventoryRepository, this.jobRepository);
+        this.marketService = new MarketService(this.economyService, this.inventoryRepository, this.auctionRepository);
+
+        // High-level Services (Depend on Mid-level and Base Services)
+        this.gamblingService = new GamblingService(this.gamblingRepository, this.economyService, this.petService, this.guildService);
         this.rpgService = new RPGService(
             this.economyService,
             this.inventoryRepository,
             this.jobRepository,
             this.petService
         );
-        this.marketService = new MarketService(
-            this.economyService,
-            this.inventoryRepository,
-            this.auctionRepository
-        );
-        this.craftingService = new CraftingService(
-            this.inventoryRepository,
-            this.jobRepository
-        );
-        this.guildService = new GuildService(this.economyService, this.guildRepository);
 
         this.authController = new AuthController(this.authService, this.userRepository);
         this.profileController = new ProfileController(this.userService);
