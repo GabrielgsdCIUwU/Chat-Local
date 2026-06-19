@@ -90,7 +90,7 @@ export class PetService {
             const petExists = profile.pets.find(p => p.id.startsWith(petId));
             if (!petExists) throw new Error("No posees una mascota con ese ID.");
 
-            profile.equipped = petId;
+            profile.equipped = petExists.id;
             equippedPet = RPG_CONFIG.PETS[petExists.type];
         });
 
