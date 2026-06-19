@@ -101,18 +101,19 @@ export class RPGService {
 
         const jobConfig = RPG_CONFIG.JOBS[profileInfo.job];
         const toolConfig = jobConfig.tools[profileInfo.toolLevel];
+        const prestigeBonus = profileInfo.prestigeLevel || 0;
         const obtainedItems = {};
 
         for (const drop of toolConfig.lootTable) {
             if (Math.random() <= drop.chance) {
                 const amount = Math.floor(Math.random() * (drop.max - drop.min + 1)) + drop.min;
-                obtainedItems[drop.item] = amount;
+                obtainedItems[drop.item] = amount + prestigeBonus; 
             }
         }
 
         if (Object.keys(obtainedItems).length === 0) {
             const guaranteed = toolConfig.lootTable[0];
-            obtainedItems[guaranteed.item] = guaranteed.min;
+            obtainedItems[guaranteed.item] = guaranteed.min + prestigeBonus;
         }
 
         await this.inventoryRepo.executeTransaction((inventories) => {
