@@ -205,4 +205,14 @@ export class GuildService {
             }
         });
     }
+
+    /**
+     * Retrieves the guild level for a specific user.
+     * @param {string} username - The username to check.
+     * @returns {Promise<number>} The guild level, or 0 if the user is not in a guild.
+     */
+    async getUserGuildLevel(username) {
+        const guild = await this.getUserGuild(username);
+        return guild ? guild.level : 0;
+    }
 }
