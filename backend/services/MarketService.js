@@ -16,6 +16,7 @@ export class MarketService {
         this.economyService = economyService;
         this.inventoryRepository = inventoryRepository;
         this.auctionRepository = auctionRepository;
+        this.pendingTrades = new Map();
     }
 
     /**
