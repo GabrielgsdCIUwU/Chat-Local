@@ -71,7 +71,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     socket.on("messageDeleted", (data) => chatUI.deleteMessage(data.id));
     
     socket.on("newReaction", (data) => {
-        chatUI.renderReaction(data.messageId, data.emojiName, data.emojiUrl, data.userName);
+        const matchedEmoji = appState.emojiCache.find(c => c.name === data.emojiName);
+        if (matchedEmoji) {
+            chatUI.renderReaction(data.messageId, matchedEmoji.name, matchedEmoji.url, data.userName);
+        }
     });
 
     socket.on("usersTyping", (users) => {
