@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 /**
  * @typedef {Object} BotContextParams
  * @property {string} command - The main command name.
