@@ -52,6 +52,7 @@ export const GAME_CONFIG = Object.freeze({
         }
     },
     ROB_CONFIG: {
+        COOLDOWN_MS: 5 * 60 * 1000,
         MAX_CHANCE: 0.95,
         CHANCE_SCALING: 0.9,
         PENALTY_DIVISOR: 4,

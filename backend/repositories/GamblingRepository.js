@@ -35,7 +35,7 @@
             user = {
                 name: username, totalEarnings: 0, spend: 0,
                 timesSteal: 0, moneySteal: 0, duelWin: 0, duelLose: 0,
-                bankRupt: 0
+                bankRupt: 0, lastRobbery: 0
             };
             users.push(user);
         }
