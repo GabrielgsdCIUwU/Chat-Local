@@ -34,6 +34,7 @@ createFile('./backend/data/auctions.json', []);
 createFile('./backend/data/guilds.json', []);
 createFile('./backend/data/pets.json', []);
 createFile('./public/json/encuesta.json', { "pregunta": "Ejemplo", "opciones": [], "hiden": "True" });
+createFile('./public/json/nonCountDays.json', []);
 
 createFolder('./resources/emojis');
 createFolder('./resources/waitlist');
