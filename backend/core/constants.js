@@ -16,5 +16,16 @@ export const GAME_CONFIG = Object.freeze({
         4: 500000,
         5: 1000000,
         6: 2500000
+    },
+    ROB_CONFIG: {
+        MAX_CHANCE: 0.95,
+        CHANCE_SCALING: 0.9,
+        PENALTY_DIVISOR: 4,
+        THRESHOLDS: {
+            STEALTH: 0.05,
+            CLUMSY: 0.1,
+            GREEDY: 0.7,
+            HEIST: 0.8
+        }
     }
 });

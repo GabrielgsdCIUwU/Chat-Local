@@ -1,11 +1,34 @@
-export const description = "Intenta robar dinero a otro jugador. Cuidado con la policía.";
+import { GAME_CONFIG } from "../../../backend/core/constants.js";
+
+export const description = "Intenta robar dinero a otro jugador. A mayor cantidad, más fácil que te atrapen.";
 export const params = [
     { name: "usuario", type: "user", required: true, description: "Víctima a la que deseas robar." },
     { name: "dinero", type: "number", required: true, description: "Cantidad que vas a intentar robar." }
 ];
 
+const calculatePenalty = (amount) => {
+    return amount + Math.floor(amount / GAME_CONFIG.ROB_CONFIG.PENALTY_DIVISOR);
+};
+
+const getSuccessMessage = (thief, victim, amount, percentage, petMsg) => {
+    const { STEALTH, HEIST } = GAME_CONFIG.ROB_CONFIG.THRESHOLDS;
+    
+    if (percentage <= STEALTH) return `👻 **Como un fantasma:** ${thief} le robó **${amount}€** a ${victim} y ni se dio cuenta${petMsg}.`;
+    if (percentage >= HEIST) return `👑 **¡EL GOLPE DEL SIGLO!** Contra todo pronóstico, ${thief} le vació los bolsillos (**${amount}€**) a ${victim} con maestría${petMsg}.`;
+    
+    return `🕵️ ${thief} ha robado **${amount}€** a ${victim} con éxito${petMsg}.`;
+};
+
+const getFailureMessage = (thief, victim, penalty, percentage) => {
+    const { CLUMSY, GREEDY } = GAME_CONFIG.ROB_CONFIG.THRESHOLDS;
+    
+    if (percentage >= GREEDY) return `🚨 **Demasiado avaricioso:** ${thief} intentó robar casi todo el dinero de ${victim}. Hizo tanto ruido que la policía lo atrapó al instante, pagando **${penalty}€** en multas.`;
+    if (percentage <= CLUMSY) return `🤦 **Mala suerte:** ${thief} intentó robar una miseria a ${victim}, pero tropezó absurdamente y la policía lo atrapó, perdiendo **${penalty}€**.`;
+    
+    return `👮 ${thief} intentó robar a ${victim} pero la policía lo atrapó, perdiendo **${penalty}€** en multas.`;
+};
+
 /**
- * 
  * @param {import("../../core/BotContext.js").BotContext} context 
  */
 export async function execute(context) {
@@ -17,7 +40,7 @@ export async function execute(context) {
     if (Number.isNaN(amount) || amount <= 0) return context.reply("Cantidad no válida.");
 
     const thiefWallet = await eco.getBalance(context.username);
-    const maxPossibleFine = amount + Math.floor(amount / 4);
+    const maxPossibleFine = calculatePenalty(amount);
     
     if (thiefWallet.money < maxPossibleFine) {
         return context.reply(`Para intentar robar **${amount}€**, necesitas tener al menos **${maxPossibleFine}€** en tu cuenta para cubrir la fianza en caso de que la policía te atrape.`);
@@ -27,6 +50,10 @@ export async function execute(context) {
         const victimWallet = await eco.getBalance(targetName);
         if (victimWallet.money < amount) return context.reply(`La víctima solo tiene ${victimWallet.money}€.`);
 
+        const percentageStolen = amount / victimWallet.money; 
+        const { MAX_CHANCE, CHANCE_SCALING } = GAME_CONFIG.ROB_CONFIG;
+        const successChance = MAX_CHANCE - (percentageStolen * CHANCE_SCALING);
+
         const wardConsumed = await context.container.craftingService.consumeBuff(targetName, "anti_rob");
         let finalMessage = "";
 
@@ -35,25 +62,25 @@ export async function execute(context) {
             gambler.timesSteal = (gambler.timesSteal || 0) + 1;
 
             if (wardConsumed) {
-                const moneyLost = amount + Math.floor(Math.random() * (amount / 4));
-                const actuallyLost = await eco.forceRemoveFunds(context.username, moneyLost);
-                gambler.spend = (gambler.spend || 0) + actuallyLost;
-                finalMessage = `🛡️ **¡THIEF WARD ACTIVADO!**\n¡**${targetName}** estaba protegido por una poderosa barrera mágica! La protección se rompió al bloquear el robo y **${context.username}** fue repelido violentamente, pagando una multa de **${actuallyLost}€**.`;
+                const penaltyLost = await eco.forceRemoveFunds(context.username, calculatePenalty(amount));
+                gambler.spend = (gambler.spend || 0) + penaltyLost;
+                finalMessage = `🛡️ **¡THIEF WARD ACTIVADO!**\n¡**${targetName}** estaba protegido por una poderosa barrera mágica! La protección se rompió al bloquear el robo y **${context.username}** fue repelido violentamente, pagando una multa de **${penaltyLost}€**.`;
                 return;
             }
 
-            const probability = Math.random();
-
-            if (probability < 0.5) {
+            if (Math.random() < successChance) {
                 const { totalEarned, petMsg } = await context.container.gamblingService.processRobberyWin(context.username, targetName, amount);
+                              
                 gambler.moneySteal = (gambler.moneySteal || 0) + totalEarned;
                 gambler.totalEarnings = (gambler.totalEarnings || 0) + totalEarned;
-                finalMessage = `🕵️ ${context.username} ha robado ${amount}€ a ${targetName} con éxito${petMsg}.`;
+                
+                finalMessage = getSuccessMessage(context.username, targetName, amount, percentageStolen, petMsg);
+            
             } else {
-                const moneyLost = amount + Math.floor(Math.random() * (amount / 4));
-                const actuallyLost = await eco.forceRemoveFunds(context.username, moneyLost);
-                gambler.spend = (gambler.spend || 0) + actuallyLost;
-                finalMessage = `👮 ${context.username} intentó robar a ${targetName} pero la policía lo atrapó, perdiendo ${actuallyLost}€ en multas.`;
+                const penaltyLost = await eco.forceRemoveFunds(context.username, calculatePenalty(amount));
+                gambler.spend = (gambler.spend || 0) + penaltyLost;
+                
+                finalMessage = getFailureMessage(context.username, targetName, penaltyLost, percentageStolen);
             }
         });
 
