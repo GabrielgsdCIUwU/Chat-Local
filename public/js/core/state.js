@@ -77,6 +77,25 @@ export class State {
             this.commandsTree = {};
         }
     }
+
+    async processDonators(donators) {
+        const processedDonators = await Promise.all(donators.map(async (donator) => {
+            if (donator.img) {
+                try {
+                    const res = await fetch(`/resources/profiles/${donator.name}_profile${donator.img}`);
+                    if (res.ok) {
+                        const blob = await res.blob();
+                        donator.cachedImgUrl = URL.createObjectURL(blob);
+                    }
+                } catch (e) {
+                    console.error(`Error cacheando foto de ${donator.name}`, e);
+                }
+            }
+            return donator;
+        }));
+        
+        this.donators = processedDonators;
+    }
 }
 
 export const appState = new State();
