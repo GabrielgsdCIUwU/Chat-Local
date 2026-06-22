@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import crypto from "node:crypto";
 import botHandler from "../../bot/index.js";
+import { VALIDATION_CONFIG } from "../../backend/core/constants.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -26,6 +27,10 @@ export default function registerChatEvents(io, socket, user, container) {
 
     // Enviar mensaje
     socket.on("sendmsg", async (msg, reply) => {
+         if (!msg || typeof msg !== 'string' || msg.length > VALIDATION_CONFIG.CHAT.MAX_MESSAGE_LENGTH) {
+            return socket.emit("error", { message: `El mensaje excede el límite de ${VALIDATION_CONFIG.CHAT.MAX_MESSAGE_LENGTH} caracteres.` });
+        }
+
         const timestamp = Date.now();
         const id = crypto.randomUUID();
         try {
@@ -52,6 +57,9 @@ export default function registerChatEvents(io, socket, user, container) {
 
     // Editar y Borrar
     socket.on("editmsg", async (data) => {
+        if (!data.message || typeof data.message !== 'string' || data.message.length > VALIDATION_CONFIG.CHAT.MAX_MESSAGE_LENGTH) {
+            return socket.emit("error", { message: "El mensaje editado es demasiado largo." });
+        }
         try {
             await container.messageRepository.editMessage(data.id, user.name, data.message);
             io.emit("messageUpdated", {id: data.id, message: data.message, edited: true});
@@ -75,6 +83,9 @@ export default function registerChatEvents(io, socket, user, container) {
 
     // Comandos de Bot y Emojis
     socket.on("sendcmd", (cmdData) => {
+        if (cmdData.raw && cmdData.raw.length > VALIDATION_CONFIG.CHAT.MAX_MESSAGE_LENGTH) {
+            return socket.emit("error", { message: "El comando es demasiado largo." });
+        }
         botHandler.handleCommand({ cmd: cmdData, socket, io, username: user.name, container });
     });
 
