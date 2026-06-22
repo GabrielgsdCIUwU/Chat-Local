@@ -55,8 +55,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     socket.on("iam", (name) => appState.currentUser = name);
     socket.on("userNames", (names) => appState.userNames = names);
     
-    socket.on("donators", (donators) => {
-        appState.donators = donators;
+    socket.on("donators", async (donators) => {
+        await appState.processDonators(donators);
         donatorsLoaded = true;
         attemptRenderHistory();
     });
