@@ -16,6 +16,13 @@ export async function execute(context) {
     if (context.username === targetName) return context.reply("No puedes robarte a ti mismo.");
     if (Number.isNaN(amount) || amount <= 0) return context.reply("Cantidad no válida.");
 
+    const thiefWallet = await eco.getBalance(context.username);
+    const maxPossibleFine = amount + Math.floor(amount / 4);
+    
+    if (thiefWallet.money < maxPossibleFine) {
+        return context.reply(`Para intentar robar **${amount}€**, necesitas tener al menos **${maxPossibleFine}€** en tu cuenta para cubrir la fianza en caso de que la policía te atrape.`);
+    }
+
     try {
         const victimWallet = await eco.getBalance(targetName);
         if (victimWallet.money < amount) return context.reply(`La víctima solo tiene ${victimWallet.money}€.`);
