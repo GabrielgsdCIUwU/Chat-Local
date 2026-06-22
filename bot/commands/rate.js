@@ -1,3 +1,5 @@
+import { BOT_CONFIG } from '../../backend/core/constants.js';
+
 export const description = "El bot valorará del 1 al 10 lo que le pidas.";
 export const params = [
     { name: "valorar", type: "string", required: true, description: "Lo que quieres que el bot valore." }
@@ -15,7 +17,7 @@ export function execute(context) {
     }
 
     function random() {
-        let max = 10;
+        let max = BOT_CONFIG.MAX_RATE_VALUE;
         let v = Math.round(Math.random() * (max -1) + 1);
         return v;
     }

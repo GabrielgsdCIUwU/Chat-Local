@@ -45,7 +45,7 @@ export class EconomyService {
             const wallet = this.repo.ensureWallet(wallets, username);
 
             if (wallet.debt > 0) {
-                let payDebt = Math.floor(amount * 0.2);
+                let payDebt = Math.floor(amount * GAME_CONFIG.ECONOMY.DEBT_REPAY_PERCENTAGE);
                 if (payDebt > wallet.debt) payDebt = wallet.debt;
 
                 wallet.debt -= payDebt;
@@ -165,7 +165,7 @@ export class EconomyService {
 
             wallet.money = base_money;
 
-            wallet.debt += base_money + Math.floor(Math.random() * bankRuptCount * 10);
+            wallet.debt += base_money + Math.floor(Math.random() * bankRuptCount * GAME_CONFIG.ECONOMY.BANKRUPT_PENALTY_MULT);
         });
     }
 }

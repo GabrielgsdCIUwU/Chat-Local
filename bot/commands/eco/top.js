@@ -1,3 +1,4 @@
+import { BOT_CONFIG } from "../../../backend/core/constants.js";
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
 export const description = "Muestra el ranking de los jugadores más ricos del servidor.";
@@ -8,7 +9,7 @@ export const description = "Muestra el ranking de los jugadores más ricos del s
  */
 export async function execute(context) {
     try {
-        const topWallets = await context.container.economyService.getTopRicher(10);
+        const topWallets = await context.container.economyService.getTopRicher(BOT_CONFIG.TOP_LIMIT_DEFAULT);
 
         const embed = new EmbedMessage();
         topWallets.forEach((wallet, index) => {
