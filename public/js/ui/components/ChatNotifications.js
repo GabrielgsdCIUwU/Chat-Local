@@ -8,6 +8,11 @@ export class ChatNotifications {
     }
 
     initListeners() {
+        document.addEventListener("click", () => {
+            if ("Notification" in globalThis && Notification.permission === "default") {
+                Notification.requestPermission();
+            }
+        }, { once: true });
         document.addEventListener("visibilitychange", () => {
             this.isTabActive = document.visibilityState === 'visible';
             if (this.isTabActive) {
