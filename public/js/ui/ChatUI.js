@@ -47,8 +47,9 @@ export class ChatUI {
 
         if (donator) {
             if (donator.color) nameStyle = `color: ${donator.color};`;
-            if (typeof donator.img === 'string') {
-                avatarHtml = `<img src="/resources/profiles/${msg.user}_profile${donator.img}" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; object-fit: cover;">`;
+            if (donator.cachedImgUrl || typeof donator.img === 'string') {
+                const imgSrc = donator.cachedImgUrl || `/resources/profiles/${msg.user}_profile${donator.img}`;
+                avatarHtml = `<img src="${imgSrc}" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; object-fit: cover;">`;
             }
         }
 
