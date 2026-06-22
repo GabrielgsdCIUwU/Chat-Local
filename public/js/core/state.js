@@ -24,54 +24,47 @@ export class State {
 
     async loadEmojis() {
         try {
-            const response = await fetch("/img/emoji");
-            if (!response.ok) throw new Error("Fallo al obtener emojis");
-            const serverEmojis = await response.json();
-
-            let localCache = [];
-            try {
-                const cached = localStorage.getItem("emojiBlobCache");
-                if (cached) localCache = JSON.parse(cached);
-            } catch(e) { 
-                console.warn("No se pudo leer la caché local:", e); 
+            const cached = localStorage.getItem("emojiBlobCache");
+            if (cached) {
+                this.emojiCache = JSON.parse(cached);
             }
+        } catch(e) {
+            console.warn("No se pudo leer la caché local:", e);
+        }
 
-            const cacheMap = new Map(localCache.map(e => [e.name, e]));
-            const updatedCache = [];
-            let cacheChanged = false;
+        fetch("/img/emoji")
+            .then(res => res.json())
+            .then(async serverEmojis => {
+                const cacheMap = new Map(this.emojiCache.map(e => [e.name, e]));
+                const updatedCache = [];
+                let cacheChanged = false;
 
-            for (const emoji of serverEmojis) {
-                if (cacheMap.has(emoji.name)) {
-                    updatedCache.push(cacheMap.get(emoji.name));
-                } else {
-                    try {
-                        const imgRes = await fetch(emoji.url);
-                        const blob = await imgRes.blob();
-                        const base64 = await this.#blobToBase64(blob);
-                        
-                        updatedCache.push({ ...emoji, url: base64 });
-                        cacheChanged = true;
-                    } catch (e) {
-                        console.error(`Fallo al descargar el Blob de ${emoji.name}:`, e);
-                        updatedCache.push(emoji);
+                for (const emoji of serverEmojis) {
+                    if (cacheMap.has(emoji.name)) {
+                        updatedCache.push(cacheMap.get(emoji.name));
+                    } else {
+                        try {
+                            const imgRes = await fetch(emoji.url);
+                            const blob = await imgRes.blob();
+                            const base64 = await this.#blobToBase64(blob);
+                            updatedCache.push({ ...emoji, url: base64 });
+                            cacheChanged = true;
+                        } catch (e) {
+                            console.error(`Fallo al descargar ${emoji.name}`, e);
+                        }
                     }
                 }
-            }
 
-            if (cacheChanged || updatedCache.length !== localCache.length) {
-                try {
-                    localStorage.setItem("emojiBlobCache", JSON.stringify(updatedCache));
-                } catch(e) {
-                    console.warn("Caché de localStorage llena (QuotaExceeded), se usará en memoria.");
+                if (cacheChanged || updatedCache.length !== this.emojiCache.length) {
+                    this.emojiCache = updatedCache;
+                    try {
+                        localStorage.setItem("emojiBlobCache", JSON.stringify(updatedCache));
+                    } catch(e) {
+                        console.warn("Caché excedida. Se usará solo memoria.", e);
+                    }
                 }
-            }
-
-            this.emojiCache = updatedCache;
-
-        } catch (err) {
-            console.error("No se pudieron cargar los emojis:", err);
-            this.emojiCache = [];
-        }
+            })
+            .catch(err => console.error("Error validando emojis en segundo plano:", err));
     }
 
     async loadCommands() {
