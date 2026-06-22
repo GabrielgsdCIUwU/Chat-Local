@@ -83,10 +83,13 @@ export class InputUI {
 
         if (this.commandUI.isActive()) {
             textToSave = this.commandUI.getRawCommand();
+            if (textToSave.length > 1000) { return alert("Comando demasiado largo.") };
             this.commandUI.sendCommand();
         } else {
             textToSave = this.input.value.trim();
             if (!textToSave) return;
+
+            if (textToSave.length > 1000) { return alert("Comando demasiado largo.") };
 
             if (appState.isEditingMessage) {
                 this.socket.emit("editmsg", { message: textToSave, id: appState.editingMessageId });
@@ -103,9 +106,9 @@ export class InputUI {
         if (textToSave && (this.messageHistory.length === 0 || this.messageHistory.at(-1) !== textToSave)) {
             this.messageHistory.push(textToSave);
         }
-        
+
         this.historyIndex = this.messageHistory.length;
-        this.draftMessage = ""; 
+        this.draftMessage = "";
 
         const replyDisplay = document.getElementById("replyMessageDisplay");
         if (replyDisplay) replyDisplay.classList.add("hidden");
