@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import { VALIDATION_CONFIG } from "../core/constants.js";
 
 /**
  * @typedef {Object} UserDTO
