@@ -389,7 +389,7 @@ export class CommandUI {
     }
 
     sendCommand() {
-        const rawCommand = this.#buildRawCommand();
+        const rawCommand = this.getRawCommand();
         if (!rawCommand || rawCommand === "/") return;
 
         const tokens = this.#tokenizeCommand(rawCommand);
@@ -407,7 +407,7 @@ export class CommandUI {
         this.textarea.focus();
     }
 
-    #buildRawCommand() {
+    getRawCommand() {
         let finalCmd = this.activeCommand || this.textarea.value;
         
         if (this.activeCommand && this.activeParams.length) {
