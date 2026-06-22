@@ -1,3 +1,4 @@
+import { BOT_CONFIG } from "../../../backend/core/constants.js";
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
 export const description = "Muestra las subastas activas más baratas del mercado.";
@@ -14,7 +15,7 @@ export async function execute(context) {
 
     const embed = new EmbedMessage();
     
-    const sorted = auctions.toSorted((a, b) => a.price - b.price).slice(0, 15);
+    const sorted = auctions.toSorted((a, b) => a.price - b.price).slice(0, BOT_CONFIG.MARKET_TOP_LIMIT);
 
     sorted.forEach((auc) => {
         embed.addField(

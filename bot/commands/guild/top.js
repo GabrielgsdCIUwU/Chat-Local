@@ -1,3 +1,4 @@
+import { BOT_CONFIG } from "../../../backend/core/constants.js";
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
 export const description = "Muestra el ranking de los gremios más poderosos y ricos.";
@@ -6,7 +7,7 @@ export const description = "Muestra el ranking de los gremios más poderosos y r
  * @param {import('../../core/BotContext.js').BotContext} context 
  */
 export async function execute(context) {
-    const topGuilds = await context.container.guildService.getTopGuilds(10);
+    const topGuilds = await context.container.guildService.getTopGuilds(BOT_CONFIG.TOP_LIMIT_DEFAULT);
 
     if (topGuilds.length === 0) {
         return context.reply("No hay ninguna guild actualmente.");

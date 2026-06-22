@@ -1,3 +1,4 @@
+import { BOT_CONFIG } from "../../../backend/core/constants.js";
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
 export const description = "Muestra el ranking de los ludópatas más exitosos del casino.";
@@ -28,7 +29,7 @@ export async function execute(context) {
 
     const embed = new EmbedMessage();
     
-    sorted.slice(0, 10).forEach((user, index) => {
+    sorted.slice(0, BOT_CONFIG.TOP_LIMIT_DEFAULT).forEach((user, index) => {
         const earnings = user.totalEarnings || 0;
         const spend = user.spend || 0;
         const totalGames = earnings + spend;
