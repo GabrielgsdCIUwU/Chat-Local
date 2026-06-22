@@ -55,8 +55,8 @@ export class PetService {
             const roll = Math.random();
             let rarity = "COMMON";
             
-            if (roll <= 0.05) rarity = "LEGENDARY";
-            else if (roll <= 0.3) rarity = "EPIC";
+            if (roll <= RPG_CONFIG.GACHA_RATES.LEGENDARY) rarity = "LEGENDARY";
+            else if (roll <= RPG_CONFIG.GACHA_RATES.EPIC) rarity = "EPIC";
 
             const availablePets = Object.entries(RPG_CONFIG.PETS).filter(([k, v]) => v.rarity === rarity);
             
@@ -129,7 +129,7 @@ export class PetService {
      */
     async releasePet(username, petId) {
         let releasedPetConfig = null;
-        const refundAmount = Math.floor(RPG_CONFIG.EGG_PRICE * 0.5);
+        const refundAmount = Math.floor(RPG_CONFIG.EGG_PRICE * RPG_CONFIG.PET_REFUND_PERCENTAGE);
 
         await this.petRepo.executeTransaction((profiles) => {
             const profile = this.petRepo.ensureProfile(profiles, username);
