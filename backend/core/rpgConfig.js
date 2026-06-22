@@ -149,6 +149,11 @@ export const RPG_CONFIG = {
         }
     },
     EGG_PRICE: 2500,
+    PET_REFUND_PERCENTAGE: 0.5,
+    GACHA_RATES : {
+        LEGENDARY: 0.05,
+        EPIC: 0.3
+    },
     /** @type {Record<string, PetConfig>} */
     PETS: {
         "lobo_huargo": {
