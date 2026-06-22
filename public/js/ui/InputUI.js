@@ -9,6 +9,10 @@ export class InputUI {
         this.typingTimeout = null;
 
         this.commandUI = new CommandUI(socket, this.input, this.btnSend);
+
+        this.messageHistory = [];
+        this.historyIndex = 0;
+        this.draftMessage = "";
     }
 
     init() {
@@ -21,6 +25,33 @@ export class InputUI {
 
         this.input.addEventListener("keydown", (e) => {
             if (this.commandUI.handleKeydown(e)) return;
+
+            if (e.key === "ArrowUp") {
+                if (this.input.selectionStart === 0 || this.historyIndex < this.messageHistory.length) {
+                    e.preventDefault();
+                    if (this.historyIndex === this.messageHistory.length) {
+                        this.draftMessage = this.input.value;
+                    }
+                    if (this.historyIndex > 0) {
+                        this.historyIndex--;
+                        this.input.value = this.messageHistory[this.historyIndex];
+                        this.input.dispatchEvent(new Event('input'));
+                    }
+                    return;
+                }
+            } else if (e.key === "ArrowDown") {
+                if (this.historyIndex < this.messageHistory.length) {
+                    e.preventDefault();
+                    this.historyIndex++;
+                    if (this.historyIndex === this.messageHistory.length) {
+                        this.input.value = this.draftMessage;
+                    } else {
+                        this.input.value = this.messageHistory[this.historyIndex];
+                    }
+                    this.input.dispatchEvent(new Event('input'));
+                    return;
+                }
+            }
 
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -48,26 +79,33 @@ export class InputUI {
     }
 
     send() {
-        const text = this.input.value.trim();
-        if (!text && !this.commandUI.isActive()) return;
+        let textToSave = "";
 
         if (this.commandUI.isActive()) {
+            textToSave = this.commandUI.getRawCommand();
             this.commandUI.sendCommand();
         } else {
+            textToSave = this.input.value.trim();
+            if (!textToSave) return;
+
             if (appState.isEditingMessage) {
-                // Emitir edición
-                this.socket.emit("editmsg", { message: text, id: appState.editingMessageId });
+                this.socket.emit("editmsg", { message: textToSave, id: appState.editingMessageId });
                 appState.isEditingMessage = false;
                 appState.editingMessageId = null;
             } else if (appState.replyMessage) {
-                // Emitir respuesta
-                this.socket.emit("sendmsg", text, appState.replyMessage);
+                this.socket.emit("sendmsg", textToSave, appState.replyMessage);
                 appState.replyMessage = null;
             } else {
-                // Mensaje normal
-                this.socket.emit("sendmsg", text);
+                this.socket.emit("sendmsg", textToSave);
             }
         }
+
+        if (textToSave && (this.messageHistory.length === 0 || this.messageHistory.at(-1) !== textToSave)) {
+            this.messageHistory.push(textToSave);
+        }
+        
+        this.historyIndex = this.messageHistory.length;
+        this.draftMessage = ""; 
 
         const replyDisplay = document.getElementById("replyMessageDisplay");
         if (replyDisplay) replyDisplay.classList.add("hidden");
