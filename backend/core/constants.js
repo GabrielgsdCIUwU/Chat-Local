@@ -3,6 +3,18 @@ export const ROLES = Object.freeze({
     ADMIN: "Admin",
 });
 
+export const VALIDATION_CONFIG = Object.freeze({
+    USER: {
+        MIN_NAME: 3,
+        MAX_NAME: 16,
+        MIN_PASS: 6,
+        MAX_PASS: 64
+    },
+    CHAT: {
+        MAX_MESSAGE_LENGTH: 1000,
+    }
+});
+
 export const BOT_CONFIG = Object.freeze({
     TOP_LIMIT_DEFAULT: 10,
     MARKET_TOP_LIMIT: 15,
