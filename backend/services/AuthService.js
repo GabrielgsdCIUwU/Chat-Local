@@ -27,6 +27,13 @@ export class AuthService {
      * @throws {Error} If authentication fails or IP is banned/unauthorized.
      */
     async login(name, password, ip) {
+        if (!name || name.length > VALIDATION_CONFIG.USER.MAX_NAME) {
+            throw new Error('Usuario o contraseña incorrecta!');
+        }
+        if (!password || password.length > VALIDATION_CONFIG.USER.MAX_PASS) {
+            throw new Error('Usuario o contraseña incorrecta!');
+        }
+
         const blockedIP = await this.bannedIpRepository.isBanned(ip);
         if (blockedIP) throw new Error(`Lo siento pero has sido baneado por: ${blockedIP.motivo}`);
 
@@ -61,6 +68,19 @@ export class AuthService {
      * @param {string} ip 
      */
     async register(name, password, ip) {
+        const { MIN_NAME, MAX_NAME, MIN_PASS, MAX_PASS } = VALIDATION_CONFIG.USER;
+        if (!name || name.length < MIN_NAME || name.length > MAX_NAME) {
+            throw new Error(`El nombre debe tener entre ${MIN_NAME} y ${MAX_NAME} caracteres.`);
+        }
+        const nameRegex = /^[a-zA-Z0-9_]+$/;
+        if (!nameRegex.test(name)) {
+            throw new Error('El nombre solo puede contener letras, números y guiones bajos.');
+        }
+
+        if (!password || password.length < MIN_PASS || password.length > MAX_PASS) {
+            throw new Error(`La contraseña debe tener entre ${MIN_PASS} y ${MAX_PASS} caracteres.`);
+        }
+        
         const userExists = await this.userRepository.findByName(name);
         if (userExists) throw new Error('El usuario ya existe');
 
