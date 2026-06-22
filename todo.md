@@ -1,5 +1,0 @@
-- Tienda
-- Posibilidad de cambiar la dirección de los mensajes (abajo -> arriba)
-- guardar mensajes del bot (poder filtrar)
-- añadir slash commands (aparecer una guía a la hora de poner /) -> working
-- añadir la opcion de ephemeral
