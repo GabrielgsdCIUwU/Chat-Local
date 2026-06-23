@@ -1,0 +1,28 @@
+import { BOT_CONFIG } from "../../../backend/core/constants.js";
+import { EmbedMessage } from "../../utility/EmbedMessage.js";
+
+export const description = "Muestra las subastas activas más baratas del mercado.";
+
+/**
+ * @param {import('../../core/BotContext.js').BotContext} context 
+ */
+export async function execute(context) {
+    const auctions = await context.container.marketService.getActiveAuctions();
+
+    if (auctions.length === 0) {
+        return context.reply("⚖️ **Mercado Global**\nNo hay ninguna subasta activa en este momento.");
+    }
+
+    const embed = new EmbedMessage();
+    
+    const sorted = auctions.toSorted((a, b) => a.price - b.price).slice(0, BOT_CONFIG.MARKET_TOP_LIMIT);
+
+    sorted.forEach((auc) => {
+        embed.addField(
+            `🛒 ID: \`${auc.id}\` | ${auc.amount}x ${auc.itemName}`, 
+            `💰 Precio: **${auc.price.toLocaleString('es-ES')}€** (Vendedor: ${auc.seller})`
+        );
+    });
+
+    context.reply(`⚖️ **Mercado Global (Top 15 más baratos)**\n*(Usa \`/mercado buy ID\` para adquirir uno)*\n${embed.toString()}`);
+}

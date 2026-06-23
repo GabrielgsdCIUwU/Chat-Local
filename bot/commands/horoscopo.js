@@ -1,5 +1,23 @@
-export function execute({ args, socket, io, username }) {
-    const timestamp = new Date().getTime();
+export const description = "Calcula tu horóscopo aleatorio para el día de hoy.";
+export const params = [
+    { name: "usuario", type: "user", required: false, description: "Usuario al que le quieres leer el horóscopo." }
+];
+
+/**
+ * 
+ * @param {import('../core/BotContext.js').BotContext} context 
+ */
+export function execute(context) {
+
+    let finalUser;
+
+    const targetName = context.args[0];
+    if (targetName) {
+        finalUser = targetName;
+    } else {
+        finalUser = context.username;
+    }
+
 
     function random() {
         let max = 100;
@@ -7,7 +25,5 @@ export function execute({ args, socket, io, username }) {
         return v;
     }
 
-    const response = `Tu horóscopo ${username}:\n**Amor**:${random()}%\n**Salud**:${random()}%\n**Suerte**:${random()}%\n**Dinero**:${random()}%`
-
-    io.emit("sendmsg", { user: "🤖 Bot", message: response, timestamp });
+    context.reply(`El horóscopo de ${finalUser}:\n**Amor**:${random()}%\n**Salud**:${random()}%\n**Suerte**:${random()}%\n**Dinero**:${random()}%`)
 }

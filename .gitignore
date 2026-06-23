@@ -2,9 +2,10 @@
 /node_modules
 .env
 public/json/users.json
-backend/json/users.json
+backend/data/*
 sessions
 public/json/*
 .vscode/settings.json
 resources/*
 public/css/output.css
+certificates/

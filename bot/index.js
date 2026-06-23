@@ -1,5 +1,7 @@
-import { fileURLToPath, pathToFileURL } from 'url';
-import path from 'path';
+import { fileURLToPath} from 'node:url';
+import path from 'node:path';
+import { CommandLoader } from '../backend/core/CommandLoader.js';
+import { BotContext } from './core/BotContext.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -7,26 +9,22 @@ const __dirname = path.dirname(__filename);
 // Ruta donde se almacenan los comandos del bot
 const commandsPath = path.join(__dirname, "./commands");
 
-// Función para cargar y ejecutar un comando
-async function loadCommand(commandName) {
-    try {
-        const commandPath = pathToFileURL(path.join(commandsPath, `${commandName}.js`)).href;
-        return await import(commandPath);
-    } catch (error) {
-        console.error(`Error al cargar el comando ${commandName}:`, error);
-        return null;
-    }
-}
 
-export async function handleCommand({ msg, socket, io, username }) {
-    const args = msg.split(" ").slice(1); // Obtener argumentos del comando
-    const commandName = args[0]; // Nombre del comando
-    const command = await loadCommand(commandName);
+export async function handleCommand({ cmd, socket, io, username, container }) {
+    const { command, subcommands, params: args, raw } = cmd;
+    const timestamp = Date.now();
 
-    if (command && command.execute) {
-        command.execute({ args: args.slice(1), socket, io, username, msg }); // Ejecutar lógica del comando
+    const commandModule = await CommandLoader.load(commandsPath, command);
+    
+    const context = new BotContext({
+            command, subcommands, args, raw, io, socket, username, container, timestamp
+        });
+
+    if (commandModule?.execute) {
+
+        commandModule.execute(context);
     } else {
-        socket.emit("error", { message: "Comando no encontrado" });
+        context.reply("No existe este comando, revisa lo que has escrito: " + raw)
     }
 }
 

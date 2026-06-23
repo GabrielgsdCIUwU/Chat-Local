@@ -86,3 +86,56 @@ h1 {
   color: #bbb;
   margin-bottom: 4px;
 }
+
+.options-button:focus {
+  outline: none;
+}
+
+#messageOptionsModal {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
+.menu-option {
+  white-space: nowrap;
+}
+
+/*Commands section*/
+.command-suggestion {
+  transition: all 0.15s ease-in-out;
+}
+
+.command-suggestion:hover {
+  transform: translateX(2px);
+}
+
+.parameter-badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+}
+
+.suggestion-box {
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+}
+
+.suggestion-item {
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#parameterChips {
+  overflow: visible;
+}
+
+

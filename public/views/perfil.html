@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Configuración de Perfil</title>
+    <link rel="stylesheet" href="/public/css/output.css" />
+  </head>
+  <body class="bg-gray-800 p-4 shadow-lg text-white flex justify-center items-center h-screen">
+    <div class="bg-gray-700 p-6 rounded-lg shadow-lg w-96">
+      <h2 class="text-xl font-semibold mb-4">Configuración de Perfil</h2>
+
+      <div class="flex flex-col items-center">
+        <label for="profile-pic" class="cursor-pointer">
+          <div
+            id="preview-container"
+            class="w-32 h-32 rounded-full bg-gray-500 flex items-center justify-center overflow-hidden">
+            <span class="text-gray-300">Subir</span>
+          </div>
+        </label>
+        <input type="file" id="profile-pic" class="hidden" accept="image/*" />
+      </div>
+
+      <div class="mt-4">
+        <label for="username" class="block text-sm font-medium text-gray-300">Nombre de usuario</label>
+        <input type="text" id="username" class="mt-1 block w-full p-2 border rounded-md bg-gray-600 text-white" />
+      </div>
+
+      <div class="mt-4">
+        <label for="color-picker" class="block text-sm font-medium text-gray-300">Color del nombre</label>
+        <input type="color" id="color-picker" class="w-full h-10 mt-1" value="#ffffff" />
+      </div>
+
+      <p id="preview-name" class="text-center text-lg font-semibold mt-2">Vista previa del nombre</p>
+
+      <button id="save-btn" class="mt-4 w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600">
+        Guardar
+      </button>
+    </div>
+
+    <script>
+      const fileInput = document.getElementById("profile-pic");
+      const previewContainer = document.getElementById("preview-container");
+      const colorPicker = document.getElementById("color-picker");
+      const previewName = document.getElementById("preview-name");
+      const usernameInput = document.getElementById("username");
+      const saveBtn = document.getElementById("save-btn");
+
+      let nombre;
+      let color;
+
+      // Obtener el nombre del usuario desde el servidor
+      function recargarDatos() {
+        fetch("/perfil/datos")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.nombre) {
+              usernameInput.value = data.nombre;
+              previewName.textContent = data.nombre;
+              colorPicker.value = data.color;
+              nombre = data.nombre;
+              color = data.color;
+              cargarImagenPerfil(data.nombre);
+            }
+          });
+      }
+      recargarDatos();
+
+      function cargarImagenPerfil(nombre) {
+        const extensiones = ["jpg", "png", "jpeg", "gif", "webm"];
+        let encontrada = false;
+        
+        (function comprobarExtension(index) {
+          if (index >= extensiones.length) {
+            if (!encontrada) {
+              previewContainer.innerHTML = '<span class="text-gray-300">Subir</span>';
+              previewContainer.classList.add("bg-gray-500");
+            }
+            return;
+          }
+          
+          const ruta = `/resources/profiles/${nombre}_profile.${extensiones[index]}`;
+          fetch(ruta, { method: "HEAD" })
+            .then((response) => {
+              if (response.ok) {
+                encontrada = true;
+                previewContainer.innerHTML = `<img src="${ruta}" class="w-full h-full object-cover">`;
+                previewContainer.classList.remove("bg-gray-500");
+              } else {
+                comprobarExtension(index + 1);
+              }
+            })
+            .catch(() => comprobarExtension(index + 1));
+        })(0);
+      }
+
+      fileInput.addEventListener("change", function () {
+        const file = fileInput.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            previewContainer.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      colorPicker.addEventListener("input", function () {
+        previewName.style.color = colorPicker.value;
+      });
+
+      usernameInput.addEventListener("input", function () {
+        previewName.textContent = usernameInput.value || "Vista previa del nombre";
+      });
+
+      saveBtn.addEventListener("click", function () {
+        const formData = new FormData();
+        const file = fileInput.files[0];
+        if (!file && usernameInput.value === nombre && colorPicker.value === color) {
+          return alert("No has hecho ningún cambio!");
+        }
+        let errorFile = false;
+        let errorColor = false;
+        let errorNombre = false;
+        if (file) {
+          formData.append("img", file);
+          fetch("/perfil/img", {
+            method: "POST",
+            body: formData,
+          })
+            .then((response) => {
+              if (!response.ok) {
+                return response.json().then((errorData) => {
+                  errorFile = true;
+                  throw new Error(errorData.message || "Ha ocurrido un error al actualizar la foto de perfil");
+                });
+              }
+            })
+            .catch((error) => {
+              console.error("Error", error.message);
+              errorFile = true;
+              alert(error.message || "Ha ocurrido un error al enviar la imágen, intentalo más tarde.");
+            });
+        }
+
+        if (colorPicker.value !== color) {
+          fetch("/perfil/color", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ color: colorPicker.value }),
+          })
+            .then((response) => {
+              if (!response.ok) {
+                errorColor = true;
+                return response.json().then((errorData) => {
+                  throw new Error(errorData.message || "Ha ocurrido un error al actualizar el color");
+                });
+              }
+            })
+            .catch((error) => {
+              console.error("Error", error.message);
+              errorColor = true;
+              alert(error.message || "Ha ocurrido un error al actualizar el color, intentalo más tarde.");
+            });
+        }
+
+        if (usernameInput.value !== nombre) {
+          setTimeout(() => {
+            fetch("/perfil/nombre", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ nombre: usernameInput.value }),
+            })
+              .then((response) => {
+                if (!response.ok) {
+                  errorNombre = true;
+                  return response.json().then((errorData) => {
+                    throw new Error(errorData.message || "Ha ocurrido un error al actualizar el nombre");
+                  });
+                }
+              })
+              .catch((error) => {
+                errorNombre = true;
+                console.error("Error", error.message);
+                alert(error.message || "Ha ocurrido un error al cambiar el nombre, intentalo más tarde.");
+              });
+          }, 200);
+        }
+
+        if (!errorFile && !errorColor && !errorNombre) {
+          alert("Se ha guardado los cambios correctamente");
+          recargarDatos()
+        }
+      });
+    </script>
+  </body>
+</html>

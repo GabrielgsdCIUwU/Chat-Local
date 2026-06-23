@@ -1,30 +1,44 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const createFile = (filePath, content) => {
-  if (!fs.existsSync(filePath)) {
+  if (fs.existsSync(filePath)) {
+    console.log(`ℹ️ El archivo ya existe: ${filePath}`);
+  } else {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, JSON.stringify(content, null, 2), 'utf-8');
-    console.log(`Archivo creado: ${filePath}`);
-  } else {
-    console.log(`Archivo ya existe: ${filePath}`);
+    console.log(`✅ Archivo creado: ${filePath}`);
   }
 };
 
 const createFolder = (folderPath) => {
-  if (!fs.existsSync(folderPath)) {
-    fs.mkdirSync(folderPath, { recursive: true });
-    console.log(`Carpeta creada: ${folderPath}`);
+  if (fs.existsSync(folderPath)) {
+    console.log(`ℹ️ La carpeta ya existe: ${folderPath}`);
   } else {
-    console.log(`Carpeta ya existe: ${folderPath}`);
+    fs.mkdirSync(folderPath, { recursive: true });
+    console.log(`✅ Carpeta creada: ${folderPath}`);
   }
 };
 
-createFile('./public/json/messages.json', []);
-createFile('./public/json/spamer.json', []);
-createFile('./backend/json/users.json', []);
+console.log('⚙️ Iniciando configuración del entorno...');
+
+createFile('./backend/data/messages.json', []);
+createFile('./backend/data/spamer.json', []);
+createFile('./backend/data/users.json', []);
+createFile('./backend/data/usersban.json', []);
+createFile('./backend/data/gambling.json', []);
+createFile('./backend/data/economy.json', []);
+createFile('./backend/data/inventory.json', []);
+createFile('./backend/data/jobs.json', []);
+createFile('./backend/data/auctions.json', []);
+createFile('./backend/data/guilds.json', []);
+createFile('./backend/data/pets.json', []);
+createFile('./public/json/encuesta.json', { "pregunta": "Ejemplo", "opciones": [], "hiden": "True" });
+createFile('./public/json/nonCountDays.json', []);
 
 createFolder('./resources/emojis');
 createFolder('./resources/waitlist');
+createFolder('./resources/profiles');
+createFolder('./sessions');
 
-console.log('Proceso de creación de archivos y carpetas completado.');
+console.log('🚀 Proceso de inicialización completado con éxito.');
