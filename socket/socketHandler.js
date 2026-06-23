@@ -26,7 +26,7 @@ export default function setupSockets(io, sessionMiddleware) {
 
          io.emit("userNames", Array.from(connectedUsers));
 
-        registerUserEvents(io, socket, user);
+        registerUserEvents(io, socket, user, container);
         registerChatEvents(io, socket, user, container);
         registerPrivateEvents(io, socket, user);
         registerPollEvents(io, socket, user);
