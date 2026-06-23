@@ -1,13 +1,16 @@
 import { appState } from '../core/state.js';
 
 export class ToolbarUI {
-    constructor() {
+    constructor(audioSFX) {
+        this.audioSFX = audioSFX; 
         this.toggleBotBtn = document.getElementById("toggleBot");
         this.clearBtn = document.getElementById("clear");
         this.container = document.getElementById("mensajes");
+        this.muteBtn = document.getElementById("btn-mute");
 
         this.initListeners();
         this.syncBotButtonState();
+        this.syncMuteButtonState();
     }
 
     initListeners() {
@@ -15,6 +18,11 @@ export class ToolbarUI {
         
         this.clearBtn?.addEventListener("click", () => {
             if (this.container) this.container.innerHTML = "";
+        });
+
+        this.muteBtn?.addEventListener("click", () => {
+            const isMuted = this.audioSFX.toggleMute();
+            this.syncMuteButtonState();
         });
     }
 
@@ -46,5 +54,16 @@ export class ToolbarUI {
         });
 
         if (this.container) this.container.scrollTop = 0;
+    }
+
+    syncMuteButtonState() {
+        if (!this.muteBtn || !this.audioSFX) return;
+        if (this.audioSFX.muted) {
+            this.muteBtn.textContent = "🔇 Silenciado";
+            this.muteBtn.classList.replace("bg-gray-600", "bg-red-600");
+        } else {
+            this.muteBtn.textContent = "🔊 Sonido";
+            this.muteBtn.classList.replace("bg-red-600", "bg-gray-600");
+        }
     }
 }

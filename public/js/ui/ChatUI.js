@@ -4,13 +4,16 @@ import { ChatNotifications } from './components/ChatNotifications.js';
 import { MessageMenu } from './components/MessageMenu.js';
 
 export class ChatUI {
-    constructor(socket, emojiUI) {
+    constructor(socket, emojiUI, audioSFX, toastUI) {
         this.socket = socket;
         this.container = document.getElementById("mensajes");
         
         this.formatter = new MessageFormatter(appState);
         this.notifications = new ChatNotifications(this.container);
         this.menu = new MessageMenu(socket, emojiUI, this.notifications);
+        
+        this.audioSFX = audioSFX;
+        this.toastUI = toastUI;
 
         this.initListeners();
     }
@@ -55,8 +58,9 @@ export class ChatUI {
 
         const { formattedText, metadata } = this.formatter.format(msg, isHistory);
         
-        if (metadata.mentionsCurrentUser) {
+        if (metadata.mentionsCurrentUser && !isHistory) {
             this.notifications.notifyMention(msg.user);
+            this.toastUI.show(`¡${msg.user} te ha mencionado!`, 'mention');
         }
 
         const time = new Date(msg.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });

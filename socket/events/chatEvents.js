@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import crypto from "node:crypto";
 import botHandler from "../../bot/index.js";
 import { VALIDATION_CONFIG } from "../../backend/core/constants.js";
+import { RPG_CONFIG } from "../../backend/core/rpgConfig.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -22,6 +23,50 @@ export default function registerChatEvents(io, socket, user, container) {
             socket.emit("messageHistory", data);
         } catch (error) {
             socket.emit("error", { message: "Error al leer los mensajes" });
+        }
+    });
+
+    // Inventario
+    socket.on("requestInventory", async () => {
+        try {
+            const { profile, inventory } = await container.rpgService.getFullProfile(user.name);
+            const petProfile = await container.petRepository.getProfile(user.name);
+            const wallet = await container.economyService.getBalance(user.name);
+            
+            let jobInfo = null;
+            if (profile?.job) {
+                const jobConfig = RPG_CONFIG.JOBS[profile.job];
+                const toolName = jobConfig.tools[profile.toolLevel]?.name || "Desconocido";
+                jobInfo = {
+                    name: jobConfig.name,
+                    emoji: jobConfig.emoji,
+                    toolLevel: profile.toolLevel,
+                    toolName: toolName,
+                    prestige: profile.prestigeLevel || 0
+                };
+            }
+
+            const mappedPets = petProfile.pets.map(p => {
+                const config = RPG_CONFIG.PETS[p.type];
+                return {
+                    id: p.id,
+                    name: config.name,
+                    emoji: config.emoji,
+                    rarity: config.rarity,
+                    equipped: petProfile.equipped === p.id
+                };
+            });
+
+            socket.emit("inventoryData", {
+                wallet,
+                job: jobInfo,
+                items: inventory.items || {},
+                pets: mappedPets,
+                eggs: petProfile.eggs
+            });
+
+        } catch (error) {
+            socket.emit("error", { message: "Error al cargar el inventario: " + error.message });
         }
     });
 
