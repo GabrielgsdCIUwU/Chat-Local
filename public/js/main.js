@@ -8,6 +8,7 @@ import { InventoryUI } from './ui/InventoryUI.js';
 import { GachaUI } from './ui/GachaUI.js';
 import { AudioSFX } from './ui/AudioSFX.js';
 import { ToastUI } from './ui/components/ToastUI.js';
+import { MarketUI } from './ui/MarketUI.js';
 
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -25,6 +26,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const globalModal = new ModalUI();
     const inventoryUI = new InventoryUI(socket, globalModal);
     const gachaUI = new GachaUI(socket);
+    const marketUI = new MarketUI(socket, globalModal);
 
     let donatorsLoaded = false;
     let historyQueue = [];
@@ -108,6 +110,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     socket.on("toast", (data) => {
+        if (data.target && data.target !== appState.currentUser) return;
+        
         toastUI.show(data.message, data.type);
     });
 
