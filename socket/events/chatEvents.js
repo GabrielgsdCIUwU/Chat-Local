@@ -70,6 +70,33 @@ export default function registerChatEvents(io, socket, user, container) {
         }
     });
 
+    // Pedir datos del Mercado
+    socket.on("requestMarket", async () => {
+        try {
+            const auctions = await container.marketService.getActiveAuctions();
+            socket.emit("marketData", auctions);
+        } catch (error) {
+            socket.emit("error", { message: "Error al cargar el mercado." });
+        }
+    });
+
+    // Comprar una subasta
+    socket.on("buyAuction", async (auctionId) => {
+        try {
+            const boughtAuction = await container.marketService.buyAuction(user.name, auctionId);
+            
+            socket.emit("toast", { 
+                type: 'success', 
+                message: `Has comprado ${boughtAuction.amount}x ${boughtAuction.itemName} por ${boughtAuction.price}€` 
+            });
+
+            io.emit("refreshMarket");
+
+        } catch (error) {
+            socket.emit("error", { message: error.message });
+        }
+    });
+
     // Enviar mensaje
     socket.on("sendmsg", async (msg, reply) => {
          if (!msg || typeof msg !== 'string' || msg.length > VALIDATION_CONFIG.CHAT.MAX_MESSAGE_LENGTH) {
