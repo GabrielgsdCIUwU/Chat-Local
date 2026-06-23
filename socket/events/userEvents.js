@@ -1,11 +1,11 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "url";
+import { fileURLToPath } from "node:url";
 import { connectedUsers, typingUsers } from "../state.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export default function registerUserEvents(io, socket, user) {
+export default function registerUserEvents(io, socket, user, container) {
     
     // Identificación
     socket.on("whoami", () => socket.emit("iam", user.name));
@@ -13,8 +13,7 @@ export default function registerUserEvents(io, socket, user) {
     // Obtener Donadores
     socket.on("whoDonate", async () => {
         try {
-            const data = await fs.readFile(path.join(__dirname, "../../backend/data/users.json"), "utf8");
-            const users = JSON.parse(data);
+            const users = await container.userRepository.findAll();
             const donators = users
                 .filter(u => u.roles.includes("Donador") || u.roles.includes("Admin"))
                 .map(u => ({ name: u.name, color: u.color, img: u.img ?? false }));

@@ -1,12 +1,10 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { JsonDatabaseClient } from '../../../database/JsonDatabaseClient.js';
 import { ROLES } from '../../../core/constants.js';
+import { container } from '../../../core/DIContainer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const usersDb = new JsonDatabaseClient(path.join(__dirname, "../../../data/users.json"));
 
 /**
  * Checks if the user in the current session has Donor or Admin privileges.
@@ -14,10 +12,9 @@ const usersDb = new JsonDatabaseClient(path.join(__dirname, "../../../data/users
  * @param {import('express').Request} req 
  * @returns {Promise<boolean>}
  */
-export async function isUserDonate(req, callback) {
+export async function isUserDonate(req) {
      try {
-        const users = await usersDb.read();
-        const user = users.find(u => u.name === req.session.user.name);
+        const user = await container.userRepository.findByName(req.session.user.name);
         
         if (!user) return false;
         
