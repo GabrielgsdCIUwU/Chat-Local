@@ -3,16 +3,28 @@ import { ChatUI } from './ui/ChatUI.js';
 import { InputUI } from './ui/InputUI.js';
 import { EmojiUI } from './ui/EmojiUI.js';
 import { ToolbarUI } from './ui/ToolbarUI.js';
+import { ModalUI } from './ui/components/ModalUI.js';
+import { InventoryUI } from './ui/InventoryUI.js';
+import { GachaUI } from './ui/GachaUI.js';
+import { AudioSFX } from './ui/AudioSFX.js';
+import { ToastUI } from './ui/components/ToastUI.js';
+
 
 document.addEventListener("DOMContentLoaded", async () => {
     const socket = io({ autoConnect: false });
+
+    const audioSFX = new AudioSFX();
+    const toastUI = new ToastUI(audioSFX);
 
     const inputUI = new InputUI(socket);
     inputUI.init();
 
     const emojiUI = new EmojiUI(socket, inputUI);
-    const chatUI = new ChatUI(socket, emojiUI);
-    const toolbarUI = new ToolbarUI();
+    const chatUI = new ChatUI(socket, emojiUI, audioSFX, toastUI); 
+    const toolbarUI = new ToolbarUI(audioSFX); 
+    const globalModal = new ModalUI();
+    const inventoryUI = new InventoryUI(socket, globalModal);
+    const gachaUI = new GachaUI(socket);
 
     let donatorsLoaded = false;
     let historyQueue = [];
@@ -66,7 +78,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         attemptRenderHistory();
     });
 
-    socket.on("sendmsg", (msg) => chatUI.renderMessage(msg, false));
+    socket.on("sendmsg", (msg) => {
+        chatUI.renderMessage(msg, false);
+        if (msg.user !== appState.currentUser) {
+            audioSFX.playPop();
+        }
+    });
     socket.on("messageUpdated", (data) => chatUI.updateMessage(data));
     socket.on("messageDeleted", (data) => chatUI.deleteMessage(data.id));
     
@@ -86,13 +103,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     socket.on("error", (err) => {
         console.error("Server Error:", err);
-        
-        chatUI.renderMessage({
-            id: "error-" + Date.now(),
-            user: "⚠️ Sistema",
-            message: err.message || (typeof err === 'string' ? err : "Ocurrió un error inesperado."),
-            timestamp: Date.now()
-        }, false);
+        const errorMsg = err.message || (typeof err === 'string' ? err : "Ocurrió un error inesperado.");
+        toastUI.show(errorMsg, 'error');
+    });
+
+    socket.on("toast", (data) => {
+        toastUI.show(data.message, data.type);
     });
 
     await Promise.all([
