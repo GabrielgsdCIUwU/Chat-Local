@@ -3,17 +3,14 @@ import { fileURLToPath } from "node:url";
 
 import { CronManager } from "./CronManager.js";
 
+import { SqliteClient } from "../database/SqliteClient.js";
 import { JsonDatabaseClient } from "../database/JsonDatabaseClient.js";
-import { UserRepository } from "../repositories/UserRepository.js";
-import { BannedIpRepository } from "../repositories/BannedIpRepository.js";
-import { GamblingRepository } from "../repositories/GamblingRepository.js";
-import { EconomyRepository } from "../repositories/EconomyRepository.js";
-import { MessageRepository } from "../repositories/MessageRepository.js";
-import { InventoryRepository } from "../repositories/InventoryRepository.js";
-import { JobRepository } from "../repositories/JobRepository.js";
-import { AuctionRepository } from "../repositories/AuctionRepository.js";
-import { GuildRepository } from "../repositories/GuildRepository.js";
-import { PetRepository } from "../repositories/PetRepository.js";
+
+import {
+    SqliteUserRepository, SqliteBannedIpRepository, SqliteGamblingRepository,
+    SqliteEconomyRepository, SqliteMessageRepository, SqliteInventoryRepository,
+    SqliteJobRepository, SqliteAuctionRepository, SqliteGuildRepository, SqlitePetRepository
+} from "../repositories/SqliteRepositories.js";
 
 import { AuthService } from "../services/AuthService.js";
 import { UserService } from "../services/UserService.js";
@@ -38,43 +35,25 @@ const __dirname = path.dirname(__filename);
 
 class DIContainer {
     constructor() {
-        this.usersJsonPath = path.join(__dirname, "../data/users.json");
-        this.bannedJsonPath = path.join(__dirname, "../data/usersban.json");
-        this.gamblingJsonPath = path.join(__dirname, "../data/gambling.json");
-        this.economyJsonPath = path.join(__dirname, "../data/economy.json");
-        this.messagesJsonPath = path.join(__dirname, "../data/messages.json");
         this.profileDir = path.join(__dirname, "../../resources/profiles");
         this.commandsDir = path.join(__dirname, "../../bot/commands");
         this.emojisDir = path.join(__dirname, "../../resources/emojis");
+
         this.spamJsonPath = path.join(__dirname, "../data/spamer.json");
-        this.inventoryJsonPath = path.join(__dirname, "../data/inventory.json");
-        this.jobsJsonPath = path.join(__dirname, "../data/jobs.json");
-        this.auctionsJsonPath = path.join(__dirname, "../data/auctions.json");
-        this.guildsJsonPath = path.join(__dirname, "../data/guilds.json");
-        this.petsJsonPath = path.join(__dirname, "../data/pets.json");
-
-        this.userDbClient = new JsonDatabaseClient(this.usersJsonPath);
-        this.bannedDbClient = new JsonDatabaseClient(this.bannedJsonPath);
-        this.gamblingDbClient = new JsonDatabaseClient(this.gamblingJsonPath);
-        this.economyDbClient = new JsonDatabaseClient(this.economyJsonPath);
-        this.messageDbClient = new JsonDatabaseClient(this.messagesJsonPath);
         this.spamDbClient = new JsonDatabaseClient(this.spamJsonPath);
-        this.inventoryDbClient = new JsonDatabaseClient(this.inventoryJsonPath);
-        this.jobsDbClient = new JsonDatabaseClient(this.jobsJsonPath);
-        this.auctionsDbClient = new JsonDatabaseClient(this.auctionsJsonPath);
-        this.guildsDbClient = new JsonDatabaseClient(this.guildsJsonPath);
-        this.petsDbClient = new JsonDatabaseClient(this.petsJsonPath);
 
-        this.userRepository = new UserRepository(this.userDbClient);
-        this.bannedIpRepository = new BannedIpRepository(this.bannedDbClient);
-        this.gamblingRepository = new GamblingRepository(this.gamblingDbClient);
-        this.economyRepository = new EconomyRepository(this.economyDbClient);
-        this.messageRepository = new MessageRepository(this.messageDbClient);
-        this.inventoryRepository = new InventoryRepository(this.inventoryDbClient);
-        this.jobRepository = new JobRepository(this.jobsDbClient);
-        this.auctionRepository = new AuctionRepository(this.auctionsDbClient);
-        this.guildRepository = new GuildRepository(this.guildsDbClient);
-        this.petRepository = new PetRepository(this.petsDbClient);
+        this.sqliteClient = new SqliteClient();
+
+        this.userRepository = new SqliteUserRepository(this.sqliteClient);
+        this.bannedIpRepository = new SqliteBannedIpRepository(this.sqliteClient);
+        this.gamblingRepository = new SqliteGamblingRepository(this.sqliteClient);
+        this.economyRepository = new SqliteEconomyRepository(this.sqliteClient);
+        this.messageRepository = new SqliteMessageRepository(this.sqliteClient);
+        this.inventoryRepository = new SqliteInventoryRepository(this.sqliteClient);
+        this.jobRepository = new SqliteJobRepository(this.sqliteClient);
+        this.auctionRepository = new SqliteAuctionRepository(this.sqliteClient);
+        this.guildRepository = new SqliteGuildRepository(this.sqliteClient);
+        this.petRepository = new SqlitePetRepository(this.sqliteClient);
 
         // Base Services (No dependencies or just repositories)
         this.economyService = new EconomyService(this.economyRepository);
