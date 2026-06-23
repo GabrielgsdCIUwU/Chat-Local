@@ -90,8 +90,37 @@ export default function registerChatEvents(io, socket, user, container) {
                 message: `Has comprado ${boughtAuction.amount}x ${boughtAuction.itemName} por ${boughtAuction.price}€` 
             });
 
+            io.emit("toast", {
+                target: boughtAuction.seller,
+                type: 'success',
+                message: `💰 ¡VENDIDO! ${user.name} ha comprado tus ${boughtAuction.amount}x ${boughtAuction.itemName} por ${boughtAuction.price}€`
+            });
+
             io.emit("refreshMarket");
 
+        } catch (error) {
+            socket.emit("error", { message: error.message });
+        }
+    });
+
+    socket.on("requestMyItems", async () => {
+        try {
+            const inventory = await container.inventoryRepository.getInventory(user.name);
+            socket.emit("myItemsData", inventory.items || {});
+        } catch (error) {
+            socket.emit("error", { message: "Error al cargar tu mochila." });
+        }
+    });
+
+    socket.on("publishAuction", async (data) => {
+        try {
+            const amount = Number.parseInt(data.amount);
+            const price = Number.parseInt(data.price);
+            
+            await container.marketService.publishAuction(user.name, data.itemName, amount, price);
+            
+            socket.emit("toast", { type: 'success', message: `Subasta publicada correctamente.` });
+            io.emit("refreshMarket");
         } catch (error) {
             socket.emit("error", { message: error.message });
         }
