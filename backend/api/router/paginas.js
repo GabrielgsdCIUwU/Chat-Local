@@ -1,11 +1,10 @@
 import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { isAuthenticated } from "./middlewares/isAuthenticated.js";
 import { isUserDonate } from "./middlewares/isUserDonate.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const usersFilePath = path.join(__dirname, "../backend/json/users.json");
 
 
 const router = express.Router();
