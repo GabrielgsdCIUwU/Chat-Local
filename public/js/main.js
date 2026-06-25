@@ -10,6 +10,7 @@ import { AudioSFX } from './ui/AudioSFX.js';
 import { ToastUI } from './ui/components/ToastUI.js';
 import { MarketUI } from './ui/MarketUI.js';
 import { ActivityUI } from './ui/ActivityUI.js';
+import { BossRaidUI } from './ui/BossRaidUI.js';
 
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -29,6 +30,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const gachaUI = new GachaUI(socket);
     const marketUI = new MarketUI(socket, globalModal);
     const activityUI = new ActivityUI(socket, globalModal);
+    const bossRaidUI = new BossRaidUI(socket, globalModal);
 
     let donatorsLoaded = false;
     let historyQueue = [];
@@ -51,12 +53,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         historyQueue.sort((a, b) => b.timestamp - a.timestamp);
         const container = document.getElementById("mensajes");
+        
+        const raidInvite = document.getElementById("active-raid-invite");
+
         if (container) container.innerHTML = "";
         
         historyQueue.forEach(msg => {
             chatUI.renderMessage(msg, true);
             renderMessageReactions(msg);
         });
+
+        if (raidInvite && container) {
+            container.prepend(raidInvite);
+        }
 
         if (container) container.scrollTop = 0;
         historyQueue = [];
