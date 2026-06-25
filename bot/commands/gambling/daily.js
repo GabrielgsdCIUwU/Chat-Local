@@ -49,11 +49,12 @@ export async function execute(context) {
         return nonCountDays.includes(formatted);
     }
 
-    let finalMessage = "";
-
     try {
+        let baseTotal = 0;
+        let streakBonus = 0;
+        let finalStreak = 0;
+
         await context.container.gamblingRepository.executeTransaction(async (users) => {
-            
             const user = context.container.gamblingRepository.ensureUser(users, context.username);
 
             if (!user.lastDaily) user.lastDaily = 0;
@@ -95,41 +96,39 @@ export async function execute(context) {
                     streakBroken = true;
                 }
 
-                if (now.getDay() === 1) { 
-                    if (lastDailyDate.getDay() === 5) { 
-                        const daysSinceFriday = Math.floor((now.getTime() - lastDailyDate.getTime()) / (1000 * 60 * 60 * 24));
-                        if (daysSinceFriday <= 4) {
-                            user.dailyStreak += 1;
-                            streakBroken = false;
-                        }
+                if (now.getDay() === 1 && lastDailyDate.getDay() === 5) { 
+                    const daysSinceFriday = Math.floor((now.getTime() - lastDailyDate.getTime()) / (1000 * 60 * 60 * 24));
+                    if (daysSinceFriday <= 4) {
+                        user.dailyStreak += 1;
+                        streakBroken = false;
                     }
                 }
 
-                if (streakBroken) {
-                    user.dailyStreak = 1;
-                }
+                if (streakBroken) user.dailyStreak = 1;
             }
 
-            // Calcular recompensa
-            const randomBonusFactor = Math.floor(Math.random() * (100 - 25 + 1)) + 25;
-            const streakBonus = user.dailyStreak * randomBonusFactor;
-            const baseTotal = baseAmount + streakBonus;
-
-            // Procesar recompensa centralizada con el bono de MASCOTAS
-            const { actualEarnings, petMsg } = await context.container.gamblingService.addRewardWithBonus(context.username, baseTotal);
-
-            // Aplicar al perfil y guardar
-            user.totalEarnings = (user.totalEarnings || 0) + actualEarnings;
             user.lastDaily = context.timestamp;
+            finalStreak = user.dailyStreak;
 
-            finalMessage = user.dailyStreak === 1
-                ? `${context.username} ha reclamado su daily. Tu racha ha comenzado de nuevo. Bonus de racha: +${streakBonus}€. Total recibido: ${actualEarnings}€${petMsg}`
-                : `${context.username} ha reclamado su daily. Racha actual: ${user.dailyStreak} días. Bonus de racha: +${streakBonus}€. Total recibido: ${actualEarnings}€${petMsg}`;
+            const randomBonusFactor = Math.floor(Math.random() * (100 - 25 + 1)) + 25;
+            streakBonus = user.dailyStreak * randomBonusFactor;
+            baseTotal = baseAmount + streakBonus;
         });
 
+        const { actualEarnings, petMsg } = await context.container.gamblingService.addRewardWithBonus(context.username, baseTotal);
+
+        await context.container.gamblingRepository.executeTransaction(async (users) => {
+            const user = context.container.gamblingRepository.ensureUser(users, context.username);
+            user.totalEarnings = (user.totalEarnings || 0) + actualEarnings;
+        });
+
+        const finalMessage = finalStreak === 1
+            ? `${context.username} ha reclamado su daily. Tu racha ha comenzado de nuevo. Bonus de racha: +${streakBonus}€. Total recibido: ${actualEarnings}€${petMsg}`
+            : `${context.username} ha reclamado su daily. Racha actual: ${finalStreak} días. Bonus de racha: +${streakBonus}€. Total recibido: ${actualEarnings}€${petMsg}`;
+        
         context.reply(finalMessage);
 
     } catch (error) {
         context.reply(`${context.username}, ${error.message}`);
     }
-}
+} 

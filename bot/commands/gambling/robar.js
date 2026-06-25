@@ -6,9 +6,7 @@ export const params = [
     { name: "dinero", type: "number", required: true, description: "Cantidad que vas a intentar robar." }
 ];
 
-const calculatePenalty = (amount) => {
-    return amount + Math.floor(amount / GAME_CONFIG.ROB_CONFIG.PENALTY_DIVISOR);
-};
+const calculatePenalty = (amount) => amount + Math.floor(amount / GAME_CONFIG.ROB_CONFIG.PENALTY_DIVISOR);
 
 const getCooldownMessage = (timeLeftMs) => {
     const minutes = Math.floor(timeLeftMs / 60000);
@@ -74,33 +72,37 @@ export async function execute(context) {
         const wardConsumed = await context.container.craftingService.consumeBuff(targetName, "anti_rob");
         let finalMessage = "";
 
-        await context.container.gamblingRepository.executeTransaction(async (users) => {
-            const gambler = context.container.gamblingRepository.ensureUser(users, context.username);
-            gambler.timesSteal = (gambler.timesSteal || 0) + 1;
-            gambler.lastRobbery = now;
-
-            if (wardConsumed) {
-                const penaltyLost = await eco.forceRemoveFunds(context.username, calculatePenalty(amount));
+        if (wardConsumed) {
+            const penaltyLost = await eco.forceRemoveFunds(context.username, calculatePenalty(amount));
+            await context.container.gamblingRepository.executeTransaction(async (users) => {
+                const gambler = context.container.gamblingRepository.ensureUser(users, context.username);
+                gambler.timesSteal = (gambler.timesSteal || 0) + 1;
+                gambler.lastRobbery = now;
                 gambler.spend = (gambler.spend || 0) + penaltyLost;
-                finalMessage = `🛡️ **¡THIEF WARD ACTIVADO!**\n¡**${targetName}** estaba protegido por una poderosa barrera mágica! La protección se rompió al bloquear el robo y **${context.username}** fue repelido violentamente, pagando una multa de **${penaltyLost}€**.`;
-                return;
-            }
-
-            if (Math.random() < successChance) {
-                const { totalEarned, petMsg } = await context.container.gamblingService.processRobberyWin(context.username, targetName, amount);
-                              
+            });
+            finalMessage = `🛡️ **¡THIEF WARD ACTIVADO!**\n¡**${targetName}** estaba protegido por una poderosa barrera mágica! La protección se rompió al bloquear el robo y **${context.username}** fue repelido violentamente, pagando una multa de **${penaltyLost}€**.`;
+        
+        } else if (Math.random() < successChance) {
+            const { totalEarned, petMsg } = await context.container.gamblingService.processRobberyWin(context.username, targetName, amount);
+            await context.container.gamblingRepository.executeTransaction(async (users) => {
+                const gambler = context.container.gamblingRepository.ensureUser(users, context.username);
+                gambler.timesSteal = (gambler.timesSteal || 0) + 1;
+                gambler.lastRobbery = now;
                 gambler.moneySteal = (gambler.moneySteal || 0) + totalEarned;
                 gambler.totalEarnings = (gambler.totalEarnings || 0) + totalEarned;
-                
-                finalMessage = getSuccessMessage(context.username, targetName, amount, percentageStolen, petMsg);
-            
-            } else {
-                const penaltyLost = await eco.forceRemoveFunds(context.username, calculatePenalty(amount));
+            });
+            finalMessage = getSuccessMessage(context.username, targetName, amount, percentageStolen, petMsg);
+        
+        } else {
+            const penaltyLost = await eco.forceRemoveFunds(context.username, calculatePenalty(amount));
+            await context.container.gamblingRepository.executeTransaction(async (users) => {
+                const gambler = context.container.gamblingRepository.ensureUser(users, context.username);
+                gambler.timesSteal = (gambler.timesSteal || 0) + 1;
+                gambler.lastRobbery = now;
                 gambler.spend = (gambler.spend || 0) + penaltyLost;
-                
-                finalMessage = getFailureMessage(context.username, targetName, penaltyLost, percentageStolen);
-            }
-        });
+            });
+            finalMessage = getFailureMessage(context.username, targetName, penaltyLost, percentageStolen);
+        }
 
         return context.reply(finalMessage);
     } catch (error) {
