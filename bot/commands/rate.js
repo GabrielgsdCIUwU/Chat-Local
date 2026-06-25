@@ -1,28 +1,32 @@
 import { BOT_CONFIG } from '../../backend/core/constants.js';
 
-export const description = "El bot valorará del 1 al 10 lo que le pidas.";
-export const params = [
-    { name: "valorar", type: "string", required: true, description: "Lo que quieres que el bot valore." }
-];
+import { BaseCommand } from "../core/BaseCommand.js";
+
 /**
- * 
- * @param {import('../core/BotContext.js').BotContext} context 
+ * Rate command.
+ * @extends BaseCommand
  */
-export function execute(context) {
-    const valoracion = context.args.join(" ");
-
-    if(!valoracion) {
-        context.reply("Debes decirme qué quieres que valore.");
-        return;
+class RateCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "rate",
+            description: "El bot valorará del 1 al 10 lo que le pidas.",
+            params: [
+                { name: "valorar", type: "string", required: true, description: "Lo que quieres que el bot valore." }
+            ]
+        });
     }
 
-    function random() {
-        let max = BOT_CONFIG.MAX_RATE_VALUE;
-        let v = Math.round(Math.random() * (max -1) + 1);
-        return v;
+    async run(context, args) {
+        const response = `Yo le doy a ${args.valoracion} un ${random()}/10`;
+        context.reply(response);
     }
+}
 
-    const response = `Yo le doy a ${valoracion.trim()} un ${random()}/10`;
+export default new RateCommand();
 
-    context.reply(response);
+function random() {
+    let max = BOT_CONFIG.MAX_RATE_VALUE;
+    let v = Math.round(Math.random() * (max - 1) + 1);
+    return v;
 }

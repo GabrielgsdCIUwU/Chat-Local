@@ -1,29 +1,38 @@
-export const description = "Calcula tu horóscopo aleatorio para el día de hoy.";
-export const params = [
-    { name: "usuario", type: "user", required: false, description: "Usuario al que le quieres leer el horóscopo." }
-];
+import { BaseCommand } from "../core/BaseCommand.js";
 
 /**
- * 
- * @param {import('../core/BotContext.js').BotContext} context 
+ * Horoscopo command.
+ * @extends BaseCommand
  */
-export function execute(context) {
-
-    let finalUser;
-
-    const targetName = context.args[0];
-    if (targetName) {
-        finalUser = targetName;
-    } else {
-        finalUser = context.username;
+class HoroscopoCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "horoscopo",
+            description: "Calcula tu horóscopo aleatorio para el día de hoy.",
+            params: [
+                { name: "usuario", type: "user", required: false, description: "Usuario al que le quieres leer el horóscopo." }
+            ]
+        });
     }
 
+    async run(context, args) {
+        let finalUser;
 
-    function random() {
-        let max = 100;
-        let v = Math.round(Math.random() * (max - 1) + 1);
-        return v;
+        const targetName = context.args[0];
+        if (targetName) {
+            finalUser = targetName;
+        } else {
+            finalUser = context.username;
+        }
+
+        context.reply(`El horóscopo de ${finalUser}:\n**Amor**:${random()}%\n**Salud**:${random()}%\n**Suerte**:${random()}%\n**Dinero**:${random()}%`);
     }
+}
 
-    context.reply(`El horóscopo de ${finalUser}:\n**Amor**:${random()}%\n**Salud**:${random()}%\n**Suerte**:${random()}%\n**Dinero**:${random()}%`)
+export default new HoroscopoCommand();
+
+function random() {
+    let max = 100;
+    let v = Math.round(Math.random() * (max - 1) + 1);
+    return v;
 }

@@ -1,9 +1,20 @@
-export const description = "Comprueba que el bot está activo y responde.";
+import { BaseCommand } from "../core/BaseCommand.js";
 
 /**
- * 
- * @param {import('../core/BotContext.js').BotContext} context 
+ * Simple ping command to test bot responsiveness.
+ * @extends BaseCommand
  */
-export function execute(context) {
-    context.reply("Pong!")
+class PingCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "ping",
+            description: "Comprueba que el bot está activo y responde."
+        });
+    }
+
+    async run(context) {
+        context.reply("Pong!");
+    }
 }
+
+export default new PingCommand();
