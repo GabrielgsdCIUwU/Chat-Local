@@ -62,5 +62,14 @@ export const GAME_CONFIG = Object.freeze({
             GREEDY: 0.7,
             HEIST: 0.8
         }
+    },
+    BOSS_CONFIG: {
+        MAX_HP: 2000,
+        START_HP: 2000,
+        BOSS_TIME_LIMIT: 30 * 1000,
+        DAMAGE_MULTIPLIER: 10,
+        REWARD_PER_DAMAGE: 2,
+        MIN_TIME_TO_SHOW: 30 * 60 * 1000,
+        MAX_TIME_TO_SHOW: 90 * 60 * 1000,
     }
 });
