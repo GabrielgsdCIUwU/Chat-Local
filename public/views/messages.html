@@ -22,29 +22,34 @@
       <div class="relative mb-2">
         <div id="replyMessageDisplay" class="text-sm text-gray-300 mb-1 hidden"></div>
         
-        <div class="relative w-full bg-gray-700 border border-gray-600 rounded-lg transition duration-300 ease focus-within:border-blue-400 focus-within:bg-gray-600 focus-within:shadow-lg hover:border-gray-500 shadow-sm">
-          <div class="flex items-center relative">
-            <textarea
+        <div class="relative w-full bg-gray-700 border border-gray-600 rounded-lg transition duration-300 ease focus-within:border-blue-400 focus-within:bg-gray-600 focus-within:shadow-lg hover:border-gray-500 shadow-sm flex items-center">
+          
+          <button id="openActivityMenuBtn" class="p-3 ml-1 text-gray-400 hover:text-white hover:bg-blue-600 rounded-lg transition-colors group focus:outline-none" title="Actividades y Minijuegos">
+              <svg class="w-5 h-5 group-hover:rotate-90 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+          </button>
+
+          <textarea
               id="mensaje"
               rows="1"
-              class="flex-1 bg-transparent placeholder-gray-400 text-gray-200 text-sm pl-5 pr-24 py-3 resize-none focus:outline-none"
-              placeholder="Escribe tu mensaje"
+              class="flex-1 bg-transparent placeholder-gray-400 text-gray-200 text-sm pl-3 pr-12 py-3 resize-none focus:outline-none"
+              placeholder="Escribe tu mensaje o usa el menú de actividades (+)..."
               maxlength="1000"></textarea>
-            
-            <button
+          
+          <button
               class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-green-600 text-white rounded-full p-2 border border-transparent text-sm transition-all shadow-lg hover:bg-green-500 hover:shadow-md active:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400"
               id="enviar">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+              <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
               </svg>
-            </button>
-            
-            <div id="parameterChips" class="hidden absolute left-0 top-0 flex flex-wrap gap-1 px-2 py-3">
-              <span id="textMeasure" class="invisible absolute whitespace-pre text-sm pl-5"></span>
-            </div>
+          </button>
+          
+          <div id="parameterChips" class="hidden absolute left-12 top-0 flex flex-wrap gap-1 px-2 py-3">
+            <span id="textMeasure" class="invisible absolute whitespace-pre text-sm pl-5"></span>
           </div>
         </div>
-        
+
         <div id="suggestionBoxContainer" class="relative">
         </div>
       </div>
@@ -130,6 +135,86 @@
           </button>
         </div>
       </div>
+    </div>
+
+    <div id="activityMenuModal" class="fixed inset-0 bg-black bg-opacity-60 z-[150] hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+        <div id="activityMenuBox" class="w-full max-w-3xl bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] min-h-[500px] transform scale-95 transition-transform duration-300">
+            
+           <!-- Lista de Comandos -->
+            <div id="activityListView" class="flex flex-col h-full">
+                <!-- Header / Buscador -->
+                <div class="p-4 border-b border-gray-800 flex items-center gap-3">
+                    <svg class="text-gray-400 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input 
+                        type="text" 
+                        id="activitySearchInput"
+                        placeholder="Buscar actividad, comando o juego..." 
+                        class="flex-1 bg-transparent text-white outline-none placeholder:text-gray-500 text-lg"
+                    />
+                    <button id="closeActivityMenuBtn" class="p-2 hover:bg-gray-800 rounded-full text-gray-400 hover:text-white transition-colors focus:outline-none">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="flex flex-1 min-h-0 overflow-hidden">
+                    <!-- Sidebar Categorías -->
+                    <div id="activityCategories" class="w-40 bg-gray-800/30 border-r border-gray-800 overflow-y-auto p-2 flex flex-col gap-1">
+                        <!-- Las categorías se inyectan por JS -->
+                    </div>
+
+                    <!-- Grid de Comandos -->
+                    <div class="flex-1 min-h-0 p-4 overflow-y-auto bg-gray-900 custom-scrollbar">
+                        <div id="activityCommandsGrid" class="grid grid-cols-1 gap-2">
+                            <!-- Los comandos se inyectan por JS -->
+                        </div>
+                        <div id="activityEmptyState" class="hidden text-center text-gray-500 py-10">
+                            No se encontraron actividades.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario de Parámetros -->
+            <div id="activityFormView" class="hidden flex-col h-full">
+                <div class="p-4 border-b border-gray-800 flex items-center gap-3">
+                    <button id="backToActivitiesBtn" class="p-2 hover:bg-gray-800 rounded-full text-gray-400 hover:text-white transition-colors focus:outline-none">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <div class="flex items-center gap-3 flex-1">
+                        <div class="p-2 bg-blue-600/20 text-blue-400 rounded-lg" id="activityFormIcon">
+                            <!-- Icono SVG inyectado -->
+                        </div>
+                        <h3 id="activityFormTitle" class="text-lg font-bold text-gray-200 capitalize">Comando</h3>
+                    </div>
+                </div>
+
+                <div class="p-6 overflow-y-auto flex-1">
+                    <p id="activityFormDesc" class="text-gray-400 mb-6">Descripción del comando.</p>
+                    <form id="activityParamForm" class="space-y-5">
+                        <!-- Inputs de parámetros inyectados por JS -->
+                    </form>
+                </div>
+
+                <div class="p-4 border-t border-gray-800 bg-gray-800/30 flex justify-end gap-3">
+                    <button type="button" id="cancelActivityBtn" class="px-5 py-2.5 rounded-lg text-gray-300 hover:bg-gray-800 font-medium transition-colors focus:outline-none">
+                        Atrás
+                    </button>
+                    <button type="submit" form="activityParamForm" class="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium flex items-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                        Ejecutar
+                    </button>
+                </div>
+            </div>
+
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js" integrity="sha384-JSZXO0kKYHTylAsDYTb+7Kg2eUyalm19b8Pydcdf8sQ1cCKYZr9lLahoKT9+LFY5" crossorigin="anonymous"></script>
