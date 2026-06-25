@@ -46,7 +46,7 @@ export async function execute(context) {
     if (context.username === targetName) return context.reply("No puedes robarte a ti mismo.");
     if (Number.isNaN(amount) || amount <= 0) return context.reply("Cantidad no válida.");
 
-    const users = await context.container.gamblingRepository.db.read();
+    const users = await context.container.gamblingRepository.getAll();
     const thiefProfile = users.find(u => u.name === context.username);
     
     if (thiefProfile?.lastRobbery) {
