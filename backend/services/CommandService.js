@@ -38,21 +38,15 @@ export class CommandService {
             if (file.name.endsWith(".js")) {
                 const commandName = path.basename(file.name, ".js");
                 const module = await import(pathToFileURL(fullPath).href).catch(() => null);
+                
+                const cmdRef = module?.default || module;
 
-                if (commands[commandName]) {
-                    commands[commandName] = {
-                        ...commands[commandName],
-                        params: module?.params || [],
-                        description: module?.description || "Sin descripción.",
-                        adminOnly: module?.adminOnly || false
-                    };
-                } else {
-                    commands[commandName] = {
-                        params: module?.params || [],
-                        description: module?.description || "Sin descripción.",
-                        adminOnly: module?.adminOnly || false
-                    };
-                }
+                commands[commandName] = {
+                    ...commands[commandName],
+                    params: cmdRef?.params || [],
+                    description: cmdRef?.description || "Sin descripción.",
+                    adminOnly: cmdRef?.adminOnly || false
+                };
             }
         }
         return commands;
