@@ -62,10 +62,14 @@ export class ActivityUI {
         
         /** @type {ParsedCommand[]} */
         this.commandsList = [];
-        
+
         /** @type {string[]} */
-        this.categoriesList = ["All", "General"];
+        this.categoriesList = ["All", "⭐ Recientes", "General"];
         
+        this.wallet = 0;
+        this.inventory = {};
+        this.cooldowns = {};
+
         this.#initListeners();
     }
     
@@ -107,6 +111,41 @@ export class ActivityUI {
                 this.#executeFormCommand();
             });
         }
+
+        this.socket.on("activityData", (data) => {
+            this.wallet = data.wallet;
+            this.inventory = data.inventory;
+            this.cooldowns = data.cooldowns;
+            if (this.elements.modal && !this.elements.modal.classList.contains("hidden")) {
+                this.renderCommands();
+            }
+        });
+    }
+
+    /**
+     * Saves a command to the browser's local storage for the 'Recent' section.
+     * @param {string} cmdId 
+     */
+    #saveRecentCommand(cmdId) {
+        let recents = JSON.parse(localStorage.getItem("recentActivityCommands") || "[]");
+        recents = recents.filter(id => id !== cmdId);
+        recents.unshift(cmdId);
+        if (recents.length > 5) recents.pop();
+        localStorage.setItem("recentActivityCommands", JSON.stringify(recents));
+    }
+
+    /**
+     * Formats milliseconds into a readable string format.
+     * @param {number} ms 
+     * @returns {string} Formatted time string.
+     */
+    #formatCooldown(ms) {
+        const totalSeconds = Math.floor(ms / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        if (hours > 0) return `${hours}h ${minutes}m`;
+        return `${minutes}m ${seconds}s`;
     }
     
     /**
@@ -116,6 +155,9 @@ export class ActivityUI {
         this.commandsList = [];
         this.categoriesList = ["All", "General"];
         
+        const recents = JSON.parse(localStorage.getItem("recentActivityCommands") || "[]");
+        if (recents.length > 0) this.categoriesList.push("⭐ Recientes");
+
         const tree = appState.commandsTree || {};
         
         for (const [rootKey, rootValue] of Object.entries(tree)) {
@@ -127,41 +169,41 @@ export class ActivityUI {
             
             if (subKeys.length > 0) {
                 const categoryName = rootKey.charAt(0).toUpperCase() + rootKey.slice(1);
-                
-                if (!this.categoriesList.includes(categoryName)) {
-                    this.categoriesList.push(categoryName);
-                }
+                if (!this.categoriesList.includes(categoryName)) this.categoriesList.push(categoryName);
                 
                 for (const subKey of subKeys) {
                     const subCmd = rootValue[subKey];
                     if (subCmd.adminOnly) continue;
                     
-                    this.commandsList.push({
-                        id: `${rootKey} ${subKey}`,
-                        command: rootKey,
-                        subcommands: [subKey],
-                        name: subKey,
-                        category: categoryName,
-                        description: subCmd.description || "Sin descripción.",
-                        params: subCmd.params || [],
-                        icon: this.#getIconForCategory(categoryName)
-                    });
+                    const cmdObj = {
+                        id: `${rootKey} ${subKey}`, command: rootKey, subcommands: [subKey],
+                        name: subKey, category: categoryName, description: subCmd.description || "Sin descripción.",
+                        params: subCmd.params || [], icon: this.#getIconForCategory(categoryName)
+                    };
+
+                    this.commandsList.push(cmdObj);
+                    if (recents.includes(cmdObj.id)) this.commandsList.push({ ...cmdObj, category: "⭐ Recientes" });
                 }
             } else {
                 if (rootValue.adminOnly) continue;
                 
-                this.commandsList.push({
-                    id: rootKey,
-                    command: rootKey,
-                    subcommands: [],
-                    name: rootKey,
-                    category: "General",
-                    description: rootValue.description || "Sin descripción.",
-                    params: rootValue.params || [],
-                    icon: this.#getIconForCategory("General")
-                });
+                const cmdObj = {
+                    id: rootKey, command: rootKey, subcommands: [],
+                    name: rootKey, category: "General", description: rootValue.description || "Sin descripción.",
+                    params: rootValue.params || [], icon: this.#getIconForCategory("General")
+                };
+
+                this.commandsList.push(cmdObj);
+                if (recents.includes(cmdObj.id)) this.commandsList.push({ ...cmdObj, category: "⭐ Recientes" });
             }
         }
+
+        this.categoriesList.sort((a, b) => {
+            if (a === "All") return -1; if (b === "All") return 1;
+            if (a === "⭐ Recientes") return -1; if (b === "⭐ Recientes") return 1;
+            if (a === "General") return -1; if (b === "General") return 1;
+            return a.localeCompare(b);
+        });
     }
     
     /**
@@ -170,15 +212,7 @@ export class ActivityUI {
      * @returns {string} The assigned emoji.
      */
     #getIconForCategory(category) {
-        const icons = {
-            "Rpg": "⛏️",
-            "Eco": "💰",
-            "Gambling": "🎰",
-            "Pet": "🐾",
-            "Guild": "🛡️",
-            "Market": "⚖️",
-            "General": "⚡"
-        };
+        const icons = { "Rpg": "⛏️", "Eco": "💰", "Gambling": "🎰", "Pet": "🐾", "Guild": "🛡️", "Market": "⚖️", "General": "⚡", "⭐ Recientes": "⭐" };
         return icons[category] || "🕹️";
     }
     
@@ -188,6 +222,8 @@ export class ActivityUI {
     open() {
         if (!this.elements.modal) return;
         
+        this.socket.emit("requestActivityData")
+
         this.parseCommandsTree();
         this.renderCategories();
         this.renderCommands();
@@ -216,10 +252,7 @@ export class ActivityUI {
         this.elements.modal.classList.add("opacity-0");
         this.elements.box.classList.remove("scale-100");
         this.elements.box.classList.add("scale-95");
-        
-        setTimeout(() => {
-            this.elements.modal.classList.add("hidden");
-        }, 300);
+        setTimeout(() => this.elements.modal.classList.add("hidden"), 300);
     }
     
     /**
@@ -228,12 +261,8 @@ export class ActivityUI {
     showListView() {
         const { listView, formView } = this.elements;
         if (!listView || !formView) return;
-        
-        formView.classList.add("hidden");
-        formView.classList.remove("flex");
-        
-        listView.classList.remove("hidden");
-        listView.classList.add("flex");
+        formView.classList.add("hidden"); formView.classList.remove("flex");
+        listView.classList.remove("hidden"); listView.classList.add("flex");
         this.activeCommand = null;
     }
     
@@ -246,12 +275,8 @@ export class ActivityUI {
         if (!listView || !formView) return;
         
         this.activeCommand = cmd;
-        
-        listView.classList.add("hidden");
-        listView.classList.remove("flex");
-        
-        formView.classList.remove("hidden");
-        formView.classList.add("flex");
+        listView.classList.add("hidden"); listView.classList.remove("flex");
+        formView.classList.remove("hidden"); formView.classList.add("flex");
         
         if (formTitle) formTitle.textContent = `/${cmd.id}`;
         if (formDesc) formDesc.textContent = cmd.description;
@@ -276,10 +301,58 @@ export class ActivityUI {
                 wrapper.appendChild(inputElement);
                 paramForm.appendChild(wrapper);
 
-                if (index === 0) {
-                    setTimeout(() => inputElement.focus(), 50);
-                }
+                if (index === 0) setTimeout(() => inputElement.focus(), 50);
             });
+
+            const errorBox = document.createElement("div");
+            errorBox.className = "text-red-400 bg-red-900/20 border border-red-800 rounded-lg p-3 text-sm font-medium mt-4 hidden flex items-center gap-2";
+            paramForm.appendChild(errorBox);
+
+            const submitBtn = document.querySelector('button[form="activityParamForm"]');
+            
+            const validateForm = () => {
+                let errorMsg = "";
+                const formData = new FormData(paramForm);
+                
+                const amountFields = ["cantidad", "dinero", "precio_total"];
+                let reqAmount = 0;
+                amountFields.forEach(f => { if (formData.has(f)) reqAmount += Number(formData.get(f)); });
+
+                if (reqAmount > 0 && reqAmount > this.wallet) {
+                    errorMsg = `Fondos insuficientes. Tienes: ${this.wallet.toLocaleString()}€`;
+                }
+
+                const itemFields = cmd.params.filter(p => p.type === "inventory_item");
+                if (itemFields.length > 0) {
+                    const selectedItem = formData.get(itemFields[0].name);
+                    const qty = Number(formData.get("cantidad") || formData.get("mi_cantidad") || 0);
+                    
+                    if (selectedItem && qty > 0) {
+                        const userHas = this.inventory[selectedItem] || 0;
+                        if (qty > userHas) {
+                            errorMsg = `No tienes suficientes ítems. Tienes: ${userHas}x ${selectedItem}`;
+                        }
+                    }
+                }
+
+                if (errorMsg) {
+                    errorBox.innerHTML = `<span>⚠️</span> ${errorMsg}`;
+                    errorBox.classList.remove("hidden");
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.classList.add("opacity-50", "cursor-not-allowed");
+                    }
+                } else {
+                    errorBox.classList.add("hidden");
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.classList.remove("opacity-50", "cursor-not-allowed");
+                    }
+                }
+            };
+
+            paramForm.addEventListener("input", validateForm);
+            validateForm(); 
         }
     }
 
@@ -296,15 +369,20 @@ export class ActivityUI {
             element = document.createElement("select");
             element.className = baseClasses + " cursor-pointer appearance-none";
             element.innerHTML = `<option value="" disabled selected>Selecciona una opción...</option>`;
-            param.values.forEach(val => {
-                element.innerHTML += `<option value="${val}">${val}</option>`;
-            });
+            param.values.forEach(val => element.innerHTML += `<option value="${val}">${val}</option>`);
         } else if (param.type === "user") {
             element = document.createElement("select");
             element.className = baseClasses + " cursor-pointer appearance-none";
-            element.innerHTML = `<option value="" disabled selected>Selecciona un usuario conectado...</option>`;
+            element.innerHTML = `<option value="" disabled selected>Selecciona un usuario...</option>`;
             appState.userNames.forEach(user => {
-                element.innerHTML += `<option value="${user}">@${user}</option>`;
+                if(user !== appState.currentUser) element.innerHTML += `<option value="${user}">@${user}</option>`;
+            });
+        } else if (param.type === "inventory_item") {
+            element = document.createElement("select");
+            element.className = baseClasses + " cursor-pointer appearance-none";
+            element.innerHTML = `<option value="" disabled selected>Selecciona un material...</option>`;
+            Object.entries(this.inventory).forEach(([item, amount]) => {
+                element.innerHTML += `<option value="${item}">${item} (Tienes ${amount})</option>`;
             });
         } else {
             element = document.createElement("input");
@@ -378,24 +456,32 @@ export class ActivityUI {
                 const btn = document.createElement("button");
                 const hasParams = cmd.params && cmd.params.length > 0;
                 
-                btn.className = "shrink-0 flex items-center gap-4 p-2 w-full text-left bg-transparent hover:bg-gray-800 border border-transparent hover:border-gray-700 rounded-xl transition-all group focus:outline-none focus:ring-2 focus:ring-blue-500/50";
+                const cdMs = this.cooldowns[cmd.id];
+                const isOnCooldown = cdMs && cdMs > 0;
                 
-                const paramStr = hasParams 
-                    ? cmd.params.map(p => p.required ? `&lt;${p.name}&gt;` : `[${p.name}]`).join(" ")
-                    : "";
+                let renderDesc = cmd.description;
+                if (isOnCooldown) renderDesc = `⏳ En espera: Disponible en ${this.#formatCooldown(cdMs)}`;
+
+                const btnStateClass = isOnCooldown 
+                    ? "opacity-50 cursor-not-allowed border-red-900/30 bg-red-900/10" 
+                    : "hover:bg-gray-800 border-transparent hover:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer";
+
+                btn.className = `shrink-0 flex items-center gap-4 p-2 w-full text-left bg-transparent border rounded-xl transition-all group ${btnStateClass}`;
+                
+                const paramStr = hasParams ? cmd.params.map(p => p.required ? `&lt;${p.name}&gt;` : `[${p.name}]`).join(" ") : "";
 
                 btn.innerHTML = `
-                    <div class="p-3 bg-gray-900 rounded-xl text-2xl group-hover:scale-110 group-hover:bg-gray-950 transition-all shadow-inner border border-gray-800 group-hover:border-gray-700">
+                    <div class="p-3 bg-gray-900 rounded-xl text-2xl ${isOnCooldown ? 'grayscale' : 'group-hover:scale-110 group-hover:bg-gray-950 shadow-inner border border-gray-800 group-hover:border-gray-700'} transition-all">
                         ${cmd.icon}
                     </div>
                     <div class="flex-1 min-w-0 py-1">
-                        <div class="font-bold text-gray-100 flex items-baseline gap-2">
+                        <div class="font-bold ${isOnCooldown ? 'text-gray-400' : 'text-gray-100'} flex items-baseline gap-2">
                             /${cmd.id}
                             ${paramStr ? `<span class="text-xs font-normal text-gray-500 font-mono tracking-tight">${paramStr}</span>` : ''}
                         </div>
-                        <div class="text-sm text-gray-400 mt-0.5 truncate">${cmd.description}</div>
+                        <div class="text-sm ${isOnCooldown ? 'text-red-400 font-medium' : 'text-gray-400'} mt-0.5 truncate">${renderDesc}</div>
                     </div>
-                    ${hasParams ? `
+                    ${hasParams && !isOnCooldown ? `
                     <div class="text-gray-600 group-hover:text-blue-400 transition-colors self-center px-2">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -404,6 +490,7 @@ export class ActivityUI {
                 `;
                 
                 btn.onclick = () => {
+                    if (isOnCooldown) return;
                     if (hasParams) {
                         this.showFormView(cmd);
                     } else {
@@ -427,9 +514,7 @@ export class ActivityUI {
         
         for (const param of this.activeCommand.params) {
             const value = formData.get(param.name)?.toString().trim();
-            if (value) {
-                paramValues.push(value);
-            }
+            if (value) paramValues.push(value);
         }
         
         this.#emitCommandExecution(this.activeCommand, paramValues);
@@ -441,6 +526,8 @@ export class ActivityUI {
      * @param {string[]} paramValues - The array of evaluated parameters.
      */
     #emitCommandExecution(cmdObj, paramValues) {
+        this.#saveRecentCommand(cmdObj.id);
+
         const rawParams = paramValues.map(p => p.includes(" ") ? `%${p}%` : p).join(" ");
         const rawCmd = `/${cmdObj.id} ${rawParams}`.trim();
 
