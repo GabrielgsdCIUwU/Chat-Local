@@ -9,6 +9,7 @@ import { GachaUI } from './ui/GachaUI.js';
 import { AudioSFX } from './ui/AudioSFX.js';
 import { ToastUI } from './ui/components/ToastUI.js';
 import { MarketUI } from './ui/MarketUI.js';
+import { ActivityUI } from './ui/ActivityUI.js';
 
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -27,6 +28,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const inventoryUI = new InventoryUI(socket, globalModal);
     const gachaUI = new GachaUI(socket);
     const marketUI = new MarketUI(socket, globalModal);
+    const activityUI = new ActivityUI(socket, globalModal);
 
     let donatorsLoaded = false;
     let historyQueue = [];
