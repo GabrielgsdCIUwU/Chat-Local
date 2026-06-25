@@ -2,7 +2,7 @@ export const description = "Propón un intercambio directo a otro jugador o acep
 export const params = [
     { name: "accion_o_usuario", type: "string", required: true, description: "Usuario, o 'aceptar'/'rechazar'." },
     { name: "mi_cantidad", type: "number", required: false, description: "Cantidad que ofreces." },
-    { name: "mi_item", type: "string", required: false, description: "Item que ofreces." },
+    { name: "mi_item", type: "inventory_item", required: false, description: "Item que ofreces." },
     { name: "su_cantidad", type: "number", required: false, description: "Cantidad que pides." },
     { name: "su_item", type: "string", required: false, description: "Item que pides." }
 ];

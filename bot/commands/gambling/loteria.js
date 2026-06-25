@@ -20,19 +20,23 @@ export async function execute(context) {
         const playerNumber = Math.floor(Math.random() * 6) + 1;
         let finalMessage = "";
 
-        await context.container.gamblingRepository.executeTransaction(async (users) => {
-            const gambler = context.container.gamblingRepository.ensureUser(users, context.username);
-            gambler.spend = (gambler.spend || 0) + bet;
-
-            if (playerNumber === winnerNumber) {
-                const baseWinnings = bet * 5;
-                const { actualEarnings, petMsg } = await context.container.gamblingService.addRewardWithBonus(context.username, baseWinnings);
+        if (playerNumber === winnerNumber) {
+            const baseWinnings = bet * 5;
+            const { actualEarnings, petMsg } = await context.container.gamblingService.addRewardWithBonus(context.username, baseWinnings);
+            
+            await context.container.gamblingRepository.executeTransaction(async (users) => {
+                const gambler = context.container.gamblingRepository.ensureUser(users, context.username);
+                gambler.spend = (gambler.spend || 0) + bet;
                 gambler.totalEarnings = (gambler.totalEarnings || 0) + actualEarnings;
-                finalMessage = `🎉 ¡Felicidades ${context.username}! Has ganado ${actualEarnings}€ netos en la lotería.${petMsg}`;
-            } else {
-                finalMessage = `💸 Lo siento ${context.username}, has perdido ${bet}€ en la lotería.`;
-            }
-        });
+            });
+            finalMessage = `🎉 ¡Felicidades ${context.username}! Has ganado ${actualEarnings}€ netos en la lotería.${petMsg}`;
+        } else {
+            await context.container.gamblingRepository.executeTransaction(async (users) => {
+                const gambler = context.container.gamblingRepository.ensureUser(users, context.username);
+                gambler.spend = (gambler.spend || 0) + bet;
+            });
+            finalMessage = `💸 Lo siento ${context.username}, has perdido ${bet}€ en la lotería.`;
+        }
 
         return context.reply(finalMessage);
     } catch (error) {

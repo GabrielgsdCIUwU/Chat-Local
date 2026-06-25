@@ -32,22 +32,27 @@ export async function execute(context) {
             const result = Math.random();
             let finalMessage = "";
 
-            await context.container.gamblingRepository.executeTransaction(async (users) => {
-                const accepterGambler = context.container.gamblingRepository.ensureUser(users, context.username);
-                const challengerGambler = context.container.gamblingRepository.ensureUser(users, challengerName);
+            if (result < 0.5) {
+                await eco.transferFunds(challengerName, context.username, amount);
 
-                if (result < 0.5) {
-                    await eco.transferFunds(challengerName, context.username, amount);
+                await context.container.gamblingRepository.executeTransaction(async (users) => {
+                    const accepterGambler = context.container.gamblingRepository.ensureUser(users, context.username);
+                    const challengerGambler = context.container.gamblingRepository.ensureUser(users, challengerName);
                     accepterGambler.duelWin = (accepterGambler.duelWin || 0) + 1;
                     challengerGambler.duelLose = (challengerGambler.duelLose || 0) + 1;
-                    finalMessage = `⚔️ **${context.username}** ha ganado el duelo contra **${challengerName}** y se lleva ${amount}€`;
-                } else {
-                    await eco.transferFunds(context.username, challengerName, amount);
+                });
+                finalMessage = `⚔️ **${context.username}** ha ganado el duelo contra **${challengerName}** y se lleva ${amount}€`;
+            } else {
+                await eco.transferFunds(context.username, challengerName, amount);
+
+                await context.container.gamblingRepository.executeTransaction(async (users) => {
+                    const accepterGambler = context.container.gamblingRepository.ensureUser(users, context.username);
+                    const challengerGambler = context.container.gamblingRepository.ensureUser(users, challengerName);
                     accepterGambler.duelLose = (accepterGambler.duelLose || 0) + 1;
                     challengerGambler.duelWin = (challengerGambler.duelWin || 0) + 1;
-                    finalMessage = `⚔️ **${context.username}** ha perdido el duelo contra **${challengerName}** y le entrega ${amount}€`;
-                }
-            });
+                });
+                finalMessage = `⚔️ **${context.username}** ha perdido el duelo contra **${challengerName}** y le entrega ${amount}€`;
+            }
 
             return context.reply(finalMessage);
         } catch (error) {

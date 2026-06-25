@@ -24,11 +24,13 @@ import { MarketService } from "../services/MarketService.js";
 import { CraftingService } from "../services/CraftingService.js";
 import { GuildService } from "../services/GuildService.js";
 import { PetService } from "../services/PetService.js";
+import { RaidService } from "../services/RaidService.js";
 
 import { AuthController } from "../controllers/AuthController.js";
 import { ProfileController } from "../controllers/ProfileController.js";
 import { ChatController } from "../controllers/ChatController.js";
 import { MediaController } from "../controllers/MediaController.js";
+import { BossRepository } from "../repositories/BossRepository.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -41,6 +43,10 @@ class DIContainer {
 
         this.spamJsonPath = path.join(__dirname, "../data/spamer.json");
         this.spamDbClient = new JsonDatabaseClient(this.spamJsonPath);
+
+        this.bossJsonPath = path.join(__dirname, "../data/boss.json");
+        this.bossDbClient = new JsonDatabaseClient(this.bossJsonPath);
+        this.bossRepository = new BossRepository(this.bossDbClient);
 
         this.sqliteClient = new SqliteClient();
 
@@ -68,6 +74,7 @@ class DIContainer {
         this.guildService = new GuildService(this.economyService, this.guildRepository);
         this.craftingService = new CraftingService(this.inventoryRepository, this.jobRepository);
         this.marketService = new MarketService(this.economyService, this.inventoryRepository, this.auctionRepository);
+        this.raidService = new RaidService(this.economyService, this.bossRepository);
 
         // High-level Services (Depend on Mid-level and Base Services)
         this.gamblingService = new GamblingService(this.gamblingRepository, this.economyService, this.petService, this.guildService);
@@ -83,7 +90,7 @@ class DIContainer {
         this.chatController = new ChatController(this.commandService);
         this.mediaController = new MediaController(this.emojiService);
 
-        this.cronManager = new CronManager(this.marketService, this.rpgService);
+        this.cronManager = new CronManager(this.marketService, this.rpgService, this.raidService);
     }
 }
 

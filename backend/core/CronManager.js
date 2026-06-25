@@ -1,19 +1,23 @@
 import crypto from "node:crypto";
+import { GAME_CONFIG } from "./constants.js";
 export class CronManager {
     /**
      * 
      * @param {import('../services/MarketService.js').MarketService} marketService 
      * @param {import('../services/RPGService.js').RPGService} rpgService 
+     * @param {import('../services/RaidService.js').RaidService} raidService 
      */
-    constructor(marketService, rpgService) {
+    constructor(marketService, rpgService, raidService) {
         this.marketService = marketService;
         this.rpgService = rpgService;
+        this.raidService = raidService;
     }
 
     startAll(io) {
         console.log("⚙️ Inicializando tareas en segundo plano (Cron Jobs)...");
         this.#startMarketCron();
         this.#startExpeditionsCron(io);
+        this.#startRandomRaidCron(io);
     }
 
     #startMarketCron() {
@@ -47,5 +51,20 @@ export class CronManager {
                 console.error("[CRON ERROR Expeditions]:", error);
             }
         }, 60 * 1000)
+    }
+
+    #startRandomRaidCron(io) {
+        const scheduleNextRaid = () => {
+            const minTimeMs = GAME_CONFIG.BOSS_CONFIG.MIN_TIME_TO_SHOW;
+            const maxTimeMs = GAME_CONFIG.BOSS_CONFIG.MAX_TIME_TO_SHOW;
+            const nextRunMs = Math.floor(Math.random() * (maxTimeMs - minTimeMs + 1)) + minTimeMs;
+
+            setTimeout(() => {
+                this.raidService.startRaid(io);
+                scheduleNextRaid()
+            }, nextRunMs);
+        };
+
+        scheduleNextRaid();
     }
 }

@@ -33,6 +33,7 @@ createFile('./backend/data/jobs.json', []);
 createFile('./backend/data/auctions.json', []);
 createFile('./backend/data/guilds.json', []);
 createFile('./backend/data/pets.json', []);
+createFile('./backend/data/boss.json', []);
 createFile('./public/json/encuesta.json', { "pregunta": "Ejemplo", "opciones": [], "hiden": "True" });
 createFile('./public/json/nonCountDays.json', []);
 

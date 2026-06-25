@@ -6,6 +6,7 @@ import registerPrivateEvents from "./events/privateEvents.js";
 import registerPollEvents from "./events/pollEvents.js";
 
 import { container } from "../backend/core/DIContainer.js";
+import registerActivityEvents from "./events/activityEvents.js";
 
 export default function setupSockets(io, sessionMiddleware) {
     // Middleware de sesión para Sockets
@@ -30,5 +31,6 @@ export default function setupSockets(io, sessionMiddleware) {
         registerChatEvents(io, socket, user, container);
         registerPrivateEvents(io, socket, user);
         registerPollEvents(io, socket, user);
+        registerActivityEvents(io, socket, user, container)
     });       
 }

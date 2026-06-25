@@ -126,6 +126,58 @@ export default function registerChatEvents(io, socket, user, container) {
         }
     });
 
+    socket.on("requestActivityData", async () => {
+        try {
+            const now = Date.now();
+            const wallet = await container.economyService.getBalance(user.name);
+            const inv = await container.inventoryRepository.getInventory(user.name);
+            const profile = await container.jobRepository.getProfile(user.name);
+            
+            const allGamblers = await container.gamblingRepository.getAll();
+            const gambler = allGamblers.find(u => u.name === user.name);
+
+            const cooldowns = {};
+
+            if (profile?.job) {
+                const petBonus = await container.petService.getBonus(user.name, "WORK_COOLDOWN");
+                let currentCooldownMs = RPG_CONFIG.WORK_COOLDOWN_MS;
+                if (profile.activeBuffs?.["haste"] && now < profile.activeBuffs["haste"]) {
+                    currentCooldownMs = Math.floor(currentCooldownMs / 2);
+                }
+                if (petBonus > 0) {
+                    currentCooldownMs -= Math.floor(currentCooldownMs * (petBonus / 100));
+                }
+                const timePassed = now - (profile.lastWork || 0);
+                if (timePassed < currentCooldownMs) {
+                    cooldowns["rpg work"] = currentCooldownMs - timePassed;
+                }
+            }
+
+            if (gambler?.lastDaily) {
+                const timePassed = now - gambler.lastDaily;
+                const twelveH = 12 * 60 * 60 * 1000;
+                if (timePassed < twelveH) {
+                    cooldowns["gambling daily"] = twelveH - timePassed;
+                }
+            }
+
+            if (gambler?.lastRobbery) {
+                const timePassed = now - gambler.lastRobbery;
+                if (timePassed < GAME_CONFIG.ROB_CONFIG.COOLDOWN_MS) {
+                    cooldowns["gambling robar"] = GAME_CONFIG.ROB_CONFIG.COOLDOWN_MS - timePassed;
+                }
+            }
+
+            socket.emit("activityData", {
+                wallet: wallet.money,
+                inventory: inv.items || {},
+                cooldowns
+            });
+        } catch (error) {
+            console.error("Error cargando Activity Data:", error);
+        }
+    });
+
     // Enviar mensaje
     socket.on("sendmsg", async (msg, reply) => {
          if (!msg || typeof msg !== 'string' || msg.length > VALIDATION_CONFIG.CHAT.MAX_MESSAGE_LENGTH) {

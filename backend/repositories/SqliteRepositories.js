@@ -47,6 +47,14 @@ export class SqliteEconomyRepository {
 
 export class SqliteGamblingRepository {
     constructor(client) { this.client = client; }
+    /**
+     * Retrieves all gambling profiles from the database.
+     * @returns {Promise<import('./GamblingRepository.js').Gambler[]>}
+     */
+    async getAll() {
+        const db = await this.client.getDb();
+        return await db.all('SELECT * FROM gambling');
+    }
     ensureUser(users, username) {
         let user = users.find(u => u.name === username);
         if (!user) {

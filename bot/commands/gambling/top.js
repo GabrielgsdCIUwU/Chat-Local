@@ -8,7 +8,7 @@ export const description = "Muestra el ranking de los ludópatas más exitosos d
  * @param {import("../../core/BotContext.js").BotContext} context 
  */
 export async function execute(context) {
-    const users = await context.container.gamblingRepository.db.read();
+    const users = await context.container.gamblingRepository.getAll();
 
     const sorted = [...users].sort((a, b) => {
         const aEarnings = a.totalEarnings || 0;

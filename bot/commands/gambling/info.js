@@ -12,7 +12,7 @@ export const params = [
 export async function execute(context) {
     const targetName = context.args.join(" ") || context.username;
     
-    const users = await context.container.gamblingRepository.db.read();
+    const users = await context.container.gamblingRepository.getAll();
     const gambler = users.find(u => u.name === targetName);
     
     if (!gambler) {
