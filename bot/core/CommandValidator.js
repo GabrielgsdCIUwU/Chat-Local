@@ -8,7 +8,8 @@
 
 /**
  * @typedef {Object} CommandParam
- * @property {string} name - The name of the parameter.
+ * @property {string} name - The internal property name used in the 'args' object backend-side (e.g., 'targetUser').
+ * @property {string} [displayName] - The visual alias shown in the frontend UI (e.g., 'Usuario'). Defaults to 'name' if omitted.
  * @property {ParamDatatype} type - The expected type (string, number, user, inventory_item).
  * @property {boolean} required - Whether the parameter is mandatory.
  * @property {string} [description] - Description of the parameter.

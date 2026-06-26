@@ -15,7 +15,7 @@ class InviteGuildCommand extends BaseCommand {
             name: "invite",
             description: "Invita a un jugador a tu gremio (Solo Líder/Oficial).",
             params: [
-                { name: "usuario", type: "user", required: true, description: "Usuario al que quieres invitar." }
+                { name: "targetUser", displayName: "Usuario", type: "user", required: true, description: "Usuario al que quieres invitar." }
             ]
         });
     }

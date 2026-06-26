@@ -14,8 +14,8 @@ class SellCommand extends BaseCommand {
             name: "sell",
             description: "Vende tus materiales rápidamente al sistema por un precio base fijo.",
             params: [
-                { name: "item", type: "inventory_item", required: true, description: "El material que quieres vender." },
-                { name: "cantidad", type: "number", required: true, description: "La cantidad que vas a vender." }
+                {name: "itemName", displayName: "Item", type: "inventory_item", required: true, description: "El material que quieres vender." },
+                {name: "amount", displayName: "Cantidad", type: "number", required: true, description: "La cantidad que vas a vender." }
             ]
         });
     }

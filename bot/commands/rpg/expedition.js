@@ -15,7 +15,7 @@ class ExpeditionCommand extends BaseCommand {
             name: "expedition",
             description: "Envía a tu personaje a una expedición (Idle) para conseguir materiales pasivamente.",
             params: [
-                { name: "zona", type: "string", required: true, values: Object.keys(RPG_CONFIG.EXPEDITIONS), description: "La zona a explorar." }
+                { name: "zone", displayName: "Zona", type: "string", required: true, values: Object.keys(RPG_CONFIG.EXPEDITIONS), description: "La zona a explorar." }
             ]
         });
     }

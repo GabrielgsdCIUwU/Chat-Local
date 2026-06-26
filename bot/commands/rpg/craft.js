@@ -14,7 +14,7 @@ class CraftComand extends BaseCommand {
             name: "craft",
             description: "Crea pociones y objetos mágicos gastando materiales de tu mochila.",
             params: [
-                { name: "recipe_id", type: "string", required: true, description: "El código de la receta (ej: haste_potion)." }
+                { name: "recipe_id", displayName: "ID", type: "string", required: true, description: "El código de la receta (ej: haste_potion)." }
             ]
         });
     }

@@ -15,8 +15,8 @@ class RobarCommand extends BaseCommand {
             name: "robar",
             description: "Intenta robar dinero a otro jugador. A mayor cantidad, más fácil que te atrapen.",
             params: [
-                { name: "usuario", type: "user", required: true, description: "Víctima a la que deseas robar." },
-                { name: "dinero", type: "number", required: true, description: "Cantidad que vas a intentar robar." }
+                {name: "targetUser", displayName: "Usuario", type: "user", required: true, description: "Víctima a la que deseas robar." },
+                {name: "amount", displayName: "Dinero", type: "number", required: true, description: "Cantidad que vas a intentar robar." }
             ]
         });
     }

@@ -2,7 +2,8 @@ import { appState } from '../core/state.js';
 
 /**
  * @typedef {Object} CommandParam
- * @property {string} name - The name of the parameter.
+ * @property {string} name - The internal variable name.
+ * @property {string} [displayName] - The UI alias.
  * @property {string} type - The data type (string, number, user).
  * @property {boolean} required - Whether the parameter is mandatory.
  * @property {string} description - Description of the parameter.
@@ -293,7 +294,8 @@ export class ActivityUI {
                 
                 const label = document.createElement("label");
                 label.className = "block text-sm font-semibold text-gray-300 mb-2 uppercase tracking-wide";
-                label.innerHTML = `${param.name} ${param.required ? '<span class="text-red-400">*</span>' : '<span class="text-gray-500 font-normal normal-case ml-1">(Opcional)</span>'}`;
+                const uiName = param.displayName || param.name;
+                label.innerHTML = `${uiName} ${param.required ? '<span class="text-red-400">*</span>' : '<span class="text-gray-500 font-normal normal-case ml-1">(Opcional)</span>'}`;
                 
                 const inputElement = this.#createInputElement(param);
                 
@@ -388,7 +390,8 @@ export class ActivityUI {
             element = document.createElement("input");
             element.type = param.type === "number" ? "number" : "text";
             element.className = `${baseClasses} placeholder:text-gray-600`;
-            element.placeholder = param.description || `Introduce ${param.name}...`;
+            const uiName = param.displayName || param.name;
+            element.placeholder = param.description || `Introduce ${uiName}...`;
         }
 
         element.name = param.name;
@@ -468,8 +471,10 @@ export class ActivityUI {
 
                 btn.className = `shrink-0 flex items-center gap-4 p-2 w-full text-left bg-transparent border rounded-xl transition-all group ${btnStateClass}`;
                 
-                const paramStr = hasParams ? cmd.params.map(p => p.required ? `&lt;${p.name}&gt;` : `[${p.name}]`).join(" ") : "";
-
+                const paramStr = hasParams ? cmd.params.map(p => {
+                                    const uiName = p.displayName || p.name;
+                                    return p.required ? `&lt;${uiName}&gt;` : `[${uiName}]`;
+                                }).join(" ") : "";
                 btn.innerHTML = `
                     <div class="p-3 bg-gray-900 rounded-xl text-2xl ${isOnCooldown ? 'grayscale' : 'group-hover:scale-110 group-hover:bg-gray-950 shadow-inner border border-gray-800 group-hover:border-gray-700'} transition-all">
                         ${cmd.icon}

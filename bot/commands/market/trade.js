@@ -14,11 +14,11 @@ class TradeCommand extends BaseCommand {
             name: "trade",
             description: "Propón un intercambio directo a otro jugador o acepta/rechaza uno.",
             params: [
-                { name: "accion_o_usuario", type: "string", required: true, description: "Usuario, o 'aceptar'/'rechazar'." },
-                { name: "mi_cantidad", type: "number", required: false, description: "Cantidad que ofreces." },
-                { name: "mi_item", type: "inventory_item", required: false, description: "Item que ofreces." },
-                { name: "su_cantidad", type: "number", required: false, description: "Cantidad que pides." },
-                { name: "su_item", type: "string", required: false, description: "Item que pides." }
+                { name: "action", displayName: "Usuario o acción", type: "string", required: true, description: "Usuario, o 'aceptar'/'rechazar'." },
+                { name: "sendAmount", displayName: "Cantidad ofreces", type: "number", required: false, description: "Cantidad que ofreces." },
+                { name: "sendItem", displayName: "Item ofreces", type: "inventory_item", required: false, description: "Item que ofreces." },
+                { name: "reqAmount", displayName: "Cantidad pides", type: "number", required: false, description: "Cantidad que pides." },
+                { name: "reqItem", displayName: "Item pides", type: "string", required: false, description: "Item que pides." }
             ]
         });
     }

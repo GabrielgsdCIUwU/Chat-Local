@@ -14,9 +14,9 @@ class PublishCommand extends BaseCommand {
             name: "publish",
             description: "Publica materiales de tu inventario en el mercado global.",
             params: [
-                { name: "amount", type: "number", required: true, description: "Cantidad de material a vender." },
-                { name: "price", type: "number", required: true, description: "Precio total por el lote." },
-                { name: "itemName", type: "inventory_item", required: true, description: "Nombre del material a vender." }
+                { name: "amount", displayName: "Cantidad", type: "number", required: true, description: "Cantidad de material a vender." },
+                { name: "price", displayName: "Precio", type: "number", required: true, description: "Precio total por el lote." },
+                { name: "itemName", displayName: "Nombre material", type: "inventory_item", required: true, description: "Nombre del material a vender." }
             ]
         });
     }

@@ -18,7 +18,7 @@ class RateCommand extends BaseCommand {
     }
 
     async run(context, args) {
-        const response = `Yo le doy a ${args.valoracion} un ${random()}/10`;
+        const response = `Yo le doy a ${args.valorar} un ${random()}/10`;
         context.reply(response);
     }
 }
