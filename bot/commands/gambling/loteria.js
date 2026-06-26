@@ -14,7 +14,7 @@ class LoteriaCommand extends BaseCommand {
             name: "loteria",
             description: "Compra un ticket de lotería. ¡Si aciertas, multiplicas tu apuesta x5!",
             params: [
-                { name: "cantidad", type: "number", required: true, description: "Cantidad de dinero a apostar." }
+                { name: "amount", displayName: "Cantidad", type: "number", required: true, description: "Cantidad de dinero a apostar." }
             ]
         })
     }

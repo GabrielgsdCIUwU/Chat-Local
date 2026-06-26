@@ -16,9 +16,9 @@ class DueloCommand extends BaseCommand {
             name: "duelo",
             description: "Reta a otro jugador a duelo a muerte por dinero.",
             params: [
-                { name: "usuario", type: "user", required: false, description: "Usuario a retar." },
-                { name: "cantidad", type: "number", required: false, description: "Cantidad a apostar." },
-                { name: "acción", type: "string", required: false, values: ["aceptar", "rechazar"], description: "Acepta o rechaza un duelo pendiente." }
+                {name: "targetUser", displayName: "Usuario", type: "user", required: false, description: "Usuario a retar." },
+                {name: "amount", displayName: "Cantidad", type: "number", required: false, description: "Cantidad a apostar." },
+                {name: "action", displayName: "Acción", type: "string", required: false, values: ["aceptar", "rechazar"], description: "Acepta o rechaza un duelo pendiente." }
             ]
         });
     }

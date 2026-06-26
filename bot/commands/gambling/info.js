@@ -11,7 +11,7 @@ class InfoCommand extends BaseCommand {
             name: "info",
             description: "Muestra las estadísticas de apuestas, robos y duelos de un jugador.",
             params: [
-                { name: "usuario", type: "user", required: false, description: "Usuario del que quieres ver las estadísticas." }
+                { name: "targetUser", displayName: "Usuario", type: "user", required: false, description: "Usuario del que quieres ver las estadísticas." }
             ]
         });
     }
