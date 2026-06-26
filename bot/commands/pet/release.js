@@ -1,16 +1,35 @@
-export const description = "Libera a una de tus mascotas a cambio de una compensación económica del 50%.";
-export const params = [
-    { name: "id_mascota", type: "string", required: true, description: "ID de la mascota (míralo usando /pet list)." }
-];
+import { RPG_CONFIG } from "../../../backend/core/rpgConfig.js";
+import { BaseCommand } from "../../core/BaseCommand.js";
 
 /**
- * 
- * @param {import('../../core/BotContext.js').BotContext} context
+ * @typedef {import("../../core/BotContext.js").BotContext} BotContext
  */
-export async function execute(context) {
-    const petId = context.args[0].trim();
 
-    const { petConfig, refundAmount } = await context.container.petService.releasePet(context.username, petId);
+/**
+ * Command to release a pet in exchange for money.
+ * @extends BaseCommand
+ */
+class ReleaseCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "release",
+            description: `Libera a una de tus mascotas a cambio de una compensación económica del ${RPG_CONFIG.PET_REFUND_PERCENTAGE * 100}%.`,
+            params: [
+                { name: "id_mascota", type: "string", required: true, description: "ID de la mascota (míralo usando /pet list)." }
+            ]
+        });
+    }
 
-    context.reply(`🌿 **¡MASCOTA LIBERADA!**\n**${context.username}** ha liberado a su ${petConfig.emoji} **${petConfig.name}** en la naturaleza.\nComo agradecimiento por cuidarla, el Gremio de Aventureros te ha compensado con **${refundAmount}€**.`);
+    /**
+     * 
+     * @param {BotContext} context 
+     */
+    async run(context) {
+        const { petId } = args;
+
+        const { petConfig, refundAmount } = await context.container.petService.releasePet(context.username, petId);
+
+        context.reply(`🌿 **¡MASCOTA LIBERADA!**\n**${context.username}** ha liberado a su ${petConfig.emoji} **${petConfig.name}** en la naturaleza.\nComo agradecimiento por cuidarla, el Gremio de Aventureros te ha compensado con **${refundAmount}€**.`);
+    }
 }
+export default new ReleaseCommand();
