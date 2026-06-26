@@ -19,10 +19,11 @@ export async function handleCommand({ cmd, socket, io, username, container }) {
     const context = new BotContext({
             command, subcommands, args, raw, io, socket, username, container, timestamp
         });
+    
+    const commandInstance = commandModule?.default || commandModule;
 
-    if (commandModule?.execute) {
-
-        commandModule.execute(context);
+    if (commandInstance?.execute && typeof commandInstance.execute === "function") {
+        await commandInstance.execute(context);
     } else {
         context.reply("No existe este comando, revisa lo que has escrito: " + raw)
     }
