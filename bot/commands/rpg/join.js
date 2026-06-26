@@ -15,7 +15,7 @@ class JoinCommand extends BaseCommand {
             name: "join",
             description: "Únete a un oficio para poder empezar a trabajar.",
             params: [
-                { name: "oficio", type: "string", required: true, values: availableJobs, description: "Elige entre minero, leñador o pescador." }
+                { name: "jobKey", displayName: "Oficio", type: "string", required: true, values: availableJobs, description: "Elige entre minero, leñador o pescador." }
             ]
         });
     }

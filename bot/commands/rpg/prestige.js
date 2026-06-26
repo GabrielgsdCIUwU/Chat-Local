@@ -14,7 +14,7 @@ class PrestigeCommand extends BaseCommand {
             name: "prestige",
             description: "Reinicia tu progreso a cambio de un multiplicador permanente. Requiere herramienta máxima.",
             params: [
-                { name: "confirmation", type: "string", required: false, description: "Escribe 'confirm' si estás 100% seguro." }
+                { name: "confirmation", displayName: "Confirmación", type: "string", required: false, description: "Escribe 'confirm' si estás 100% seguro." }
             ]
         });
     }
