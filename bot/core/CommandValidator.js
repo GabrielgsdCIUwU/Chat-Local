@@ -3,9 +3,13 @@
  */
 
 /**
+ * @typedef {"string" | "number" | "user" | "inventory_item"} ParamDatatype
+ */
+
+/**
  * @typedef {Object} CommandParam
  * @property {string} name - The name of the parameter.
- * @property {string} type - The expected type (string, number, user, inventory_item).
+ * @property {ParamDatatype} type - The expected type (string, number, user, inventory_item).
  * @property {boolean} required - Whether the parameter is mandatory.
  * @property {string} [description] - Description of the parameter.
  * @property {string[]} [values] - Allowed specific values.
