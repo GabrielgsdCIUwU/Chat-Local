@@ -1,25 +1,40 @@
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
-
-export const description = "Muestra la información de tu gremio actual.";
+import { BaseCommand } from "../../core/BaseCommand.js";
 
 /**
- * @param {import('../../core/BotContext.js').BotContext} context 
+ * @typedef {import("../../core/BotContext.js").BotContext} BotContext
  */
-export async function execute(context) {
-    const guild = await context.container.guildService.getUserGuild(context.username);
 
-    if (!guild) {
-        return context.reply("No estás en una guild.");
+
+class InfoGuildCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "info",
+            description: "Muestra la información de tu gremio actual."
+        });
     }
 
-    const leader = guild.members.find(m => m.rank === "Leader");
-    const members = guild.members.map(m => `• ${m.name} (${m.rank})`).join("\n");
+    /**
+     * 
+     * @param {BotContext} context 
+     */
+    async run(context) {
+        const guild = await context.container.guildService.getUserGuild(context.username);
 
-    const embed = new EmbedMessage()
-        .addField("👑 Líder", leader.name)
-        .addField("⭐ Nivel", guild.level.toString())
-        .addField("🏦 Saldo del Banco", `${guild.bankMoney.toLocaleString('es-ES')}€`)
-        .addField(`👥 Miembros (${guild.members.length})`, members); 
+        if (!guild) {
+            return context.reply("No estás en una guild.");
+        }
 
-    context.reply(`🏰 **Perfil del Gremio: [${guild.name}]**\n${embed.toString()}`);
+        const leader = guild.members.find(m => m.rank === "Leader");
+        const members = guild.members.map(m => `• ${m.name} (${m.rank})`).join("\n");
+
+        const embed = new EmbedMessage()
+            .addField("👑 Líder", leader.name)
+            .addField("⭐ Nivel", guild.level.toString())
+            .addField("🏦 Saldo del Banco", `${guild.bankMoney.toLocaleString('es-ES')}€`)
+            .addField(`👥 Miembros (${guild.members.length})`, members);
+
+        context.reply(`🏰 **Perfil del Gremio: [${guild.name}]**\n${embed.toString()}`);
+    }
 }
+export default new InfoGuildCommand();

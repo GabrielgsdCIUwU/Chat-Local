@@ -1,19 +1,39 @@
-export const description = "Invita a un jugador a tu gremio (Solo Líder/Oficial).";
-export const params = [
-    { name: "usuario", type: "user", required: true, description: "Usuario al que quieres invitar." }
-];
+import { BaseCommand } from "../../core/BaseCommand.js";
 
 /**
- * @param {import('../../core/BotContext.js').BotContext} context 
+ * @typedef {import("../../core/BotContext.js").BotContext} BotContext
  */
-export async function execute(context) {
-    const targetName = context.args.join(" ");
-    
-    if (targetName === context.username) {
-        return context.reply("No puedes invitarte a ti mismo.");
+
+
+/**
+ * Command to invite a user to the guild.
+ * @extends BaseCommand
+ */
+class InviteGuildCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "invite",
+            description: "Invita a un jugador a tu gremio (Solo Líder/Oficial).",
+            params: [
+                { name: "usuario", type: "user", required: true, description: "Usuario al que quieres invitar." }
+            ]
+        });
     }
 
-    const guildName = await context.container.guildService.inviteMember(context.username, targetName);
+    /**
+     * 
+     * @param {BotContext} context 
+     * @param {Record<string, any>} args 
+     */
+    async run(context, args) {
+        const { targetUser } = args;
 
-    context.reply(`🏰 **INVITACIÓN A GREMIO**\n**${context.username}** ha invitado a **${targetName}** a unirse al gremio **[${guildName}]**.\n*(Usa \`/guild join\` o \`/guild reject\`)*`);
+        if (targetUser === context.username) {
+            throw new Error("No puedes invitarte a ti mismo.");
+        }
+
+        const guildName = await context.container.guildService.inviteMember(context.username, targetUser);
+        context.reply(`🏰 **INVITACIÓN A GREMIO**\n**${context.username}** ha invitado a **${targetName}** a unirse al gremio **[${guildName}]**.\n*(Usa \`/guild join\` o \`/guild reject\`)*`);
+    }
 }
+export default new InviteGuildCommand();
