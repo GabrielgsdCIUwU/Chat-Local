@@ -215,8 +215,10 @@ export class CommandUI {
         params.forEach((p, idx) => {
             const chip = document.createElement("div");
             chip.className = `inline-flex items-center space-x-1 border rounded-md px-2 py-1 text-xs ${p.required ? "bg-red-800 border-red-600" : "bg-blue-800 border-blue-600"}`;
+
+            const uiName = p.displayName || p.name;
             
-            chip.innerHTML = `<label class="font-medium ${p.required ? 'text-red-200' : 'text-blue-200'}">${p.name}</label>`;
+            chip.innerHTML = `<label class="font-medium ${p.required ? 'text-red-200' : 'text-blue-200'}">${uiName}</label>`;
             
             const input = document.createElement("input");
             input.type = "text";
