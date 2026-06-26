@@ -1,22 +1,39 @@
 import { RPG_CONFIG } from "../../../backend/core/rpgConfig.js";
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
-
-export const description = "Muestra todas las recetas de crafteo disponibles y su coste de materiales.";
+import { BaseCommand } from "../../core/BaseCommand.js";
 
 /**
- * @param {import('../../core/BotContext.js').BotContext} context 
+ * @typedef {import("../../core/BotContext.js").BotContext} BotContext
  */
 
-export function execute(context) {
-    const embed = new EmbedMessage();
-
-    for (const [key, recipe] of Object.entries(RPG_CONFIG.CRAFTING_RECIPES)) {
-        const cost = Object.entries(recipe.cost)
-            .map(([item, quantity]) => `${quantity}x ${item}`)
-            .join(", ");
-        
-        embed.addField(`🧪 ${recipe.name} \`(${key})\``, `*${recipe.description}*\n**Precio:** ${cost}`);
+/**
+ * Command to craft potions and magical items.
+ * @extends BaseCommand
+ */
+class RecipesCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "recipes",
+            description: "Muestra todas las recetas de crafteo disponibles y su coste de materiales."
+        });
     }
 
-    context.reply(`📜 **Recetas de crafteo**\n*(Usa \`/rpg craft [id]\` para hacer una poción)*\n${embed.toString()}`);
+    /**
+     * 
+     * @param {BotContext} context 
+     */
+    async run(context) {
+        const embed = new EmbedMessage();
+
+        for (const [key, recipe] of Object.entries(RPG_CONFIG.CRAFTING_RECIPES)) {
+            const cost = Object.entries(recipe.cost)
+                .map(([item, quantity]) => `${quantity}x ${item}`)
+                .join(", ");
+
+            embed.addField(`🧪 ${recipe.name} \`(${key})\``, `*${recipe.description}*\n**Precio:** ${cost}`);
+        }
+
+        context.reply(`📜 **Recetas de crafteo**\n*(Usa \`/rpg craft [id]\` para hacer una poción)*\n${embed.toString()}`);
+    }
 }
+export default new RecipesCommand();

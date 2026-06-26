@@ -1,16 +1,35 @@
-export const description = "Crea pociones y objetos mágicos gastando materiales de tu mochila.";
-export const params = [
-    { name: "recipe_id", type: "string", required: true, description: "El código de la receta (ej: haste_potion)." }
-];
+import { BaseCommand } from "../../core/BaseCommand.js";
 
 /**
- * @param {import('../../core/BotContext.js').BotContext} context 
+ * @typedef {import("../../core/BotContext.js").BotContext} BotContext
  */
 
-export async function execute(context) {
-    const recipeId = context.args[0].trim();
+/**
+ * Command to craft potions and magical items.
+ * @extends BaseCommand
+ */
+class CraftComand extends BaseCommand {
+    constructor() {
+        super({
+            name: "craft",
+            description: "Crea pociones y objetos mágicos gastando materiales de tu mochila.",
+            params: [
+                { name: "recipe_id", type: "string", required: true, description: "El código de la receta (ej: haste_potion)." }
+            ]
+        });
+    }
 
-    const craftedItem = await context.container.craftingService.craftItem(context.username, recipeId);
+    /**
+     * 
+     * @param {BotContext} context 
+     * @param {Record<string, any>} args 
+     */
+    async run(context, args) {
+        const recipeId = context.args[0].trim();
 
-    context.reply(`✨ **CRAFTEO HECHO!**\n**${context.username}** has creado **${craftedItem.name}**.\nEl efecto mágico está ahora activo! usa \`/rpg buffs\` para comprobar tus efectos activos.`);
+        const craftedItem = await context.container.craftingService.craftItem(context.username, recipeId);
+
+        context.reply(`✨ **CRAFTEO HECHO!**\n**${context.username}** has creado **${craftedItem.name}**.\nEl efecto mágico está ahora activo! usa \`/rpg buffs\` para comprobar tus efectos activos.`);
+    }
 }
+export default new CraftComand();
