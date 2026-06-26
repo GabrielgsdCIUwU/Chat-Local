@@ -33,16 +33,20 @@ export class BaseCommand {
      * @returns {Promise<void>}
      */
     async execute(context) {
-        try {
-            if (this.adminOnly) {
-                await this.#validateAdmin(context);
-            }
+        let parsedArgs;
 
-            const parsedArgs = CommandValidator.parse(context.args, this.params);
+        try {
+            if (this.adminOnly) await this.#validateAdmin(context);
+            parsedArgs = CommandValidator.parse(context.args, this.params);
+        } catch (validationError) {
+            return context.reply(`❌ **Error de validación:** ${validationError.message}`);
+        }
+
+        try {
             await this.run(context, parsedArgs);
-            
-        } catch (error) {
-            context.reply(`❌ **Error:** ${error.message}`);
+        } catch (executionError) {
+            await this.#safeRollback(context, parsedArgs, executionError);
+            return context.reply(`❌ **Error:** ${executionError.message}`);
         }
     }
 
@@ -57,6 +61,31 @@ export class BaseCommand {
      */
     async run(context, args) {
         throw new Error("Method 'run()' must be implemented in the child class.");
+    }
+
+    /**
+     * Revert all the database changes. Child classes could implement it.
+     * @param {BotContext} context - The command execution context.
+     * @param {Record<string, any>} args - The strongly typed and parsed arguments.
+     * @param {Error} error
+     * @abstract 
+     */
+    async rollback(context, args, error) {
+      // Implemented by Child classes if need it.
+    }
+
+    /**
+     * 
+     * @param {BotContext} context - The command execution context.
+     * @param {Record<string, any>} args - The strongly typed and parsed arguments.
+     * @param {Error} error
+     */
+    async #safeRollback(context, args, error) {
+        try {
+            await this.rollback(context, args, error);
+        } catch (rollbackError) {
+            console.error(`[Rollback Error] Comando '${this.name}' falló al revertir el estado:`, rollbackError);
+        }
     }
 
     /**
