@@ -1,5 +1,6 @@
 import { RPG_CONFIG } from '../../../backend/core/rpgConfig.js';
 import { BaseCommand } from "../../core/BaseCommand.js";
+const availableJobs = Object.keys(RPG_CONFIG.JOBS);
 
 /**
  * @typedef {import("../../core/BotContext.js").BotContext} BotContext
