@@ -15,7 +15,7 @@ class BuyCommand extends BaseCommand {
             name: "buy",
             description: `Compra uno o varios huevos sorpresa de mascota (Precio: ${RPG_CONFIG.EGG_PRICE}€ c/u).`,
             params: [
-                { name: "cantidad", type: "number", required: false, description: "Cantidad de huevos a comprar (por defecto 1)." }
+                { name: "amount", displayName: "Cantidad", type: "number", required: false, description: "Cantidad de huevos a comprar (por defecto 1)." }
             ]
         });
     }

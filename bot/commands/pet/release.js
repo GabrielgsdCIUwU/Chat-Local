@@ -15,7 +15,7 @@ class ReleaseCommand extends BaseCommand {
             name: "release",
             description: `Libera a una de tus mascotas a cambio de una compensación económica del ${RPG_CONFIG.PET_REFUND_PERCENTAGE * 100}%.`,
             params: [
-                { name: "id_mascota", type: "string", required: true, description: "ID de la mascota (míralo usando /pet list)." }
+                { name: "petId", displayName: "ID", type: "string", required: true, description: "ID de la mascota (míralo usando /pet list)." }
             ]
         });
     }

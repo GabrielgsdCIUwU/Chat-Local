@@ -14,7 +14,7 @@ class EquipCommand extends BaseCommand {
             name: "equip",
             description: "Equipa una mascota usando su ID para recibir sus bonificaciones, o desequípala.",
             params: [
-                { name: "id_mascota", type: "string", required: true, description: "ID de la mascota (míralo en /pet list), o 'none' para desequipar." }
+                { name: "petId", displayName: "ID", type: "string", required: true, description: "ID de la mascota (míralo en /pet list), o 'none' para desequipar." }
             ]
         })
     }
