@@ -1,14 +1,22 @@
 import { BOT_CONFIG } from "../../../backend/core/constants.js";
+import { BaseCommand } from "../../core/BaseCommand.js";
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
 export const description = "Muestra el ranking de los jugadores más ricos del servidor.";
 
 /**
- * 
- * @param {import('../../core/BotContext.js').BotContext} context 
+ * Displays the economy leaderboard.
+ * @extends BaseCommand
  */
-export async function execute(context) {
-    try {
+class TopEcoCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "top",
+            description: "Muestra el ranking de los jugadores más ricos del servidor."
+        });
+    }
+
+    async run(context) {
         const topWallets = await context.container.economyService.getTopRicher(BOT_CONFIG.TOP_LIMIT_DEFAULT);
 
         const embed = new EmbedMessage();
@@ -17,8 +25,7 @@ export async function execute(context) {
         });
 
         context.reply(`🏆 **Los más ricos**\n${embed.toString()}`);
-    } catch (error) {
-        console.error("Error al ejecutar el ranking", error);
-        context.reply("❌ Error al obtener el ranking");
     }
 }
+
+export default new TopEcoCommand();

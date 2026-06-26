@@ -1,18 +1,24 @@
+import { BaseCommand } from "../../core/BaseCommand.js";
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
 
-export const description = "Muestra tu saldo actual y tus deudas pendientes.";
-export const params = [
-    { name: "usuario", type: "user", required: false, description: "Usuario del que quieres ver el balance (opcional)." }
-];
-
 /**
- * 
- * @param {import('../../core/BotContext.js').BotContext} context 
+ * Displays user's current economy balance.
+ * @extends BaseCommand
  */
-export async function execute(context) {
-    const targetName = context.args.join(" ") || context.username;
+class BalanceCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "balance",
+            description: "Muestra tu saldo actual y tus deudas pendientes.",
+            params: [
+                { name: "targetUser", type: "user", required: false, description: "Usuario del que quieres ver el balance (opcional)." }
+            ]
+        });
+    }
 
-    try {
+    async run(context, args) {
+        const targetName = args.targetUser || context.username;
+
         const wallet = await context.container.economyService.getBalance(targetName);
 
         const embed = new EmbedMessage()
@@ -24,7 +30,7 @@ export async function execute(context) {
         }
 
         context.reply(embed.toString());
-    } catch (error) {
-        context.reply(error.message);
     }
 }
+
+export default new BalanceCommand();
