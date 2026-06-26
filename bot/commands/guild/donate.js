@@ -14,7 +14,7 @@ class DonateGuildCommand extends BaseCommand {
             name: "donate",
             description: "Dona dinero al banco de tu gremio para subirlo de nivel.",
             params: [
-                { name: "cantidad", type: "number", required: true, description: "Cantidad de dinero a donar." }
+                { name: "amount", displayName: "Cantidad", type: "number", required: true, description: "Cantidad de dinero a donar." }
             ]
         });
     }

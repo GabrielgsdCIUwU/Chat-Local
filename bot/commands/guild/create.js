@@ -15,7 +15,7 @@ class CreateGuildCommand extends BaseCommand {
             name: "create",
             description: "Funda un nuevo gremio inviertiendo dinero.",
             params: [
-                { name: "guildName", type: "string", required: true, description: "El nombre de tu nuevo gremio." }
+                { name: "guildName", displayName: "Nombre", type: "string", required: true, description: "El nombre de tu nuevo gremio." }
             ]
         });
     }
