@@ -1,4 +1,5 @@
 import { Wallet } from '../domain/economy/Wallet.js';
+import { BaseSqliteRepository } from '../core/repositories/BaseSqliteRepository.js';
 
 export class SqliteUserRepository {
     constructor(client) { this.client = client; }
@@ -22,13 +23,17 @@ export class SqliteUserRepository {
     }
 }
 
-export class SqliteEconomyRepository {
-    constructor(client) { this.client = client; }
-    async getAll() {
-        const db = await this.client.getDb();
-        const rows = await db.all('SELECT * FROM economy');
-        return rows.map(r => new Wallet(r));
+export class SqliteEconomyRepository extends BaseSqliteRepository {
+    constructor(client) { super(client, "economy"); }
+
+    mapToDomain(rows) { return rows.map(r => new Wallet(r)); }
+
+    async saveAll(db, wallets) {
+        for (const w of wallets) {
+            await db.run('INSERT OR REPLACE INTO economy (name, money, debt) VALUES (?, ?, ?)', [w.name, w.money, w.debt]);
+        }
     }
+
     ensureWallet(wallets, username) {
         let wallet = wallets.find(w => w.name === username);
         if (!wallet) {
@@ -37,32 +42,22 @@ export class SqliteEconomyRepository {
         }
         return wallet;
     }
-    async executeTransaction(callback) {
-        const db = await this.client.getDb();
-        await db.exec('BEGIN EXCLUSIVE TRANSACTION');
-        try {
-            const rows = await db.all('SELECT * FROM economy');
-            const wallets = rows.map(r => new Wallet(r));
-            
-            await callback(wallets);
-            for (const w of wallets) {
-                await db.run('INSERT OR REPLACE INTO economy (name, money, debt) VALUES (?, ?, ?)', [w.name, w.money, w.debt]);
-            }
-            await db.exec('COMMIT');
-        } catch(e) { await db.exec('ROLLBACK'); throw e; }
-    }
 }
 
-export class SqliteGamblingRepository {
-    constructor(client) { this.client = client; }
-    /**
-     * Retrieves all gambling profiles from the database.
-     * @returns {Promise<import('./GamblingRepository.js').Gambler[]>}
-     */
-    async getAll() {
-        const db = await this.client.getDb();
-        return await db.all('SELECT * FROM gambling');
+export class SqliteGamblingRepository extends BaseSqliteRepository {
+    constructor(client) { super(client, "gambling"); }
+
+    mapToDomain(rows) { return rows; }
+
+    async saveAll(db, users) {
+        for (const u of users) {
+            await db.run(
+                `INSERT OR REPLACE INTO gambling (name, totalEarnings, spend, timesSteal, moneySteal, duelWin, duelLose, bankRupt, lastRobbery, lastDaily, dailyStreak) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [u.name, u.totalEarnings, u.spend, u.timesSteal, u.moneySteal, u.duelWin, u.duelLose, u.bankRupt, u.lastRobbery, u.lastDaily, u.dailyStreak]
+            );
+        }
     }
+
     ensureUser(users, username) {
         let user = users.find(u => u.name === username);
         if (!user) {
@@ -71,25 +66,19 @@ export class SqliteGamblingRepository {
         }
         return user;
     }
-    async executeTransaction(callback) {
-        const db = await this.client.getDb();
-        await db.exec('BEGIN EXCLUSIVE TRANSACTION');
-        try {
-            const users = await db.all('SELECT * FROM gambling');
-            await callback(users);
-            for (const u of users) {
-                await db.run(
-                    `INSERT OR REPLACE INTO gambling (name, totalEarnings, spend, timesSteal, moneySteal, duelWin, duelLose, bankRupt, lastRobbery, lastDaily, dailyStreak) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [u.name, u.totalEarnings, u.spend, u.timesSteal, u.moneySteal, u.duelWin, u.duelLose, u.bankRupt, u.lastRobbery, u.lastDaily, u.dailyStreak]
-                );
-            }
-            await db.exec('COMMIT');
-        } catch(e) { await db.exec('ROLLBACK'); throw e; }
-    }
 }
 
-export class SqliteInventoryRepository {
-    constructor(client) { this.client = client; }
+export class SqliteInventoryRepository extends BaseSqliteRepository {
+    constructor(client) { super(client, "inventory"); }
+
+    mapToDomain(rows) { return rows.map(r => ({ name: r.name, items: JSON.parse(r.items) })); }
+
+    async saveAll(db, inventories) {
+        for (const inv of inventories) {
+            await db.run('INSERT OR REPLACE INTO inventory (name, items) VALUES (?, ?)', [inv.name, JSON.stringify(inv.items)]);
+        }
+    }
+
     async getInventory(username) {
         const db = await this.client.getDb();
         const row = await db.get('SELECT * FROM inventory WHERE name = ?', [username]);
@@ -101,23 +90,22 @@ export class SqliteInventoryRepository {
         if (!inv) { inv = { name: username, items: {} }; inventories.push(inv); }
         return inv;
     }
-    async executeTransaction(callback) {
-        const db = await this.client.getDb();
-        await db.exec('BEGIN EXCLUSIVE TRANSACTION');
-        try {
-            const rows = await db.all('SELECT * FROM inventory');
-            const inventories = rows.map(r => ({ name: r.name, items: JSON.parse(r.items) }));
-            await callback(inventories);
-            for (const inv of inventories) {
-                await db.run('INSERT OR REPLACE INTO inventory (name, items) VALUES (?, ?)', [inv.name, JSON.stringify(inv.items)]);
-            }
-            await db.exec('COMMIT');
-        } catch(e) { await db.exec('ROLLBACK'); throw e; }
-    }
 }
 
-export class SqliteJobRepository {
-    constructor(client) { this.client = client; }
+export class SqliteJobRepository extends BaseSqliteRepository {
+    constructor(client) { super(client, "jobs"); }
+
+    mapToDomain(rows) { 
+        return rows.map(r => ({ ...r, activeBuffs: JSON.parse(r.activeBuffs), activeExpedition: JSON.parse(r.activeExpedition) })); 
+    }
+
+    async saveAll(db, jobs) {
+        for (const j of jobs) {
+            await db.run('INSERT OR REPLACE INTO jobs (name, job, toolLevel, lastWork, activeBuffs, prestigeLevel, activeExpedition) VALUES (?, ?, ?, ?, ?, ?, ?)', 
+            [j.name, j.job, j.toolLevel, j.lastWork, JSON.stringify(j.activeBuffs), j.prestigeLevel || 0, JSON.stringify(j.activeExpedition)]);
+        }
+    }
+
     async getProfile(username) {
         const db = await this.client.getDb();
         const row = await db.get('SELECT * FROM jobs WHERE name = ?', [username]);
@@ -131,24 +119,21 @@ export class SqliteJobRepository {
         if (p.activeExpedition === undefined) p.activeExpedition = null;
         return p;
     }
-    async executeTransaction(callback) {
-        const db = await this.client.getDb();
-        await db.exec('BEGIN EXCLUSIVE TRANSACTION');
-        try {
-            const rows = await db.all('SELECT * FROM jobs');
-            const jobs = rows.map(r => ({ ...r, activeBuffs: JSON.parse(r.activeBuffs), activeExpedition: JSON.parse(r.activeExpedition) }));
-            await callback(jobs);
-            for (const j of jobs) {
-                await db.run('INSERT OR REPLACE INTO jobs (name, job, toolLevel, lastWork, activeBuffs, prestigeLevel, activeExpedition) VALUES (?, ?, ?, ?, ?, ?, ?)', 
-                [j.name, j.job, j.toolLevel, j.lastWork, JSON.stringify(j.activeBuffs), j.prestigeLevel || 0, JSON.stringify(j.activeExpedition)]);
-            }
-            await db.exec('COMMIT');
-        } catch(e) { await db.exec('ROLLBACK'); throw e; }
-    }
 }
 
-export class SqlitePetRepository {
-    constructor(client) { this.client = client; }
+export class SqlitePetRepository extends BaseSqliteRepository {
+    constructor(client) { super(client, "pets"); }
+
+    mapToDomain(rows) { 
+        return rows.map(r => ({ name: r.name, eggs: r.eggs, pets: JSON.parse(r.pets), equipped: r.equipped })); 
+    }
+
+    async saveAll(db, profiles) {
+        for (const p of profiles) {
+            await db.run('INSERT OR REPLACE INTO pets (name, eggs, pets, equipped) VALUES (?, ?, ?, ?)', [p.name, p.eggs, JSON.stringify(p.pets), p.equipped]);
+        }
+    }
+
     async getProfile(username) {
         const db = await this.client.getDb();
         const row = await db.get('SELECT * FROM pets WHERE name = ?', [username]);
@@ -160,62 +145,33 @@ export class SqlitePetRepository {
         if (!p) { p = { name: username, eggs: 0, pets: [], equipped: null }; profiles.push(p); }
         return p;
     }
-    async executeTransaction(callback) {
-        const db = await this.client.getDb();
-        await db.exec('BEGIN EXCLUSIVE TRANSACTION');
-        try {
-            const rows = await db.all('SELECT * FROM pets');
-            const profiles = rows.map(r => ({ name: r.name, eggs: r.eggs, pets: JSON.parse(r.pets), equipped: r.equipped }));
-            await callback(profiles);
-            for (const p of profiles) {
-                await db.run('INSERT OR REPLACE INTO pets (name, eggs, pets, equipped) VALUES (?, ?, ?, ?)', [p.name, p.eggs, JSON.stringify(p.pets), p.equipped]);
-            }
-            await db.exec('COMMIT');
-        } catch(e) { await db.exec('ROLLBACK'); throw e; }
+}
+
+export class SqliteGuildRepository extends BaseSqliteRepository {
+    constructor(client) { super(client, "guilds"); }
+
+    mapToDomain(rows) { 
+        return rows.map(r => ({ ...r, members: JSON.parse(r.members) })); 
+    }
+
+    async saveAll(db, guilds) {
+        await db.run('DELETE FROM guilds');
+        for (const g of guilds) {
+            await db.run('INSERT INTO guilds (id, name, level, bankMoney, members) VALUES (?, ?, ?, ?, ?)', [g.id, g.name, g.level, g.bankMoney, JSON.stringify(g.members)]);
+        }
     }
 }
 
-export class SqliteGuildRepository {
-    constructor(client) { this.client = client; }
-    async getAll() {
-        const db = await this.client.getDb();
-        const rows = await db.all('SELECT * FROM guilds');
-        return rows.map(r => ({ ...r, members: JSON.parse(r.members) }));
-    }
-    async executeTransaction(callback) {
-        const db = await this.client.getDb();
-        await db.exec('BEGIN EXCLUSIVE TRANSACTION');
-        try {
-            const rows = await db.all('SELECT * FROM guilds');
-            const guilds = rows.map(r => ({ ...r, members: JSON.parse(r.members) }));
-            await callback(guilds);
-            await db.run('DELETE FROM guilds'); 
-            for (const g of guilds) {
-                await db.run('INSERT INTO guilds (id, name, level, bankMoney, members) VALUES (?, ?, ?, ?, ?)', [g.id, g.name, g.level, g.bankMoney, JSON.stringify(g.members)]);
-            }
-            await db.exec('COMMIT');
-        } catch(e) { await db.exec('ROLLBACK'); throw e; }
-    }
-}
+export class SqliteAuctionRepository extends BaseSqliteRepository {
+    constructor(client) { super(client, "auctions"); }
 
-export class SqliteAuctionRepository {
-    constructor(client) { this.client = client; }
-    async getAll() {
-        const db = await this.client.getDb();
-        return await db.all('SELECT * FROM auctions');
-    }
-    async executeTransaction(callback) {
-        const db = await this.client.getDb();
-        await db.exec('BEGIN EXCLUSIVE TRANSACTION');
-        try {
-            const auctions = await db.all('SELECT * FROM auctions');
-            await callback(auctions);
-            await db.run('DELETE FROM auctions'); 
-            for (const a of auctions) {
-                await db.run('INSERT INTO auctions (id, seller, itemName, amount, price, expiresAt) VALUES (?, ?, ?, ?, ?, ?)', [a.id, a.seller, a.itemName, a.amount, a.price, a.expiresAt]);
-            }
-            await db.exec('COMMIT');
-        } catch(e) { await db.exec('ROLLBACK'); throw e; }
+    mapToDomain(rows) { return rows; }
+
+    async saveAll(db, auctions) {
+        await db.run('DELETE FROM auctions');
+        for (const a of auctions) {
+            await db.run('INSERT INTO auctions (id, seller, itemName, amount, price, expiresAt) VALUES (?, ?, ?, ?, ?, ?)', [a.id, a.seller, a.itemName, a.amount, a.price, a.expiresAt]);
+        }
     }
     async removeAuction(id) {
         const db = await this.client.getDb();
