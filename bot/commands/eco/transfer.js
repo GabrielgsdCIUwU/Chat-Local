@@ -10,8 +10,8 @@ class TransferCommand extends BaseCommand {
             name: "transfer",
             description: "Transfiere dinero de tu cartera a otro jugador.",
             params: [
-                { name: "targetUser", type: "user", required: true, description: "Usuario que recibirá el dinero." },
-                { name: "amount", type: "number", required: true, description: "Cantidad a transferir." }
+                { name: "targetUser", displayName: "Usuario", type: "user", required: true, description: "Usuario que recibirá el dinero." },
+                { name: "amount", displayName: "Cantidad", type: "number", required: true, description: "Cantidad a transferir." }
             ]
         });
     }

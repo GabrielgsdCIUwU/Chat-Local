@@ -11,7 +11,7 @@ class BalanceCommand extends BaseCommand {
             name: "balance",
             description: "Muestra tu saldo actual y tus deudas pendientes.",
             params: [
-                { name: "targetUser", type: "user", required: false, description: "Usuario del que quieres ver el balance (opcional)." }
+                { name: "targetUser", displayName: "Usuario", type: "user", required: false, description: "Usuario del que quieres ver el balance (opcional)." }
             ]
         });
     }

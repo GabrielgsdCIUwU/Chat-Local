@@ -11,8 +11,8 @@ class AdminAddCommand extends BaseCommand {
             description: "Comando de administrador para inyectar dinero a un usuario.",
             adminOnly: true,
             params: [
-                { name: "targetUser", type: "user", required: true, description: "Usuario al que se le dará el dinero." },
-                { name: "amount", type: "number", required: true, description: "Cantidad de dinero a añadir." }
+                { name: "targetUser", displayName: "Usuario", type: "user", required: true, description: "Usuario al que se le dará el dinero." },
+                { name: "amount", displayName: "Cantidad", type: "number", required: true, description: "Cantidad de dinero a añadir." }
             ]
         });
     }
