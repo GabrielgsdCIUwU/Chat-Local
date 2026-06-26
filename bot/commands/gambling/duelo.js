@@ -1,82 +1,97 @@
-const pendingDuels = new Map();
-export const description = "Reta a otro jugador a un duelo a muerte por dinero.";
-export const params = [
-    { name: "usuario", type: "user", required: false, description: "Usuario a retar." },
-    { name: "cantidad", type: "number", required: false, description: "Cantidad a apostar." },
-    { name: "acción", type: "string", required: false, values: ["aceptar", "rechazar"], description: "Acepta o rechaza un duelo pendiente." }
-];
+import { BaseCommand } from "../../core/BaseCommand.js";
 
 /**
- * 
- * @param {import("../../core/BotContext.js").BotContext} context 
+ * @typedef {import("../../core/BotContext.js").BotContext} BotContext
  */
-export async function execute(context) {
-    const action = context.args[0];
-    const eco = context.container.economyService;
-    
-    if (action === "aceptar") {
-        if (!pendingDuels.has(context.username)) {
-            return context.reply(`${context.username} No tienes ningún duelo pendiente.`)
-        }
 
-        const { challengerName, amount } = pendingDuels.get(context.username);
-        pendingDuels.delete(context.username);
+const pendingDuels = new Map();
 
-        try {
+/**
+ * Command to challenge other players to a duel.
+ * @extends BaseCommand
+ */
+class DueloCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "duelo",
+            description: "Reta a otro jugador a duelo a muerte por dinero.",
+            params: [
+                { name: "usuario", type: "user", required: false, description: "Usuario a retar." },
+                { name: "cantidad", type: "number", required: false, description: "Cantidad a apostar." },
+                { name: "acción", type: "string", required: false, values: ["aceptar", "rechazar"], description: "Acepta o rechaza un duelo pendiente." }
+            ]
+        });
+    }
+
+    /**
+     * 
+     * @param {BotContext} context 
+     * @param {Record<string, any>} args 
+     */
+    async run(context, args) {
+        const { action, amount, targetUser } = args;
+        const eco = context.container.economyService;
+
+        if (action === "aceptar") {
+            if (!pendingDuels.has(context.username)) {
+                throw new Error("No tienes ningún duelo pendiente.");
+            }
+
+            const { challengerName, amount: duelAmount } = pendingDuels.get(context.username);
+            pendingDuels.delete(context.username);
+
             const challengerWallet = await eco.getBalance(challengerName);
             const accepterWallet = await eco.getBalance(context.username);
-            
-            if (challengerWallet.money < amount) return context.reply(`El duelo se cancela: ${challengerName} ya no tiene fondos.`);
-            if (accepterWallet.money < amount) return context.reply(`El duelo se cancela: ${context.username} no tiene fondos.`);
+
+            if (challengerWallet.money < duelAmount) throw new Error(`El duelo se cancela: ${challengerName} ya no tiene fondos.`);
+            if (accepterWallet.money < duelAmount) throw new Error(`El duelo se cancela: no tienes fondos suficientes.`);
 
             const result = Math.random();
             let finalMessage = "";
 
             if (result < 0.5) {
-                await eco.transferFunds(challengerName, context.username, amount);
-
-                await context.container.gamblingRepository.executeTransaction(async (users) => {
-                    const accepterGambler = context.container.gamblingRepository.ensureUser(users, context.username);
-                    const challengerGambler = context.container.gamblingRepository.ensureUser(users, challengerName);
-                    accepterGambler.duelWin = (accepterGambler.duelWin || 0) + 1;
-                    challengerGambler.duelLose = (challengerGambler.duelLose || 0) + 1;
-                });
-                finalMessage = `⚔️ **${context.username}** ha ganado el duelo contra **${challengerName}** y se lleva ${amount}€`;
+                await eco.transferFunds(challengerName, context.username, duelAmount);
+                await this.#updateDuelStats(context.container, context.username, challengerName);
+                finalMessage = `⚔️ **${context.username}** ha ganado el duelo contra **${challengerName}** y se lleva **${duelAmount}€**`;
             } else {
-                await eco.transferFunds(context.username, challengerName, amount);
-
-                await context.container.gamblingRepository.executeTransaction(async (users) => {
-                    const accepterGambler = context.container.gamblingRepository.ensureUser(users, context.username);
-                    const challengerGambler = context.container.gamblingRepository.ensureUser(users, challengerName);
-                    accepterGambler.duelLose = (accepterGambler.duelLose || 0) + 1;
-                    challengerGambler.duelWin = (challengerGambler.duelWin || 0) + 1;
-                });
-                finalMessage = `⚔️ **${context.username}** ha perdido el duelo contra **${challengerName}** y le entrega ${amount}€`;
+                await eco.transferFunds(context.username, challengerName, duelAmount);
+                await this.#updateDuelStats(context.container, challengerName, context.username);
+                finalMessage = `⚔️ **${context.username}** ha perdido el duelo contra **${challengerName}** y le entrega **${duelAmount}€**`;
             }
 
             return context.reply(finalMessage);
-        } catch (error) {
-            return context.reply(`El duelo fue cancelado: ${error.message}`);
+
+        } else if (action === "rechazar") {
+            if (pendingDuels.has(context.username)) {
+                pendingDuels.delete(context.username);
+                return context.reply(`❌ **${context.username}** ha rechazado el duelo.`);
+            }
+            throw new Error("No tienes ningún duelo pendiente para rechazar.");
+
+        } else if (action === "retar") {
+            if (!targetUser || !amount) {
+                throw new Error("Para retar debes especificar la cantidad y el usuario. Ej: `/gambling duelo retar 100 Usuario`.");
+            }
+            if (context.username === targetUser) throw new Error("No puedes retarte a ti mismo.");
+
+            const senderWallet = await eco.getBalance(context.username);
+            if (senderWallet.money < amount) throw new Error(`No tienes suficiente dinero para apostar ${amount}€.`);
+
+            if (pendingDuels.has(targetUser)) throw new Error(`El usuario ${targetUser} ya tiene un duelo pendiente.`);
+
+            pendingDuels.set(targetUser, { challengerName: context.username, amount });
+            return context.reply(`⚔️ **${context.username}** ha retado a **${targetUser}** con **${amount}€**. Usa \`/gambling duelo aceptar\` o \`/gambling duelo rechazar\`.`);
         }
-        
-    } else if (action === "rechazar") {
-        if (pendingDuels.has(context.username)) {
-            pendingDuels.delete(context.username);
-            return context.reply(`${context.username} ha rechazado el duelo.`);
-        }
-    } else {
-        const targetName = context.args.slice(0, -1).join(" ");
-        const amount = Number.parseInt(context.args.at(-1));
+    }
 
-        if (context.username === targetName) return context.reply("No puedes retarte a ti mismo.");
-        if (Number.isNaN(amount) || amount <= 0) return context.reply("Cantidad no válida.");
-
-        const senderWallet = await eco.getBalance(context.username);
-        if (senderWallet.money < amount) return context.reply(`No tienes suficiente dinero para apostar ${amount}€.`);
-
-        if (pendingDuels.has(targetName)) return context.reply(`El usuario ${targetName} ya tiene un duelo pendiente.`);
-
-        pendingDuels.set(targetName, { challengerName: context.username, amount });
-        return context.reply(`⚔️ **${context.username}** ha retado a **${targetName}** con ${amount}€. Usa \`/gambling duelo aceptar\` o \`/gambling duelo rechazar\`.`);
+    async #updateDuelStats(container, winner, loser) {
+        await container.gamblingRepository.executeTransaction(async (users) => {
+            const winnerGambler = container.gamblingRepository.ensureUser(users, winner);
+            const loserGambler = container.gamblingRepository.ensureUser(users, loser);
+            winnerGambler.duelWin = (winnerGambler.duelWin || 0) + 1;
+            loserGambler.duelLose = (loserGambler.duelLose || 0) + 1;
+        });
     }
 }
+
+export default new DueloCommand();
