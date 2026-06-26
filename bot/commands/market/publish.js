@@ -1,24 +1,43 @@
-export const description = "Publica materiales de tu inventario en el mercado global.";
-export const params = [
-    { name: "item", type: "inventory_item", required: true, description: "Nombre del material a vender." },
-    { name: "cantidad", type: "number", required: true, description: "Cantidad de material a vender." },
-    { name: "precio_total", type: "number", required: true, description: "Precio total por el lote." }
-];
+import { BaseCommand } from "../../core/BaseCommand.js";
 
 /**
- * @param {import('../../core/BotContext.js').BotContext} context 
+ * @typedef {import("../../core/BotContext.js").BotContext} BotContext
  */
-export async function execute(context) {
-    const price = Number.parseInt(context.args.at(-1));
-    const amount = Number.parseInt(context.args.at(-2));
-    const itemName = context.args.slice(0, -2).join(" ");
 
-    const auction = await context.container.marketService.publishAuction(
-        context.username,
-        itemName,
-        amount,
-        price
-    );
+/**
+ * Command to publish items into the global auction house.
+ * @extends BaseCommand
+ */
+class PublishCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "publish",
+            description: "Publica materiales de tu inventario en el mercado global.",
+            params: [
+                { name: "amount", type: "number", required: true, description: "Cantidad de material a vender." },
+                { name: "price", type: "number", required: true, description: "Precio total por el lote." },
+                { name: "itemName", type: "inventory_item", required: true, description: "Nombre del material a vender." }
+            ]
+        });
+    }
 
-    context.reply(`📢 **NUEVA SUBASTA**\n**${context.username}** ha publicado **${auction.amount}x ${auction.itemName}** por **${auction.price}€**.\n*(Usa \`/market buy ${auction.id}\` para comprarlo)*`);
+    /**
+     * 
+     * @param {BotContext} context 
+     * @param {Record<string, any>} args 
+     */
+    async run(context, args) {
+        const { amount, price, itemName } = args;
+
+        const auction = await context.container.marketService.publishAuction(
+            context.username,
+            itemName,
+            amount,
+            price
+        );
+
+        context.reply(`📢 **NUEVA SUBASTA**\n**${context.username}** ha publicado **${auction.amount}x ${auction.itemName}** por **${auction.price}€**.\n*(Usa \`/market buy ${auction.id}\` para comprarlo)*`);
+    }
 }
+
+export default new PublishCommand();

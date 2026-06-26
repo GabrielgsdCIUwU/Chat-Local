@@ -1,15 +1,36 @@
-export const description = "Compra un lote de materiales del mercado usando su ID.";
-export const params = [
-    { name: "ID_Subasta", type: "string", required: true, description: "El código de la subasta a comprar." }
-];
+import { BaseCommand } from "../../core/BaseCommand.js";
 
 /**
- * @param {import('../../core/BotContext.js').BotContext} context 
+ * @typedef {import("../../core/BotContext.js").BotContext} BotContext
  */
-export async function execute(context) {
-    const auctionId = context.args[0].trim().toLowerCase();
 
-    const boughtAuction = await context.container.marketService.buyAuction(context.username, auctionId);
+/**
+ * Command to purchase an active auction.
+ * @extends BaseCommand
+ */
+class BuyCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "buy",
+            description: "Compra un lote de materiales del mercado usando su ID.",
+            params: [
+                { name: "auctionId", type: "string", required: true, description: "El código de la subasta a comprar." }
+            ]
+        });
+    }
     
-    context.reply(`🛍️ **¡COMPRA EXITOSA!**\n**${context.username}** ha comprado **${boughtAuction.amount}x ${boughtAuction.itemName}** a **${boughtAuction.seller}** por **${boughtAuction.price}€**.`);
+    /**
+     * 
+     * @param {BotContext} context 
+     * @param {Record<string, any>} args 
+     */
+    async run(context, args) {
+        const auctionId = args.auctionId.toLowerCase();
+
+        const boughtAuction = await context.container.marketService.buyAuction(context.username, auctionId);
+
+        context.reply(`🛍️ **¡COMPRA EXITOSA!**\n**${context.username}** ha comprado **${boughtAuction.amount}x ${boughtAuction.itemName}** a **${boughtAuction.seller}** por **${boughtAuction.price}€**.`);
+    }
 }
+
+export default new BuyCommand();
