@@ -1,5 +1,6 @@
 import { Wallet } from '../domain/economy/Wallet.js';
 import { BaseSqliteRepository } from '../core/repositories/BaseSqliteRepository.js';
+import { Inventory } from '../domain/rpg/Inventory.js';
 
 export class SqliteUserRepository {
     constructor(client) { this.client = client; }
@@ -71,7 +72,7 @@ export class SqliteGamblingRepository extends BaseSqliteRepository {
 export class SqliteInventoryRepository extends BaseSqliteRepository {
     constructor(client) { super(client, "inventory"); }
 
-    mapToDomain(rows) { return rows.map(r => ({ name: r.name, items: JSON.parse(r.items) })); }
+    mapToDomain(rows) { return rows.map(r => new Inventory({ name: r.name, items: JSON.parse(r.items) })); }
 
     async saveAll(db, inventories) {
         for (const inv of inventories) {
@@ -82,12 +83,12 @@ export class SqliteInventoryRepository extends BaseSqliteRepository {
     async getInventory(username) {
         const db = await this.client.getDb();
         const row = await db.get('SELECT * FROM inventory WHERE name = ?', [username]);
-        if (row) return { name: row.name, items: JSON.parse(row.items) };
-        return { name: username, items: {} };
+        if (row) return new Inventory({ name: row.name, items: JSON.parse(row.items) });
+        return new Inventory({ name: username, items: {} });
     }
     ensureInventory(inventories, username) {
         let inv = inventories.find(i => i.name === username);
-        if (!inv) { inv = { name: username, items: {} }; inventories.push(inv); }
+        if (!inv) { inv = new Inventory({ name: username, items: {} }); inventories.push(inv); }
         return inv;
     }
 }
