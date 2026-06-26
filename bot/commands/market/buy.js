@@ -14,7 +14,7 @@ class BuyCommand extends BaseCommand {
             name: "buy",
             description: "Compra un lote de materiales del mercado usando su ID.",
             params: [
-                { name: "auctionId", type: "string", required: true, description: "El código de la subasta a comprar." }
+                { name: "auctionId", displayName: "ID", type: "string", required: true, description: "El código de la subasta a comprar." }
             ]
         });
     }
