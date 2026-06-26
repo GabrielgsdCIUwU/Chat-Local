@@ -1,9 +1,5 @@
-/**
- * @typedef {Object} Wallet
- * @property {string} name - Username
- * @property {number} money - Current balance
- * @property {number} debt - Current debt
- */
+import { Wallet } from '../domain/economy/Wallet.js';
+
 
 export class EconomyRepository {
     /**
@@ -19,9 +15,10 @@ export class EconomyRepository {
      * @param {function(Wallet[]): void} callback 
      */
     async executeTransaction(callback) {
-        await this.db.update((wallets) => {
+        await this.db.update((rawWallets) => {
+            const wallets = rawWallets.map(w => new Wallet(w));
             callback(wallets);
-            return wallets;
+            return wallets.map(w => w.toJSON());
         });
     }
 
@@ -30,7 +27,8 @@ export class EconomyRepository {
      * @returns {Promise<Wallet[]>}
      */
     async getAll() {
-        return await this.db.read();
+        const rawWallets = await this.db.read();
+        return rawWallets.map(w => new Wallet(w));
     }
 
     /**
@@ -42,7 +40,7 @@ export class EconomyRepository {
     ensureWallet(wallets, username) {
         let wallet = wallets.find(w => w.name === username);
         if (!wallet) {
-            wallet = { name: username, money: 100, debt: 0 };
+            wallet = new Wallet({ name: username, money: 100, debt: 0});
             wallets.push(wallet);
         }
         return wallet;

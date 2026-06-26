@@ -21,7 +21,8 @@ export class EconomyService {
     async getBalance(username) {
         let userWallet;
         await this.repo.executeTransaction((wallets) => {
-            userWallet = { ...this.repo.ensureWallet(wallets, username) };
+            const wallet = this.repo.ensureWallet(wallets, username);
+            userWallet = wallet.toJSON();
         });
         return userWallet;
     }
@@ -40,18 +41,10 @@ export class EconomyService {
     async addFunds(username, amount) {
         if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error("La cantidad no es válida");
 
-        let actualEarnings = amount;
+        let actualEarnings = 0;
         await this.repo.executeTransaction((wallets) => {
             const wallet = this.repo.ensureWallet(wallets, username);
-
-            if (wallet.debt > 0) {
-                let payDebt = Math.floor(amount * GAME_CONFIG.ECONOMY.DEBT_REPAY_PERCENTAGE);
-                if (payDebt > wallet.debt) payDebt = wallet.debt;
-
-                wallet.debt -= payDebt;
-                actualEarnings = amount - payDebt;
-            }
-            wallet.money += actualEarnings;
+            actualEarnings = wallet.addFunds(amount);
         });
         return actualEarnings;
     }
@@ -73,8 +66,7 @@ export class EconomyService {
 
         await this.repo.executeTransaction((wallets) => {
             const wallet = this.repo.ensureWallet(wallets, username);
-            if (wallet.money < amount) throw new Error(`No tienes suficience dinero. Tienes ${wallet.money}€`);
-            wallet.money -= amount;
+            wallet.removeFunds(amount);
         });
     }
 
@@ -100,10 +92,8 @@ export class EconomyService {
             const sender = this.repo.ensureWallet(wallets, senderName);
             const target = this.repo.ensureWallet(wallets, targetName);
 
-            if (sender.money < amount) throw new Error(`No tienes suficiente dinero. Tienes ${sender.money}€`);
-
-            sender.money -= amount;
-            this.addFunds(target.name, amount);
+            sender.removeFunds(amount);
+            target.addFunds(amount);
         });
 
     }
@@ -119,7 +109,7 @@ export class EconomyService {
      */
     async getTopRicher(limit = 10) {
         const wallets = await this.repo.getAll();
-        return wallets.toSorted((a, b) => b.money - a.money).slice(0, limit);
+        return wallets.toSorted((a, b) => b.money - a.money).slice(0, limit).map(w => w.toJSON());
     }
 
     /**
@@ -137,8 +127,7 @@ export class EconomyService {
         let removedAmount = 0;
         await this.repo.executeTransaction((wallets) => {
             const wallet = this.repo.ensureWallet(wallets, username);
-            removedAmount = Math.min(wallet.money, amount);
-            wallet.money -= removedAmount;
+            removedAmount = wallet.forceRemoveFunds(amount);
         });
         return removedAmount;
     }
@@ -159,13 +148,7 @@ export class EconomyService {
     async declareBankruptcy(username, bankRuptCount) {
         await this.repo.executeTransaction((wallets) => {
             const wallet = this.repo.ensureWallet(wallets, username);
-            if (wallet.money > 0) throw new Error(`Tienes ${wallet.money}€, no puedes declarate en bancarrota`);
-
-            const base_money = GAME_CONFIG.BANKRUPT_BASE_MONEY;
-
-            wallet.money = base_money;
-
-            wallet.debt += base_money + Math.floor(Math.random() * bankRuptCount * GAME_CONFIG.ECONOMY.BANKRUPT_PENALTY_MULT);
+            wallet.declareBankruptcy(bankRuptCount);
         });
     }
 }

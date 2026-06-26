@@ -1,3 +1,5 @@
+import { Wallet } from '../domain/economy/Wallet.js';
+
 export class SqliteUserRepository {
     constructor(client) { this.client = client; }
     async findAll() {
@@ -24,18 +26,24 @@ export class SqliteEconomyRepository {
     constructor(client) { this.client = client; }
     async getAll() {
         const db = await this.client.getDb();
-        return await db.all('SELECT * FROM economy');
+        const rows = await db.all('SELECT * FROM economy');
+        return rows.map(r => new Wallet(r));
     }
     ensureWallet(wallets, username) {
         let wallet = wallets.find(w => w.name === username);
-        if (!wallet) { wallet = { name: username, money: 100, debt: 0 }; wallets.push(wallet); }
+        if (!wallet) {
+            wallet = new Wallet({name: username, money: 100, debt: 0});
+            wallet.push(wallet);
+        }
         return wallet;
     }
     async executeTransaction(callback) {
         const db = await this.client.getDb();
         await db.exec('BEGIN EXCLUSIVE TRANSACTION');
         try {
-            const wallets = await db.all('SELECT * FROM economy');
+            const rows = await db.all('SELECT * FROM economy');
+            const wallets = rows.map(r => new Wallet(r));
+            
             await callback(wallets);
             for (const w of wallets) {
                 await db.run('INSERT OR REPLACE INTO economy (name, money, debt) VALUES (?, ?, ?)', [w.name, w.money, w.debt]);
