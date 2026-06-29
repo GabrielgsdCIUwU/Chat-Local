@@ -61,6 +61,17 @@
  */
 
 /**
+ * Represents a direct player-to-player trade offer.
+ * @typedef {Object} DirectTradeProps
+ * @property {string} senderName - Username of the player creating the offer.
+ * @property {string} sendItem - Item offered by the sender.
+ * @property {number} sendAmount - Quantity of the offered item.
+ * @property {string} reqItem - Item requested in exchange.
+ * @property {number} reqAmount - Quantity of the requested item.
+ * @property {number} expiresAt - Epoch timestamp when the trade offer expires.
+ */
+
+/**
  * Profile and professional specialization metrics for RPG jobs.
  * @typedef {Object} JobProfile
  * @property {string} name - Username of the worker.
@@ -188,7 +199,7 @@
  * @template T
  * @typedef {Object} IBaseRepository
  * @property {function(): Promise<T[]>} getAll - Retrieves all records.
- * @property {function(function(T[]): Promise<void>|void): Promise<void>} executeTransaction - Safely handles database transactions.
+ * @property {function(function(T[]): Promise<any>|any): Promise<void>} executeTransaction - Safely handles database transactions.
  */
 
 /**
@@ -219,16 +230,18 @@
 
 /**
  * RPG inventory persistence contract.
- * @typedef {IBaseRepository<import('../domain/rpg/Inventory.js').Inventory>} IInventoryRepository
- * @property {function(string): Promise<import('../domain/rpg/Inventory.js').Inventory>} getInventory - Yields an Inventory class wrapper.
- * @property {function(any[], string): import('../domain/rpg/Inventory.js').Inventory} ensureInventory - Transaction safe finder for inventory.
+ * @typedef {IBaseRepository<import('../domain/rpg/Inventory.js').Inventory> & {
+ *   getInventory: function(string): Promise<import('../domain/rpg/Inventory.js').Inventory>,
+ *   ensureInventory: function(any[], string): import('../domain/rpg/Inventory.js').Inventory
+ * }} IInventoryRepository
  */
 
 /**
  * Job profile persistence contract.
- * @typedef {IBaseRepository<JobProfile>} IJobRepository
- * @property {function(string): Promise<JobProfile|undefined>} getProfile - Fetches user workspace profile.
- * @property {function(any[], string): JobProfile} ensureJobProfile - Obtains or configures a new job profile.
+ * @typedef {IBaseRepository<JobProfile> & {
+ *   getProfile: function(string): Promise<JobProfile|undefined>,
+ *   ensureJobProfile: function(any[], string): JobProfile
+ * }} IJobRepository
  */
 
 /**
