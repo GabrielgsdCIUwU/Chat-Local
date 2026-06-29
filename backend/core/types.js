@@ -11,6 +11,13 @@
  */
 
 /**
+ * Represents a blacklisted IP record.
+ * @typedef {Object} BannedIp
+ * @property {string} ip - The banned IP address.
+ * @property {string} reason - The reason for the ban.
+ */
+
+/**
  * Safe Data Transfer Object representing user public/session information.
  * @typedef {Object} UserDTO
  * @property {string} name - The username.
