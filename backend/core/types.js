@@ -115,6 +115,13 @@
  */
 
 /**
+ * User emoji reactions
+ * @typedef {Object} EmojiReactions
+ * @property {string} name - Name of the emoji
+ * @property {string[]} users - All users that reacted to this emoji 
+ */
+
+/**
  * Live global boss raid metrics.
  * @typedef {Object} RaidSession
  * @property {boolean} active - Flags if a battle is running.
@@ -133,7 +140,7 @@
  * @property {number} timestamp - Epoch timestamp of issuance.
  * @property {boolean} edited - Flag representing modification state.
  * @property {number} prestige - Prestige level of the sender at the time of sending.
- * @property {Array.<Object>} emojis - Message reactions.
+ * @property {EmojiReactions[]} emojis - Message reactions.
  * @property {Object|null} reply - Parent message meta in thread structures.
  */
 
