@@ -4,7 +4,7 @@ import { ROLES } from "../core/constants.js";
 
 export class ChatController {
     /**
-     * @param {import('../services/CommandService.js').CommandService} commandService 
+     * @param {import('../core/types.js').ICommandService} commandService 
      */
     constructor(commandService) {
         this.commandService = commandService;
