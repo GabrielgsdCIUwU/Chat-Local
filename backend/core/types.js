@@ -147,6 +147,18 @@
 
 //region Infrastructure & Persistence
 /**
+ * @typedef {Object} ISocketServer
+ * @property {function(string, ...any): void} emit - Broadcasts an event to all connected sockets.
+ */
+
+/**
+ * @typedef {Object} ISocket
+ * @property {string} id - Unique socket connection identifier.
+ * @property {function(string, ...any): void} emit - Sends an event to this specific socket client.
+ * @property {function(string): void} join - Joins a specific room.
+ */
+
+/**
  * Interface representing a transactional and queryable database client.
  * @typedef {Object} IDatabaseClient
  * @property {function(): Promise<any>} getDb - Retrieves the active connection instance.
