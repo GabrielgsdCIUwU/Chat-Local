@@ -146,6 +146,17 @@
  */
 
 /**
+ * Interface representing a transactional SQL connection context.
+ * Duck-typed abstraction to avoid direct coupling with third-party libraries.
+ * 
+ * @typedef {Object} ISqlConnection
+ * @property {function(string, ...any): Promise<any>} run - Executes statements (INSERT, UPDATE, DELETE).
+ * @property {function(string, ...any): Promise<any[]>} all - Executes queries returning multiple rows.
+ * @property {function(string, ...any): Promise<any>} get - Executes queries returning a single row.
+ * @property {function(string): Promise<any>} exec - Executes raw multi-line SQL commands.
+ */
+
+/**
  * Interface representing a simple key-value file storage system.
  * @typedef {Object} IKeyValueStore
  * @property {function(): Promise<any[]>} read - Reads persistent raw data.
