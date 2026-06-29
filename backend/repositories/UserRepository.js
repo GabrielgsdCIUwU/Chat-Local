@@ -1,13 +1,11 @@
-/**
- * @typedef {Object} User
- * @property {string} name - Username.
- * @property {string} passwd - Hashed or plain text password.
- * @property {string|string[]} location - IP address(es) associated with the user.
- * @property {string[]} roles - Array of user roles (e.g., 'Admin', 'Donador').
- * @property {string} [color] - Optional custom name color.
- * @property {string} [img] - Optional profile image extension.
- */
+/** @typedef {import('../core/types.js').IUserRepository} IUserRepository */
+/** @typedef {import('../core/types.js').User} User */
 
+/**
+ * Repository handling serialization and search of persistent user data.
+ * 
+ * @implements {IUserRepository}
+ */
 export class UserRepository {
     /**
      * @param {import('../database/JsonDatabaseClient.js').JsonDatabaseClient} dbClient 
@@ -39,7 +37,7 @@ export class UserRepository {
      * @param {User} user - The user object to save 
      */
     async save(user) {
-        await this.db.update((users) => {
+        await this.db.update((/**@type {User[]}*/users) => {
             const index = users.findIndex(u => u.name === user.name);
             if (index !== -1) {
                 users[index] = user;
