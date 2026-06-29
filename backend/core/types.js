@@ -172,7 +172,7 @@
 /**
  * Banned IP check repository interface.
  * @typedef {Object} IBannedIpRepository
- * @property {function(string): Promise<{ip: string, motivo: string}|undefined>} isBanned - Checks if an IP is blacklisted.
+ * @property {function(string): Promise<BannedIp|undefined>} isBanned - Checks if an IP is blacklisted.
  */
 
 /**
