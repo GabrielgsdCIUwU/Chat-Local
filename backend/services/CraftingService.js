@@ -7,8 +7,8 @@ import { RPG_CONFIG } from "../core/rpgConfig.js";
 export class CraftingService {
     /**
      * 
-     * @param {import('../repositories/InventoryRepository.js').InventoryRepository} inventoryRepository 
-     * @param {import('../repositories/JobRepository.js').JobRepository} jobRepository 
+     * @param {import('../repositories/SqliteRepositories.js').SqliteInventoryRepository} inventoryRepository 
+     * @param {import('../repositories/SqliteRepositories.js').SqliteJobRepository} jobRepository  
      */
     constructor(inventoryRepository, jobRepository) {
         this.inventoryRepository = inventoryRepository;
@@ -35,17 +35,15 @@ export class CraftingService {
 
         const inventory = await this.inventoryRepository.getInventory(username);
         for (const [reqItem, reqAmount] of Object.entries(recipe.cost)) {
-            const userAmount = inventory.items[reqItem] || 0;
-            if (userAmount < reqAmount) {
-                throw new Error(`Materiales insuficientes. Necesitas ${reqAmount}x ${reqItem} (Tienes ${userAmount})`);
+            if (!inventory.hasItem(reqItem, reqAmount)) {
+                throw new Error(`Materiales insuficientes. Necesitas ${reqAmount}x ${reqItem} (Tienes ${inventory.items[reqItem] || 0})`);
             }
         }
 
         await this.inventoryRepository.executeTransaction((inventories) => {
-            const inventory = this.inventoryRepository.ensureInventory(inventories, username);
+            const txInventory = this.inventoryRepository.ensureInventory(inventories, username);
             for (const [reqItem, reqAmount] of Object.entries(recipe.cost)) {
-                inventory.items[reqItem] -= reqAmount;
-                if (inventory.items[reqItem] <= 0) delete inventory.items[reqItem];
+                txInventory.removeItem(reqItem, reqAmount);
             }
         });
 
