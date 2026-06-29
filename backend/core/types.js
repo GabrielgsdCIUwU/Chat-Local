@@ -166,7 +166,7 @@
 /**
  * Interface representing a simple key-value file storage system.
  * @typedef {Object} IKeyValueStore
- * @property {function(): Promise<any[]>} read - Reads persistent raw data.
+ * @property {function(): Promise<any>} read - Reads persistent raw data.
  * @property {function(any): Promise<void>} write - Overwrites active collection.
  * @property {function(function(any): any): Promise<any>} update - Executes an atomic transactional state update.
  */
