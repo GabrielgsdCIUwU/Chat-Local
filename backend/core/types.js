@@ -34,19 +34,7 @@
  */
 
 /**
- * Gambler statistics and cooling period metrics.
- * @typedef {Object} Gambler
- * @property {string} name - Username.
- * @property {number} totalEarnings - Accumulative winning balance.
- * @property {number} spend - Accumulative spending.
- * @property {number} timesSteal - Successive robbery attempts.
- * @property {number} moneySteal - Amount stolen.
- * @property {number} duelWin - Matches won.
- * @property {number} duelLose - Matches lost.
- * @property {number} bankRupt - Count of bankruptcy calls.
- * @property {number} lastRobbery - Timestamp of the last heist.
- * @property {number} lastDaily - Timestamp of the last daily reward.
- * @property {number} dailyStreak - Consecutive daily reward streak.
+ * @typedef {import('../domain/gambling/Gambler.js').Gambler} Gambler
  */
 
 /**
