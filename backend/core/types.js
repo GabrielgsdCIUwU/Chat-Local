@@ -93,20 +93,7 @@
  */
 
 /**
- * Guild member details.
- * @typedef {Object} GuildMember
- * @property {string} name - Member's username.
- * @property {string} rank - Assigned guild authority tier ('Leader', 'Officer', 'Member').
- */
-
-/**
- * Consolidated properties of a player guild.
- * @typedef {Object} GuildProps
- * @property {string} id - Unique identifier.
- * @property {string} name - Unique guild name.
- * @property {number} level - Current tier level.
- * @property {number} bankMoney - Safe funds deposited in the treasury.
- * @property {GuildMember[]} members - Array of joined members.
+ * @typedef {import('../domain/guild/Guild.js').Guild} Guild
  */
 
 /**
@@ -487,7 +474,7 @@ export class IPetRepository extends IBaseRepository {
 /**
  * Player clan persistence contract.
  * @abstract
- * @extends {IBaseRepository<GuildProps>}
+ * @extends {IBaseRepository<Guild>}
  */
 export class IGuildRepository extends IBaseRepository {}
 
@@ -754,7 +741,7 @@ export class IGuildService {
      * Funds a clan.
      * @param {string} founderName - Funding user.
      * @param {string} guildName - Clan name.
-     * @returns {Promise<GuildProps>}
+     * @returns {Promise<Guild>}
      */
     async createGuild(founderName, guildName) {
         throw new Error("Method 'createGuild()' must be implemented.");
@@ -763,7 +750,7 @@ export class IGuildService {
     /**
      * Fetches active guild for player.
      * @param {string} username - Target player name.
-     * @returns {Promise<GuildProps|undefined>}
+     * @returns {Promise<Guild|undefined>}
      */
     async getUserGuild(username) {
         throw new Error("Method 'getUserGuild()' must be implemented.");
@@ -772,7 +759,7 @@ export class IGuildService {
     /**
      * Obtains guild ranking metrics.
      * @param {number} limit - Slice bounds.
-     * @returns {Promise<GuildProps[]>}
+     * @returns {Promise<Guild[]>}
      */
     async getTopGuilds(limit) {
         throw new Error("Method 'getTopGuilds()' must be implemented.");
