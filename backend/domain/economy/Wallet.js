@@ -1,11 +1,12 @@
 import { Entity } from '../../core/domain/Entity.js';
 import { GAME_CONFIG } from '../../core/constants.js';
+import { Money } from "./Money.js";
 
 /**
  * @typedef {Object} WalletProps
  * @property {string} name - The username owning the wallet.
- * @property {number} money - Current balance.
- * @property {number} debt - Current debt.
+ * @property {Money} money - Current balance.
+ * @property {Money} debt - Current debt.
  */
 
 /**
@@ -16,15 +17,27 @@ import { GAME_CONFIG } from '../../core/constants.js';
  */
 export class Wallet extends Entity {
     /**
-     * @param {WalletProps} props 
+     * @param {Object} props - Initial raw wallet properties.
+     * @param {string} props.name - Wallet owner name.
+     * @param {number} props.money - Money balance.
+     * @param {number} props.debt - Debt balance.
      */
     constructor(props) {
-        super(props, props.name);
+        super({
+            name: props.name,
+            money: new Money(props.money),
+            debt: new Money(props.debt)
+        }, props.name);
     }
 
+    /** @returns {string} */
     get name() { return this._props.name; }
-    get money() { return this._props.money; }
-    get debt() { return this._props.debt; }
+
+    /** @returns {number} */
+    get money() { return this._props.money.amount; }
+
+    /** @returns {number} */
+    get debt() { return this._props.debt.amount; }
 
     /**
      * Adds funds to the wallet, paying off debt automatically if any.
@@ -32,30 +45,32 @@ export class Wallet extends Entity {
      * @returns {number} The net amount added to the balance after debt deduction.
      */
     addFunds(amount) {
-        let actualEarnings = amount;
-        
-        if (this._props.debt > 0) {
-            let payDebt = Math.floor(amount * GAME_CONFIG.ECONOMY.DEBT_REPAY_PERCENTAGE);
-            if (payDebt > this._props.debt) payDebt = this._props.debt;
+        const inputMoney = new Money(amount);
+        let actualEarnings = inputMoney;
 
-            this._props.debt -= payDebt;
-            actualEarnings = amount - payDebt;
+        if (this.debt > 0) {
+            const repaymentRatio = GAME_CONFIG.ECONOMY.DEBT_REPAY_PERCENTAGE;
+            let payDebt = inputMoney.multiply(repaymentRatio);
+            
+            if (payDebt.amount > this.debt) {
+                payDebt = this._props.debt;
+            }
+
+            this._props.debt = this._props.debt.subtract(payDebt);
+            actualEarnings = inputMoney.subtract(payDebt);
         }
-        
-        this._props.money += actualEarnings;
-        return actualEarnings;
+
+        this._props.money = this._props.money.add(actualEarnings);
+        return actualEarnings.amount;
     }
 
     /**
      * Removes funds strictly. Fails if insufficient funds.
      * @param {number} amount - Positive amount to remove.
-     * @throws {Error} If wallet has insufficient funds.
      */
     removeFunds(amount) {
-        if (this._props.money < amount) {
-            throw new Error(`No tienes suficiente dinero. Tienes ${this._props.money}€`);
-        }
-        this._props.money -= amount;
+        const toSubtract = new Money(amount);
+        this._props.money = this._props.money.subtract(toSubtract);
     }
 
     /**
@@ -64,29 +79,36 @@ export class Wallet extends Entity {
      * @returns {number} The actual amount removed.
      */
     forceRemoveFunds(amount) {
-        const removedAmount = Math.min(this._props.money, amount);
-        this._props.money -= removedAmount;
-        return removedAmount;
+        const desired = new Money(amount);
+        const actualDeduction = this.money < desired.amount ? this._props.money : desired;
+        
+        this._props.money = this._props.money.subtract(actualDeduction);
+        return actualDeduction.amount;
     }
 
     /**
      * Declares bankruptcy, resetting money and increasing debt.
-     * @param {number} bankRuptCount - Historical bankruptcies multiplier.
+     * @param {number} bankruptCount - Historical bankruptcies multiplier.
      * @throws {Error} If user still has money.
      */
-    declareBankruptcy(bankRuptCount) {
-        if (this._props.money > 0) {
-            throw new Error(`Tienes ${this._props.money}€, no puedes declararte en bancarrota`);
+    declareBankruptcy(bankruptCount) {
+        if (this.money > 0) {
+            throw new Error(`Cannot declare bankruptcy. Wallet still has ${this.money}€.`);
         }
 
         const baseMoney = GAME_CONFIG.ECONOMY.BANKRUPT_BASE_MONEY;
-        this._props.money = baseMoney;
-        this._props.debt += baseMoney + Math.floor(Math.random() * bankRuptCount * GAME_CONFIG.ECONOMY.BANKRUPT_PENALTY_MULT);
+        const penaltyMultiplier = GAME_CONFIG.ECONOMY.BANKRUPT_PENALTY_MULT;
+        const randomPenalty = Math.floor(Math.random() * bankruptCount * penaltyMultiplier);
+
+        this._props.money = new Money(baseMoney);
+        
+        const addedDebt = new Money(baseMoney + randomPenalty);
+        this._props.debt = this._props.debt.add(addedDebt);
     }
 
     /**
      * Serializes the entity back to a plain Database Object.
-     * @returns {WalletProps}
+     * @returns {import('../../core/types.js').WalletProps}
      */
     toJSON() {
         return {
