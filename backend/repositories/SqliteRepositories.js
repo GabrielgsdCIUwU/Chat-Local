@@ -49,6 +49,16 @@ export class SqliteUserRepository {
             [user.name, user.passwd, user.location, JSON.stringify(user.roles), user.color, user.img]
         );
     }
+
+    /**
+     * Deletes a user profile by name.
+     * @param {string} name - Username to delete.
+     * @returns {Promise<void>}
+     */
+    async deleteByName(name) {
+        const db = await this.client.getDb();
+        await db.run('DELETE FROM users WHERE name = ?', [name]);
+    }
 }
 
 /**

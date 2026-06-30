@@ -48,4 +48,19 @@ export class UserRepository {
             return users;
         });
     }
+
+    /**
+     * Deletes a user profile by name.
+     * @param {string} name - Username to delete.
+     * @returns {Promise<void>}
+     */
+    async deleteByName(name) {
+        await this.db.update((users) => {
+            const index = users.findIndex(u => u.name === name);
+            if (index !== -1) {
+                users.splice(index, 1);
+            }
+            return users;
+        });
+    }
 }
