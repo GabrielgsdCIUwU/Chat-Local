@@ -29,14 +29,23 @@ export class Raid extends Entity {
     /** @returns {number} */
     get hp() { return this._props.hp; }
 
+    /** @param {number} value */
+    set hp(value) { this._props.hp = value; }
+
     /** @returns {number} */
     get maxHp() { return this._props.maxHp; }
 
-    /** @returns {Readonly<Record<string, number>>} */
-    get damageLog() { return Object.freeze({ ...this._props.damageLog }); }
+    /** @returns {Record<string, number>} */
+    get damageLog() { return this._props.damageLog; }
 
     /** @returns {number} */
     get expiresAt() { return this._props.expiresAt; }
+
+    /** @returns {boolean} */
+    get active() { return this._props.active; }
+
+    /** @param {boolean} value */
+    set active(value) { this._props.active = value; }
 
     /** @returns {boolean} */
     get isActive() {
