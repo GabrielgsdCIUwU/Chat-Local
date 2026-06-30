@@ -2,6 +2,13 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+/** @typedef {import('../core/types.js').ICommandService} ICommandService */
+
+/**
+ * Dynamic command directory scanner and command tree configuration builder.
+ * 
+ * @implements {ICommandService}
+ */
 export class CommandService {
     /**
      * @param {string} commandsPath - Base directory path where commands are stored.
@@ -17,6 +24,7 @@ export class CommandService {
      */
      async getCommandTree(dir = this.commandsPath) {
         const files = await fs.readdir(dir, { withFileTypes: true });
+        /** @type {Object.<string, Object>} */
         const commands = {};
 
         for (const file of files) {

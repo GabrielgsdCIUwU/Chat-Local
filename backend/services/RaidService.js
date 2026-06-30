@@ -1,19 +1,13 @@
 import { GAME_CONFIG } from "../core/constants.js";
 
 /**
- * @typedef {Object} RaidSession
- * @property {boolean} active - Indicates if a raid is currently running.
- * @property {number} hp - Current health points of the boss.
- * @property {number} maxHp - Maximum health points of the boss.
- * @property {Object.<string, number>} damageLog - Tracks damage dealt by each username.
- * @property {number} expiresAt - Timestamp when the boss end.
- * @property {number} timeLimit - MAX seconds of the boss.
+ * @typedef {import('../core/types.js').RaidSession} RaidSession
  */
 
 export class RaidService {
     /**
-     * @param {import('./EconomyService.js').EconomyService} economyService - Service to distribute rewards.
-     * @param {import('../repositories/BossRepository.js').BossRepository} bossRepository - Repository for boss variables.
+     * @param {import('../core/types.js').IEconomyService} economyService - Service to distribute rewards.
+     * @param {import('../core/types.js').IBossRepository} bossRepository - Repository for boss variables.
      */
     constructor(economyService, bossRepository) {
         this.economyService = economyService;
@@ -24,7 +18,8 @@ export class RaidService {
             active: false,
             hp: 0,
             maxHp: 0,
-            damageLog: {}
+            damageLog: {},
+            expiresAt: 0
         };
 
         /** @type {NodeJS.Timeout | null} */
@@ -53,7 +48,7 @@ export class RaidService {
 
     /**
      * Starts a new global Raid event. Called by the CronManager.
-     * @param {import('socket.io').Server} io - Socket.io server instance.
+     * @param {import('../core/types.js').ISocketServer} io - Socket.io server instance.
      */
     async startRaid(io) {
         try {
@@ -104,7 +99,7 @@ export class RaidService {
     /**
      * Processes a hit from a player during the active raid.
      * @param {string} username - The player hitting the boss.
-     * @param {import('socket.io').Server} io - Socket.io server instance.
+     * @param {import('../core/types.js').ISocketServer} io - Socket.io server instance.
      */
     async hitBoss(username, io) {
         if (!this.currentRaid.active || this.currentRaid.hp <= 0) return;

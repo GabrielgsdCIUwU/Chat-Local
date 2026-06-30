@@ -1,9 +1,12 @@
+/**
+ * @typedef {import('../core/types.js').Gambler} Gambler
+ */
 export class GamblingService {
     /**
-     * @param {import('../repositories/GamblingRepository.js').GamblingRepository} gamblingRepository 
-     * @param {import('./EconomyService.js').EconomyService} economyService
-     * @param {import('./PetService.js').PetService} petService
-     * @param {import('./GuildService.js').GuildService} guildService
+     * @param {import('../core/types.js').IGamblingRepository} gamblingRepository 
+     * @param {import('../core/types.js').IEconomyService} economyService
+     * @param {import('../core/types.js').IPetService} petService
+     * @param {import('../core/types.js').IGuildService} guildService
      */
     constructor(gamblingRepository, economyService, petService, guildService) {
         this.repo = gamblingRepository;
@@ -15,9 +18,9 @@ export class GamblingService {
     /**
      * Ensures a gambler exists. If not, initializes a new profile.
      * Note: This must be called INSIDE a transaction to be race-condition safe.
-     * @param {import('../repositories/GamblingRepository.js').Gambler[]} users 
+     * @param {Gambler[]} users 
      * @param {string} username 
-     * @returns {import('../repositories/GamblingRepository.js').Gambler}
+     * @returns {Gambler}
      */
     ensureUserExists(users, username) {
         let user = users.find(u => u.name === username);
@@ -25,7 +28,7 @@ export class GamblingService {
             user = {
                 name: username, totalEarnings: 0, spend: 0,
                 timesSteal: 0, moneySteal: 0, duelWin: 0, duelLose: 0,
-                bankRupt: 0
+                bankRupt: 0, lastRobbery: 0, lastDaily: 0, dailyStreak: 0
             };
             users.push(user);
         }

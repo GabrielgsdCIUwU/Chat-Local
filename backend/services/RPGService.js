@@ -2,10 +2,10 @@ import { RPG_CONFIG } from "../core/rpgConfig.js";
 
 export class RPGService {
     /**
-     * @param {import('./EconomyService.js').EconomyService} economyService 
-     * @param {import('../repositories/InventoryRepository.js').InventoryRepository} inventoryRepository 
-     * @param {import('../repositories/JobRepository.js').JobRepository} jobRepository 
-     * @param {import('./PetService.js').PetService} petService 
+     * @param {import('../core/types.js').IEconomyService} economyService 
+     * @param {import('../core/types.js').IInventoryRepository} inventoryRepository 
+     * @param {import('../core/types.js').IJobRepository} jobRepository 
+     * @param {import('../core/types.js').IPetService} petService 
      */
     constructor(economyService, inventoryRepository, jobRepository, petService) {
         this.economy = economyService;
@@ -27,7 +27,7 @@ export class RPGService {
      * @throws {Error} If the user already belongs to the specified profession.
      */
     async joinJob(username, jobKey) {
-        const jobKeyLowerCase = jobKey.toLowerCase();
+        const jobKeyLowerCase = /** @type {keyof typeof RPG_CONFIG.JOBS} */ (jobKey.toLowerCase());
         if (!RPG_CONFIG.JOBS[jobKeyLowerCase]) {
             throw new Error(`El oficio ${jobKey} no existe. Usa: minero, leñador o pescador`);
         }
@@ -60,6 +60,7 @@ export class RPGService {
      * @throws {Error} If the work cooldown has not yet expired.
      */
     async work(username) {
+        /** @type {import("../core/types.js").JobProfile} */
         let profileInfo;
         const now = Date.now();
 
@@ -99,10 +100,13 @@ export class RPGService {
             profileInfo = { ...profile };
         });
 
-        const jobConfig = RPG_CONFIG.JOBS[profileInfo.job];
-        const toolConfig = jobConfig.tools[profileInfo.toolLevel];
+        // @ts-ignore
+        if (!profileInfo) throw new Error("No se pudo cargar el perfil");
+        if (!profileInfo.job) throw new Error("Aun no tienes oficio. Usa `/rpg join`");
+        const jobConfig = RPG_CONFIG.JOBS[/** @type {keyof typeof RPG_CONFIG.JOBS} */ (profileInfo.job)];
+        const toolConfig = jobConfig.tools[/** @type {keyof typeof jobConfig.tools} */ (profileInfo.toolLevel)];
         const prestigeBonus = profileInfo.prestigeLevel || 0;
-        const obtainedItems = {};
+        const obtainedItems = /** @type {Record<string, number>} */ ({});
 
         for (const drop of toolConfig.lootTable) {
             if (Math.random() <= drop.chance) {
@@ -150,7 +154,7 @@ export class RPGService {
         /**
          * @type {import("../core/rpgConfig.js").JobConfig}
          */
-        const jobConfig = RPG_CONFIG.JOBS[profile.job];
+        const jobConfig = RPG_CONFIG.JOBS[/** @type {keyof typeof RPG_CONFIG.JOBS} */ (profile.job)];
         const currentLevel = profile.toolLevel;
         const nextLevel = currentLevel + 1;
         /**
@@ -211,10 +215,7 @@ export class RPGService {
     async sellItem(username, itemName, amount) {
         if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error("Cantidad no válida.");
 
-        /**
-         * @type {import("../core/rpgConfig.js").MarketItem}
-         */
-        const actualItemName = Object.keys(RPG_CONFIG.MARKET_PRICES).find(k => k.toLowerCase() === itemName.toLowerCase());
+        const actualItemName = /** @type {import("../core/rpgConfig.js").MarketItem} */ (Object.keys(RPG_CONFIG.MARKET_PRICES).find(k => k.toLowerCase() === itemName.toLowerCase()));
         if (!actualItemName) throw new Error(`El ítem "${itemName}" no existe o no se puede vender.`);
 
         const pricePerUnit = RPG_CONFIG.MARKET_PRICES[actualItemName];
@@ -244,12 +245,13 @@ export class RPGService {
      *
      * @param {string} username - Username whose RPG profile should be retrieved.
      * @returns {Promise<{
-     *   profile: import('../repositories/JobRepository.js').JobProfile | null,
-     *   inventory: import('../repositories/InventoryRepository.js').UserInventory
+     *   profile: import('../core/types.js').JobProfile | null,
+     *   inventory: import('../core/types.js').UserInventory
      * }>} The user's profession profile and inventory data.
      */
     async getFullProfile(username) {
         const profile = await this.jobRepo.getProfile(username);
+        if (!profile) throw new Error("No existe este usuario");
         const inventory = await this.inventoryRepo.getInventory(username);
         return { profile, inventory };
     }
@@ -264,7 +266,7 @@ export class RPGService {
         const profile = await this.jobRepo.getProfile(username);
         if (!profile?.job) throw new Error("No tienes un trabajo");
 
-        const jobConfig = RPG_CONFIG.JOBS[profile.job];
+        const jobConfig = RPG_CONFIG.JOBS[/** @type {keyof typeof RPG_CONFIG.JOBS}*/(profile.job)];
         const maxToolLevel = Object.keys(jobConfig.tools).length;
 
         if (profile.toolLevel < maxToolLevel) {
@@ -278,7 +280,7 @@ export class RPGService {
 
         await this.inventoryRepo.executeTransaction((inventories) => {
             const inventory = this.inventoryRepo.ensureInventory(inventories, username);
-            inventory.items = {};
+            Object.keys(inventory.items).forEach((item) => delete inventory.items[item]);
         });
 
         let newPrestigeLevel = 1;
@@ -297,11 +299,11 @@ export class RPGService {
      * Start an indle expedition.
      * @param {string} username 
      * @param {string} zoneKey 
-     * @returns {Object}
+     * @returns {Promise<Object>}
      */
     async startExpedition(username, zoneKey) {
         const zoneKeyLower = zoneKey.toLowerCase();
-        const expeditionConfig = RPG_CONFIG.EXPEDITIONS[zoneKeyLower];
+        const expeditionConfig = RPG_CONFIG.EXPEDITIONS[/** @type {keyof typeof RPG_CONFIG.EXPEDITIONS} */ (zoneKeyLower)];
         if (!expeditionConfig) throw new Error("La zona de expedición no existe.");
 
         await this.jobRepo.executeTransaction((jobs) => {
@@ -326,21 +328,21 @@ export class RPGService {
     }
 
     /**
-     * Claim expeditions when ended
-     * @returns {Promise<Array>} Loot notifications
+     * Claim expeditions when ended.
+     * @returns {Promise<Array<{username:string, zoneName:string, loot:Record<string, number>}>>} Loot notifications
      */
     async processFinishedExpeditions() {
         const now = Date.now();
-        const notifications = [];
-        const rewardsToDistribute = [];
+        const notifications = /** @type {Array<{username:string, zoneName:string, loot:Record<string, number>}>} */ ([]);
+        const rewardsToDistribute = /** @type {Array<{username:string, zoneName:string, loot:Record<string, number>}>} */ ([]);
 
         await this.jobRepo.executeTransaction((jobs) => {
-            for (const profile of jobs) {
+            for (const profile of /** @type {import('../core/types.js').JobProfile[]} */ (jobs)) {
                 
                 if (profile.activeExpedition && now >= profile.activeExpedition.endTime) {
-                    const config = RPG_CONFIG.EXPEDITIONS[profile.activeExpedition.zoneId];
+                    const config = RPG_CONFIG.EXPEDITIONS[/** @type {keyof typeof RPG_CONFIG.EXPEDITIONS} */ (profile.activeExpedition.zoneId)];
                     
-                    const obtainedItems = {};
+                    const obtainedItems = /** @type {Record<string, number>} */ ({});
                     for (const drop of config.lootTable) {
                         const amount = Math.floor(Math.random() * (drop.max - drop.min + 1)) + drop.min;
                         obtainedItems[drop.item] = amount;
