@@ -32,9 +32,8 @@ export class RPGService {
             throw new Error(`El oficio ${jobKey} no existe. Usa: minero, leñador o pescador`);
         }
 
-        await this.jobRepo.executeTransaction((jobs) => {
-            const profile = this.jobRepo.ensureJobProfile(jobs, username);
-            profile.changeJob(jobKeyLowerCase);
+        await this.jobRepo.updateTransactional(username, (profile) => {
+        profile.changeJob(jobKeyLowerCase);
         });
 
         return RPG_CONFIG.JOBS[jobKeyLowerCase].name
@@ -62,12 +61,11 @@ export class RPGService {
 
         const petBonus = await this.petService.getBonus(username, "WORK_COOLDOWN");
 
-        await this.jobRepo.executeTransaction((jobs) => {
-            const profile = this.jobRepo.ensureJobProfile(jobs, username);
-            profile.verifyWorkCooldown(petBonus);
-            profile.registerWork(now);
-            profileInfo = profile;
-        });
+        await this.jobRepo.updateTransactional(username, (profile) => {
+        profile.verifyWorkCooldown(petBonus);
+        profile.registerWork(now);
+        profileInfo = profile;
+    });
 
         // @ts-ignore
         if (!profileInfo?.job) throw new Error("Aun no tienes oficio. Usa `/rpg join`");
@@ -88,8 +86,7 @@ export class RPGService {
             obtainedItems[guaranteed.item] = guaranteed.min + prestigeBonus;
         }
 
-        await this.inventoryRepo.executeTransaction((inventories) => {
-            const inv = this.inventoryRepo.ensureInventory(inventories, username);
+        await this.inventoryRepo.updateTransactional(username, (inv) => {
             for (const [item, amount] of Object.entries(obtainedItems)) {
                 inv.addItem(item, amount);
             }
@@ -148,17 +145,15 @@ export class RPGService {
 
         await this.economy.removeFunds(username, costMoney);
 
-        await this.inventoryRepo.executeTransaction((inventories) => {
-            const inventory = this.inventoryRepo.ensureInventory(inventories, username);
+        await this.inventoryRepo.updateTransactional(username, (inv) => {
             for (const [reqItem, reqAmount] of Object.entries(costItems)) {
-                inventory.removeItem(reqItem, reqAmount);
+                inv.removeItem(reqItem, reqAmount);
             }
         });
 
-        await this.jobRepo.executeTransaction((jobs) => {
-            const profile = this.jobRepo.ensureJobProfile(jobs, username);
+        await this.jobRepo.updateTransactional(username, (prof) => {
             const maxLevel = Object.keys(jobConfig.tools).length;
-            profile.upgradeTool(maxLevel);
+            prof.upgradeTool(maxLevel);
         });
 
         return nextToolConfig.name;
@@ -189,8 +184,7 @@ export class RPGService {
         const pricePerUnit = RPG_CONFIG.MARKET_PRICES[actualItemName];
         const totalValue = pricePerUnit * amount;
 
-        await this.inventoryRepo.executeTransaction((inventories) => {
-            const inventory = this.inventoryRepo.ensureInventory(inventories, username);
+        await this.inventoryRepo.updateTransactional(username, (inventory) => {
             if (!inventory.hasItem(actualItemName, amount)) {
                 throw new Error(`No tienes suficientes. Tienes ${inventory.getItemAmount(actualItemName)}x ${actualItemName}.`);
             }
@@ -242,16 +236,14 @@ export class RPGService {
             await this.economy.removeFunds(username, wallet.money);
         }
 
-        await this.inventoryRepo.executeTransaction((inventories) => {
-            const inventory = this.inventoryRepo.ensureInventory(inventories, username);
+        await this.inventoryRepo.updateTransactional(username, (inventory) => {
             inventory.clear();
         });
 
         let newPrestigeLevel = 1;
-        await this.jobRepo.executeTransaction((jobs) => {
-            const profile = this.jobRepo.ensureJobProfile(jobs, username);
-            profile.incrementPrestige();
-            newPrestigeLevel = profile.prestigeLevel;
+        await this.jobRepo.updateTransactional(username, (jobProfile) => {
+            jobProfile.incrementPrestige();
+            newPrestigeLevel = jobProfile.prestigeLevel;
         });
 
         return newPrestigeLevel;
@@ -269,9 +261,7 @@ export class RPGService {
         const expeditionConfig = RPG_CONFIG.EXPEDITIONS[/** @type {keyof typeof RPG_CONFIG.EXPEDITIONS} */ (zoneKeyLower)];
         if (!expeditionConfig) throw new Error("La zona de expedición no existe.");
 
-        await this.jobRepo.executeTransaction((jobs) => {
-            const profile = this.jobRepo.ensureJobProfile(jobs, username);
-            
+        await this.jobRepo.updateTransactional(username, (profile) => {
             if (profile.activeExpedition) {
                 throw new Error("Ya tienes una expedición en curso.");
             }
@@ -279,10 +269,10 @@ export class RPGService {
 
         await this.economy.removeFunds(username, expeditionConfig.cost);
 
-        await this.jobRepo.executeTransaction((jobs) => {
-            const profile = this.jobRepo.ensureJobProfile(jobs, username);
+        await this.jobRepo.updateTransactional(username, (profile) => {
             profile.startExpedition(zoneKeyLower, expeditionConfig.durationMs);
         });
+
 
         return expeditionConfig;
     }
@@ -292,44 +282,43 @@ export class RPGService {
      * @returns {Promise<Array<{username:string, zoneName:string, loot:Record<string, number>}>>} Loot notifications
      */
     async processFinishedExpeditions() {
-        const now = Date.now();
-        const notifications = /** @type {Array<{username:string, zoneName:string, loot:Record<string, number>}>} */ ([]);
-        const rewardsToDistribute = /** @type {Array<{username:string, zoneName:string, loot:Record<string, number>}>} */ ([]);
+        /** @type {Array<{username: string, zoneName: string, loot: Record<string, number>}>} */
+        const notifications = [];
+        
+        const allJobs = await this.jobRepo.getAll();
+        const finishedProfiles = allJobs.filter(p => p.activeExpedition && Date.now() >= p.activeExpedition.endTime);
 
-        await this.jobRepo.executeTransaction((jobs) => {
-            for (const profile of /** @type {import('../core/types.js').JobProfile[]} */ (jobs)) {
-                
-                if (profile.activeExpedition && profile.isExpeditionFinished()) {
-                    const config = RPG_CONFIG.EXPEDITIONS[/** @type {keyof typeof RPG_CONFIG.EXPEDITIONS} */ (profile.activeExpedition.zoneId)];
-                    
-                    const obtainedItems = /** @type {Record<string, number>} */ ({});
-                    for (const drop of config.lootTable) {
-                        const amount = Math.floor(Math.random() * (drop.max - drop.min + 1)) + drop.min;
-                        obtainedItems[drop.item] = amount;
-                    }
-
-                    rewardsToDistribute.push({
-                        username: profile.name,
-                        zoneName: config.name,
-                        loot: obtainedItems
-                    });
-
-                    profile.clearExpedition();
-                }
+        for (const profile of finishedProfiles) {
+            const activeExp = profile.activeExpedition;
+            
+            if (!activeExp) {
+                continue;
             }
-        });
+            
+            const config = RPG_CONFIG.EXPEDITIONS[/** @type {keyof typeof RPG_CONFIG.EXPEDITIONS} */ (profile.activeExpedition.zoneId)];
+            
+            /** @type {Record<string, number>} */
+            const obtainedLoot = {};
+            
+            for (const drop of config.lootTable) {
+                const amount = Math.floor(Math.random() * (drop.max - drop.min + 1)) + drop.min;
+                obtainedLoot[drop.item] = amount;
+            }
 
-        if (rewardsToDistribute.length > 0) {
-            await this.inventoryRepo.executeTransaction((inventories) => {
-                for (const reward of rewardsToDistribute) {
-                    const inv = this.inventoryRepo.ensureInventory(inventories, reward.username);
-                    
-                    for (const [item, amount] of Object.entries(reward.loot)) {
-                        inv.addItem(item, amount);
-                    }
-                    
-                    notifications.push(reward);
+            await this.jobRepo.updateTransactional(profile.name, (prof) => {
+                prof.clearExpedition();
+            });
+
+            await this.inventoryRepo.updateTransactional(profile.name, (inv) => {
+                for (const [item, amount] of Object.entries(obtainedLoot)) {
+                    inv.addItem(item, amount);
                 }
+            });
+
+            notifications.push({
+                username: profile.name,
+                zoneName: config.name,
+                loot: obtainedLoot
             });
         }
 
