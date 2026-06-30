@@ -122,4 +122,15 @@ export class BaseSqliteRepository {
     async saveAll(db, entities) {
         throw new Error("Method 'saveAll()' must be implemented.");
     }
+
+    /**
+     * Directly inserts or replaces a single domain entity in the persistent store.
+     * Useful for creating brand-new aggregate roots.
+     * @param {T} entity - The domain entity to persist.
+     * @returns {Promise<void>}
+     */
+    async save(entity) {
+        const db = await this.client.getDb();
+        await this.saveSingle(db, entity);
+    }
 }
