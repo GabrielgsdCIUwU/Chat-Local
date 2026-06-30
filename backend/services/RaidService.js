@@ -1,7 +1,8 @@
 import { GAME_CONFIG } from "../core/constants.js";
+import { Raid } from "../domain/raid/Raid.js";
 
 /**
- * @typedef {import('../core/types.js').RaidSession} RaidSession
+ * @typedef {import('../core/types.js').RaidProps} RaidProps
  */
 
 export class RaidService {
@@ -13,14 +14,8 @@ export class RaidService {
         this.economyService = economyService;
         this.bossRepository = bossRepository;
 
-        /** @type {RaidSession} */
-        this.currentRaid = {
-            active: false,
-            hp: 0,
-            maxHp: 0,
-            damageLog: {},
-            expiresAt: 0
-        };
+        /** @type {RaidProps|null} */
+        this.currentRaid = null;
 
         /** @type {NodeJS.Timeout | null} */
         this.raidTimeout = null;
@@ -52,44 +47,47 @@ export class RaidService {
      */
     async startRaid(io) {
         try {
-            if (this.currentRaid.active) return;
+            if (this.currentRaid?.active) return;
 
             const currentMaxHp = await this.bossRepository.getMaxHp(GAME_CONFIG.BOSS_CONFIG.MAX_HP);
 
-            this.currentRaid.active = true;
-            this.currentRaid.maxHp = currentMaxHp;
-            this.currentRaid.hp = currentMaxHp; 
-            this.currentRaid.damageLog = {};
-            this.currentRaid.expiresAt = Date.now() + GAME_CONFIG.BOSS_CONFIG.BOSS_TIME_LIMIT;
+            const raid = new Raid({
+                maxHp: currentMaxHp,
+                hp: currentMaxHp,
+                damageLog: {},
+                expiresAt: Date.now() + GAME_CONFIG.BOSS_CONFIG.BOSS_TIME_LIMIT,
+                active: true
+            });
+            this.currentRaid = raid;
 
             io.emit("activity:raidStarted", {
                 host: "El Sistema",
-                maxHp: this.currentRaid.maxHp,
-                hp: this.currentRaid.hp,
-                expiresAt: this.currentRaid.expiresAt,
+                maxHp: raid.maxHp,
+                hp: raid.hp,
+                expiresAt: raid.expiresAt,
                 timeLimit: GAME_CONFIG.BOSS_CONFIG.BOSS_TIME_LIMIT
             });
 
             if (this.raidTimeout) clearTimeout(this.raidTimeout);
             this.raidTimeout = setTimeout(async () => {
-                if (this.currentRaid.active) {
-                    this.currentRaid.active = false;
-                    
-                    const participants = Object.keys(this.currentRaid.damageLog);
-                    const penalty = Math.floor(this.currentRaid.maxHp * 0.1) || 100;
-                    
-                    for (const user of participants) {
-                        await this.economyService.forceRemoveFunds(user, penalty).catch(console.error);
-                    }
+                if (!this.currentRaid?.active) return;
 
-                    io.emit("activity:raidEnded", { 
-                        success: false, 
-                        host: "El Sistema",
-                        penalty 
-                    });
-
-                    await this.#adjustBossDifficulty(false);
+                this.currentRaid.active = false;
+                
+                const participants = Object.keys(this.currentRaid.damageLog);
+                const penalty = Math.floor(this.currentRaid.maxHp * 0.1) || 100;
+                
+                for (const user of participants) {
+                    await this.economyService.forceRemoveFunds(user, penalty).catch(console.error);
                 }
+
+                io.emit("activity:raidEnded", { 
+                    success: false, 
+                    host: "El Sistema",
+                    penalty 
+                });
+
+                await this.#adjustBossDifficulty(false);
             }, GAME_CONFIG.BOSS_CONFIG.BOSS_TIME_LIMIT);
         } catch (error) {
             console.error("[RaidService] Error starting raid", error);
@@ -102,34 +100,35 @@ export class RaidService {
      * @param {import('../core/types.js').ISocketServer} io - Socket.io server instance.
      */
     async hitBoss(username, io) {
-        if (!this.currentRaid.active || this.currentRaid.hp <= 0) return;
+        const raid = this.currentRaid;
+        if (!raid || !raid.active || raid.hp <= 0) return;
 
         const damage = Math.floor(Math.random() * GAME_CONFIG.BOSS_CONFIG.DAMAGE_MULTIPLIER) + 1;
-        this.currentRaid.hp -= damage;
+        raid.hp -= damage;
 
-        if (!this.currentRaid.damageLog[username]) {
-            this.currentRaid.damageLog[username] = 0;
+        if (!raid.damageLog[username]) {
+            raid.damageLog[username] = 0;
         }
-        this.currentRaid.damageLog[username] += damage;
+        raid.damageLog[username] += damage;
 
         io.emit("activity:raidSync", {
-            hp: this.currentRaid.hp,
+            hp: raid.hp,
             lastHitBy: username,
             damage
         });
 
-        if (this.currentRaid.hp <= 0) {
-            this.currentRaid.active = false;
+        if (raid.hp <= 0) {
+            raid.active = false;
             if (this.raidTimeout) clearTimeout(this.raidTimeout);
 
-            for (const [user, dmg] of Object.entries(this.currentRaid.damageLog)) {
+            for (const [user, dmg] of Object.entries(raid.damageLog)) {
                 const reward = Math.floor(dmg * GAME_CONFIG.BOSS_CONFIG.REWARD_PER_DAMAGE);
                 await this.economyService.addFunds(user, reward).catch(console.error);
             }
 
             io.emit("activity:raidEnded", {
                 success: true,
-                leaderboard: this.currentRaid.damageLog
+                leaderboard: raid.damageLog
             });
 
             await this.#adjustBossDifficulty(true);
@@ -141,12 +140,13 @@ export class RaidService {
      * @returns {Object|null}
      */
     getSyncData() {
-        if (!this.currentRaid.active) return null;
+        const raid = this.currentRaid;
+        if (!raid?.active) return null;
         return {
             host: "El Sistema",
-            maxHp: this.currentRaid.maxHp,
-            hp: this.currentRaid.hp,
-            expiresAt: this.currentRaid.expiresAt,
+            maxHp: raid.maxHp,
+            hp: raid.hp,
+            expiresAt: raid.expiresAt,
             timeLimit: GAME_CONFIG.BOSS_CONFIG.BOSS_TIME_LIMIT
         };
     }
