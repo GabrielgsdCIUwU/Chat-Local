@@ -34,11 +34,7 @@ export class RPGService {
 
         await this.jobRepo.executeTransaction((jobs) => {
             const profile = this.jobRepo.ensureJobProfile(jobs, username);
-            if (profile.job === jobKeyLowerCase) {
-                throw new Error(`Ya eres ${RPG_CONFIG.JOBS[jobKeyLowerCase].name}`);
-            }
-            profile.job = jobKeyLowerCase;
-            profile.toolLevel = 1;
+            profile.changeJob(jobKeyLowerCase);
         });
 
         return RPG_CONFIG.JOBS[jobKeyLowerCase].name
@@ -68,41 +64,13 @@ export class RPGService {
 
         await this.jobRepo.executeTransaction((jobs) => {
             const profile = this.jobRepo.ensureJobProfile(jobs, username);
-            if (!profile.job) throw new Error("Aun no tienes oficio. Usa `/rpg join`");
-
-            let currentCooldownMs = RPG_CONFIG.WORK_COOLDOWN_MS;
-            if (profile.activeBuffs?.["haste"]) {
-                if (now < profile.activeBuffs["haste"]) {
-                    currentCooldownMs = Math.floor(currentCooldownMs / 2);
-                } else {
-                    delete profile.activeBuffs["haste"];
-                }
-            }
-
-            if (petBonus > 0) {
-                currentCooldownMs -= Math.floor(currentCooldownMs * (petBonus / 100));
-            }
-
-            const timePassed = now - profile.lastWork;
-            if (timePassed < currentCooldownMs) {
-                const totalSeconds = Math.ceil((currentCooldownMs - timePassed) / 1000);
-                const minutes = Math.floor(totalSeconds / 60);
-                const seconds = totalSeconds % 60;
-                
-                let timeString = "";
-                if (minutes > 0) timeString += `${minutes} minuto(s) y `;
-                timeString += `${seconds} segundo(s)`;
-
-                throw new Error(`Estás cansado. Debes esperar ${timeString} para volver a trabajar.`);
-            }
-
-            profile.lastWork = now;
-            profileInfo = { ...profile };
+            profile.verifyWorkCooldown(petBonus);
+            profile.registerWork(now);
+            profileInfo = profile;
         });
 
         // @ts-ignore
-        if (!profileInfo) throw new Error("No se pudo cargar el perfil");
-        if (!profileInfo.job) throw new Error("Aun no tienes oficio. Usa `/rpg join`");
+        if (!profileInfo?.job) throw new Error("Aun no tienes oficio. Usa `/rpg join`");
         const jobConfig = RPG_CONFIG.JOBS[/** @type {keyof typeof RPG_CONFIG.JOBS} */ (profileInfo.job)];
         const toolConfig = jobConfig.tools[/** @type {keyof typeof jobConfig.tools} */ (profileInfo.toolLevel)];
         const prestigeBonus = profileInfo.prestigeLevel || 0;
@@ -189,7 +157,8 @@ export class RPGService {
 
         await this.jobRepo.executeTransaction((jobs) => {
             const profile = this.jobRepo.ensureJobProfile(jobs, username);
-            profile.toolLevel = nextLevel;
+            const maxLevel = Object.keys(jobConfig.tools).length;
+            profile.upgradeTool(maxLevel);
         });
 
         return nextToolConfig.name;
@@ -281,8 +250,7 @@ export class RPGService {
         let newPrestigeLevel = 1;
         await this.jobRepo.executeTransaction((jobs) => {
             const profile = this.jobRepo.ensureJobProfile(jobs, username);
-            profile.toolLevel = 1;
-            profile.prestigeLevel = (profile.prestigeLevel || 0) + 1;
+            profile.incrementPrestige();
             newPrestigeLevel = profile.prestigeLevel;
         });
 
@@ -313,10 +281,7 @@ export class RPGService {
 
         await this.jobRepo.executeTransaction((jobs) => {
             const profile = this.jobRepo.ensureJobProfile(jobs, username);
-            profile.activeExpedition = {
-                zoneId: zoneKeyLower,
-                endTime: Date.now() + expeditionConfig.durationMs
-            };
+            profile.startExpedition(zoneKeyLower, expeditionConfig.durationMs);
         });
 
         return expeditionConfig;
@@ -334,7 +299,7 @@ export class RPGService {
         await this.jobRepo.executeTransaction((jobs) => {
             for (const profile of /** @type {import('../core/types.js').JobProfile[]} */ (jobs)) {
                 
-                if (profile.activeExpedition && now >= profile.activeExpedition.endTime) {
+                if (profile.activeExpedition && profile.isExpeditionFinished()) {
                     const config = RPG_CONFIG.EXPEDITIONS[/** @type {keyof typeof RPG_CONFIG.EXPEDITIONS} */ (profile.activeExpedition.zoneId)];
                     
                     const obtainedItems = /** @type {Record<string, number>} */ ({});
@@ -349,7 +314,7 @@ export class RPGService {
                         loot: obtainedItems
                     });
 
-                    profile.activeExpedition = null;
+                    profile.clearExpedition();
                 }
             }
         });
