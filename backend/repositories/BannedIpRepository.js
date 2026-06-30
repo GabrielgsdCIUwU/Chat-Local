@@ -1,12 +1,14 @@
-/**
- * @typedef {Object} BannedIp
- * @property {string} ip - The banned IP address.
- * @property {string} motivo - The reason for the ban.
- */
+/** @typedef {import('../core/types.js').IBannedIpRepository} IBannedIpRepository */
+/** @typedef {import('../core/types.js').BannedIp} BannedIp */
 
+/**
+ * Repository to audit IP security limits and bans.
+ * 
+ * @implements {IBannedIpRepository}
+ */
 export class BannedIpRepository {
     /**
-     * @param {import('../database/JsonDatabaseClient.js').JsonDatabaseClient} dbClient 
+     * @param {import('../core/types.js').IKeyValueStore} dbClient 
      */
     constructor(dbClient) {
         this.db = dbClient;
@@ -19,6 +21,6 @@ export class BannedIpRepository {
      */
     async isBanned(ip) {
         const bannedIPs = await this.db.read();
-        return bannedIPs.find(banned => banned.ip === ip);
+        return bannedIPs.find((/** @type {BannedIp} */ banned) => banned.ip === ip);
     }
 }

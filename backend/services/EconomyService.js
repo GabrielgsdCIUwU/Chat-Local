@@ -3,7 +3,7 @@ import { GAME_CONFIG } from '../core/constants.js';
 export class EconomyService {
     /**
      * 
-     * @param {import('../repositories/EconomyRepository.js').EconomyRepository} economyRepository 
+     * @param {import('../core/types.js').IEconomyRepository} economyRepository 
      */
     constructor(economyRepository) {
         this.repo = economyRepository;
@@ -16,7 +16,7 @@ export class EconomyService {
      * created with the default starting values.
      *
      * @param {string} username - Username whose wallet should be retrieved.
-     * @returns {Promise<import('../repositories/EconomyRepository.js').Wallet>} The user's wallet data.
+     * @returns {Promise<import('../core/types.js').WalletProps>} The user's wallet data.
      */
     async getBalance(username) {
         let userWallet;
@@ -24,6 +24,7 @@ export class EconomyService {
             const wallet = this.repo.ensureWallet(wallets, username);
             userWallet = wallet.toJSON();
         });
+        if (!userWallet) throw new Error("Error al obtener el wallet.");
         return userWallet;
     }
 

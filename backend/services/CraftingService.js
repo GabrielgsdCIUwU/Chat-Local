@@ -1,14 +1,16 @@
 import { RPG_CONFIG } from "../core/rpgConfig.js";
 
 /**
- * @typedef {import('../repositories/JobRepository.js').JobProfile} JobProfile
+ * @typedef {import('../core/types.js').ICraftingService} ICraftingService 
+ * @typedef {import('../core/types.js').IInventoryRepository} IInventoryRepository 
+ * @typedef {import('../core/types.js').IJobRepository} IJobRepository 
  */
 
 export class CraftingService {
     /**
      * 
-     * @param {import('../repositories/InventoryRepository.js').InventoryRepository} inventoryRepository 
-     * @param {import('../repositories/JobRepository.js').JobRepository} jobRepository 
+     * @param {IInventoryRepository} inventoryRepository 
+     * @param {IJobRepository} jobRepository  
      */
     constructor(inventoryRepository, jobRepository) {
         this.inventoryRepository = inventoryRepository;
@@ -23,10 +25,7 @@ export class CraftingService {
      * @throws {Error} If recipe doesn't exist or insufficient materials.
      */
     async craftItem(username, recipeKey) {
-        const recipeKeyLowerCase = recipeKey.toLowerCase();
-        /**
-         * @type {import("../core/rpgConfig.js").CraftingRecipe}
-         */
+        const recipeKeyLowerCase = /** @type {keyof typeof RPG_CONFIG.CRAFTING_RECIPES} */ (recipeKey.toLowerCase());        
         const recipe = RPG_CONFIG.CRAFTING_RECIPES[recipeKeyLowerCase];
 
         if (!recipe) {
@@ -35,17 +34,15 @@ export class CraftingService {
 
         const inventory = await this.inventoryRepository.getInventory(username);
         for (const [reqItem, reqAmount] of Object.entries(recipe.cost)) {
-            const userAmount = inventory.items[reqItem] || 0;
-            if (userAmount < reqAmount) {
-                throw new Error(`Materiales insuficientes. Necesitas ${reqAmount}x ${reqItem} (Tienes ${userAmount})`);
+            if (!inventory.hasItem(reqItem, reqAmount)) {
+                throw new Error(`Materiales insuficientes. Necesitas ${reqAmount}x ${reqItem} (Tienes ${inventory.items[reqItem] || 0})`);
             }
         }
 
         await this.inventoryRepository.executeTransaction((inventories) => {
-            const inventory = this.inventoryRepository.ensureInventory(inventories, username);
+            const txInventory = this.inventoryRepository.ensureInventory(inventories, username);
             for (const [reqItem, reqAmount] of Object.entries(recipe.cost)) {
-                inventory.items[reqItem] -= reqAmount;
-                if (inventory.items[reqItem] <= 0) delete inventory.items[reqItem];
+                txInventory.removeItem(reqItem, reqAmount);
             }
         });
 
@@ -66,6 +63,7 @@ export class CraftingService {
      * @returns {Promise<Object.<string, number>>} Map of active buffs and their remaining milliseconds.
      */
     async getActiveBuffs(username) {
+        /** @type {{[key: string]: number}} */
         let activeBuffsInfo = {};
         const now = Date.now();
 

@@ -1,12 +1,18 @@
+/** @typedef {import('../core/types.js').IBossRepository} IBossRepository */
+
 /**
  * @typedef {Object} BossData
  * @property {number} maxHp - The dynamic max HP of the boss.
  */
 
+/**
+ * Repository tracking world boss health scaling metrics.
+ * 
+ * @implements {IBossRepository}
+ */
 export class BossRepository {
     /**
-     * 
-     * @param {import('../database/JsonDatabaseClient').JsonDatabaseClient} dbClient 
+     * @param {import('../core/types.js').IKeyValueStore} dbClient
      */
     constructor(dbClient) {
         this.db = dbClient;

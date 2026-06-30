@@ -240,10 +240,6 @@ export const RPG_CONFIG = {
  */
 
 /**
- * @typedef {typeof RPG_CONFIG.CRAFTING_RECIPES[CraftingItem]} CraftingRecipe
- */
-
-/**
  * @typedef {"COMMON" | "EPIC" | "LEGENDARY"} PetRarity
  */
 

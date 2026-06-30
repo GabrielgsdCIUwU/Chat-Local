@@ -2,7 +2,7 @@ import { ApiResponse } from "../core/ApiResponse.js";
 
 export class ProfileController {
     /**
-     * @param {import('../services/UserService.js').UserService} userService 
+     * @param {import('../core/types.js').IUserService} userService 
      */
     constructor(userService) {
         this.userService = userService;

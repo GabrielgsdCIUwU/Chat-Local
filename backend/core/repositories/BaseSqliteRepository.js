@@ -1,18 +1,23 @@
 /**
  * @template T
- * @typedef {import('../../database/SqliteClient.js').SqliteClient} SqliteClient
+ * @typedef {import('../types.js').IDatabaseClient} IDatabaseClient
+ */
+/**
+ * @template T
+ * @typedef {import('../types.js').IBaseRepository<T>} IBaseRepository
  */
 
 /**
  * Abstract Base Repository for SQLite.
- * Handles generic database operations and safe transactions
+ * Handles generic database operations and safe transactions.
  * 
- * @template T - The Domain Entity type
+ * @template T - The Domain Entity type.
  * @abstract
+ * @implements {IBaseRepository<T>}
  */
 export class BaseSqliteRepository {
     /**
-     * @param {SqliteClient} client - The database client instance.
+     * @param {IDatabaseClient<T>} client - Abstract database connection client.
      * @param {string} tableName - The name of the table this repository manages.
      */
     constructor(client, tableName) {
@@ -74,7 +79,7 @@ export class BaseSqliteRepository {
      * Saves a collection of entities back to the database within the transaction.
      * @abstract
      * @protected
-     * @param {import('sqlite').Database} db - The active database transaction connection.
+     * @param {import('../types.js').ISqlConnection} db - The active database transaction connection.
      * @param {T[]} entities - Array of domain entities.
      * @returns {Promise<void>}
      */
