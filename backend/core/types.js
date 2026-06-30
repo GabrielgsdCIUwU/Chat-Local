@@ -101,13 +101,7 @@
  */
 
 /**
- * Represents a dynamic raid boss state.
- * @typedef {Object} RaidSession
- * @property {boolean} active - Indicates if a battle is running.
- * @property {number} hp - Active boss hitpoints.
- * @property {number} maxHp - Maximum health bounds.
- * @property {Object.<string, number>} damageLog - Damage mapped to participant usernames.
- * @property {number} expiresAt - Timestamp marking the end of the raid.
+ * @typedef {import('../domain/raid/Raid.js').RaidProps} RaidProps
  */
 
 /**
