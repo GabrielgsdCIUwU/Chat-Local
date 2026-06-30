@@ -19,13 +19,11 @@ export class EconomyService {
      * @returns {Promise<import('../core/types.js').WalletProps>} The user's wallet data.
      */
     async getBalance(username) {
-        let userWallet;
-        await this.repo.executeTransaction((wallets) => {
-            const wallet = this.repo.ensureWallet(wallets, username);
-            userWallet = wallet.toJSON();
-        });
-        if (!userWallet) throw new Error("Error al obtener el wallet.");
-        return userWallet;
+        const wallet = await this.repo.findById(username);
+        if (!wallet) {
+            return { name: username, money: 100, debt: 0 };
+        }
+        return wallet.toJSON();
     }
 
     /**
@@ -43,8 +41,7 @@ export class EconomyService {
         if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error("La cantidad no es válida");
 
         let actualEarnings = 0;
-        await this.repo.executeTransaction((wallets) => {
-            const wallet = this.repo.ensureWallet(wallets, username);
+        await this.repo.updateTransactional(username, (wallet) => {
             actualEarnings = wallet.addFunds(amount);
         });
         return actualEarnings;
@@ -65,8 +62,7 @@ export class EconomyService {
     async removeFunds(username, amount) {
         if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error("La cantidad no es válida");
 
-        await this.repo.executeTransaction((wallets) => {
-            const wallet = this.repo.ensureWallet(wallets, username);
+        await this.repo.updateTransactional(username, (wallet) => {
             wallet.removeFunds(amount);
         });
     }
@@ -89,11 +85,11 @@ export class EconomyService {
         if (senderName === targetName) throw new Error("No puedes transferir dinero a ti mismo");
         if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error("La cantidad no es válida");
 
-        await this.repo.executeTransaction((wallets) => {
-            const sender = this.repo.ensureWallet(wallets, senderName);
-            const target = this.repo.ensureWallet(wallets, targetName);
-
+        await this.repo.updateTransactional(senderName, (sender) => {
             sender.removeFunds(amount);
+        });
+
+        await this.repo.updateTransactional(targetName, (target) => {
             target.addFunds(amount);
         });
 
@@ -126,8 +122,7 @@ export class EconomyService {
      */
     async forceRemoveFunds(username, amount) {
         let removedAmount = 0;
-        await this.repo.executeTransaction((wallets) => {
-            const wallet = this.repo.ensureWallet(wallets, username);
+        await this.repo.updateTransactional(username, (wallet) => {
             removedAmount = wallet.forceRemoveFunds(amount);
         });
         return removedAmount;
@@ -147,8 +142,7 @@ export class EconomyService {
      * @throws {Error} If the user still has funds available.
      */
     async declareBankruptcy(username, bankRuptCount) {
-        await this.repo.executeTransaction((wallets) => {
-            const wallet = this.repo.ensureWallet(wallets, username);
+        await this.repo.updateTransactional(username, (wallet) => {
             wallet.declareBankruptcy(bankRuptCount);
         });
     }
