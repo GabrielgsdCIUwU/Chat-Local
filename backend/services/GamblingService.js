@@ -23,16 +23,7 @@ export class GamblingService {
      * @returns {Gambler}
      */
     ensureUserExists(users, username) {
-        let user = users.find(u => u.name === username);
-        if (!user) {
-            user = {
-                name: username, totalEarnings: 0, spend: 0,
-                timesSteal: 0, moneySteal: 0, duelWin: 0, duelLose: 0,
-                bankRupt: 0, lastRobbery: 0, lastDaily: 0, dailyStreak: 0
-            };
-            users.push(user);
-        }
-        return user;
+        return this.repo.ensureUser(users, username);
     }
 
     /**

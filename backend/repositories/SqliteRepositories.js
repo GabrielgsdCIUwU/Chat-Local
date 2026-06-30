@@ -4,6 +4,7 @@ import { Inventory } from '../domain/rpg/Inventory.js';
 import { JobProfile } from '../domain/rpg/JobProfile.js';
 import { PetProfile } from '../domain/rpg/PetProfile.js';
 import { Guild } from '../domain/guild/Guild.js';
+import { Gambler } from '../domain/gambling/Gambler.js';
 
 
 /**
@@ -107,7 +108,6 @@ export class SqliteEconomyRepository extends BaseSqliteRepository {
 }
 /**
  * @typedef {import('../core/types.js').IGamblingRepository} IGamblingRepository
- * @typedef {import('../core/types.js').Gambler} Gambler
  */
 
 /**
@@ -121,9 +121,11 @@ export class SqliteGamblingRepository extends BaseSqliteRepository {
     constructor(client) { super(client, "gambling"); }
 
     /**
-     * @param {any} rows
+     * @param {any[]} rows
      */
-    mapToDomain(rows) { return rows; }
+    mapToDomain(rows) { 
+        return rows.map(r => new Gambler(r)); 
+    }
 
     /**
      * @param {import('../core/types.js').ISqlConnection} db
@@ -145,7 +147,19 @@ export class SqliteGamblingRepository extends BaseSqliteRepository {
     ensureUser(users, username) {
         let user = users.find(u => u.name === username);
         if (!user) {
-            user = { name: username, totalEarnings: 0, spend: 0, timesSteal: 0, moneySteal: 0, duelWin: 0, duelLose: 0, bankRupt: 0, lastRobbery: 0, lastDaily: 0, dailyStreak: 0 };
+            user = new Gambler({ 
+                name: username, 
+                totalEarnings: 0, 
+                spend: 0, 
+                timesSteal: 0, 
+                moneySteal: 0, 
+                duelWin: 0, 
+                duelLose: 0, 
+                bankRupt: 0, 
+                lastRobbery: 0, 
+                lastDaily: 0, 
+                dailyStreak: 0 
+            });
             users.push(user);
         }
         return user;
