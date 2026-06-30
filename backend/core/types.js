@@ -364,34 +364,14 @@ export class IBannedIpRepository {
  * @abstract
  * @extends {IBaseRepository<import('../domain/economy/Wallet.js').Wallet>}
  */
-export class IEconomyRepository extends IBaseRepository {
-    /**
-     * Returns active wallet or initializes it.
-     * @param {import('../domain/economy/Wallet.js').Wallet[]} wallets - Wallets pool.
-     * @param {string} username - Target owner name.
-     * @returns {import('../domain/economy/Wallet.js').Wallet}
-     */
-    ensureWallet(wallets, username) {
-        throw new Error("Method 'ensureWallet()' must be implemented.");
-    }
-}
+export class IEconomyRepository extends IBaseRepository {}
 
 /**
  * Gambling statistics repository interface.
  * @abstract
  * @extends {IBaseRepository<Gambler>}
  */
-export class IGamblingRepository extends IBaseRepository {
-    /**
-     * Returns active profile or initializes it.
-     * @param {Gambler[]} users - Gamblers dataset.
-     * @param {string} username - Target user.
-     * @returns {Gambler}
-     */
-    ensureUser(users, username) {
-        throw new Error("Method 'ensureUser()' must be implemented.");
-    }
-}
+export class IGamblingRepository extends IBaseRepository {}
 
 /**
  * RPG inventory persistence contract.
@@ -406,16 +386,6 @@ export class IInventoryRepository extends IBaseRepository {
      */
     async getInventory(username) {
         throw new Error("Method 'getInventory()' must be implemented.");
-    }
-
-    /**
-     * Transaction safe finder for inventories.
-     * @param {import('../domain/rpg/Inventory.js').Inventory[]} inventories - Inventories pool.
-     * @param {string} username - Target owner name.
-     * @returns {import('../domain/rpg/Inventory.js').Inventory}
-     */
-    ensureInventory(inventories, username) {
-        throw new Error("Method 'ensureInventory()' must be implemented.");
     }
 }
 
@@ -433,16 +403,6 @@ export class IJobRepository extends IBaseRepository {
     async getProfile(username) {
         throw new Error("Method 'getProfile()' must be implemented.");
     }
-
-    /**
-     * Obtains or configures a new job profile within an active transaction.
-     * @param {JobProfile[]} jobs - Jobs pool.
-     * @param {string} username - Target username.
-     * @returns {JobProfile}
-     */
-    ensureJobProfile(jobs, username) {
-        throw new Error("Method 'ensureJobProfile()' must be implemented.");
-    }
 }
 
 /**
@@ -458,16 +418,6 @@ export class IPetRepository extends IBaseRepository {
      */
     async getProfile(username) {
         throw new Error("Method 'getProfile()' must be implemented.");
-    }
-
-    /**
-     * Safely targets and returns the active profile within an active transaction.
-     * @param {PetProfile[]} profiles - Profiles pool.
-     * @param {string} username - Target username.
-     * @returns {PetProfile}
-     */
-    ensureProfile(profiles, username) {
-        throw new Error("Method 'ensureProfile()' must be implemented.");
     }
 }
 
