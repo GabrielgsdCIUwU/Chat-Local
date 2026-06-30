@@ -62,9 +62,9 @@ export class BaseSqliteRepository {
         const db = await this.client.getDb();
         await db.exec('BEGIN IMMEDIATE TRANSACTION');
         try {
-            const entity = await this.findById(id);
+            let entity = await this.findById(id);
             if (!entity) {
-                throw new Error(`Record with ID '${id}' not found in '${this.tableName}'.`);
+                entity = this.createDefault(id);
             }
 
             await callback(entity);
@@ -75,6 +75,17 @@ export class BaseSqliteRepository {
             await db.exec('ROLLBACK');
             throw error;
         }
+    }
+
+    /**
+     * Factory method to create a default entity if not found in persistent store.
+     * @abstract
+     * @protected
+     * @param {string} id - The aggregate identifier.
+     * @returns {Awaited<T>}
+     */
+    createDefault(id) {
+        throw new Error("Method 'createDefault()' must be implemented by subclasses.");
     }
 
     /**
