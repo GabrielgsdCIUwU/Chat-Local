@@ -268,26 +268,38 @@ export class IKeyValueStore {
 }
 
 /**
- * Generic Base Repository abstraction.
- * @template T
+ * Generic Base Repository abstraction contract.
+ * @template T - The Domain Entity type.
  * @abstract
  */
 export class IBaseRepository {
     /**
-     * Retrieves all records.
-     * @returns {Promise<T[]>}
+     * Retrieves all records from the persistent store.
+     * @returns {Promise<T[]>} Array of domain entities.
      */
     async getAll() {
         throw new Error("Method 'getAll()' must be implemented.");
     }
 
     /**
-     * Safely handles database transactions.
-     * @param {function(T[]): Promise<any>|any} callback
+     * Finds a single domain entity by its unique identifier.
+     * @param {string} id - The primary key or unique identifier.
+     * @returns {Promise<T|null>} The found entity, or null.
+     */
+    async findById(id) {
+        throw new Error("Method 'findById()' must be implemented.");
+    }
+
+    /**
+     * Safely executes an isolated transactional update on a single targeted entity.
+     * Mitigates memory bottlenecks by avoiding loading full tables during writes.
+     * 
+     * @param {string} id - The identifier of the aggregate root.
+     * @param {function(T): (Promise<any>|any)} callback - Mutation callback containing domain logic.
      * @returns {Promise<void>}
      */
-    async executeTransaction(callback) {
-        throw new Error("Method 'executeTransaction()' must be implemented.");
+    async updateTransactional(id, callback) {
+        throw new Error("Method 'updateTransactional()' must be implemented.");
     }
 }
 
@@ -352,34 +364,14 @@ export class IBannedIpRepository {
  * @abstract
  * @extends {IBaseRepository<import('../domain/economy/Wallet.js').Wallet>}
  */
-export class IEconomyRepository extends IBaseRepository {
-    /**
-     * Returns active wallet or initializes it.
-     * @param {import('../domain/economy/Wallet.js').Wallet[]} wallets - Wallets pool.
-     * @param {string} username - Target owner name.
-     * @returns {import('../domain/economy/Wallet.js').Wallet}
-     */
-    ensureWallet(wallets, username) {
-        throw new Error("Method 'ensureWallet()' must be implemented.");
-    }
-}
+export class IEconomyRepository extends IBaseRepository {}
 
 /**
  * Gambling statistics repository interface.
  * @abstract
  * @extends {IBaseRepository<Gambler>}
  */
-export class IGamblingRepository extends IBaseRepository {
-    /**
-     * Returns active profile or initializes it.
-     * @param {Gambler[]} users - Gamblers dataset.
-     * @param {string} username - Target user.
-     * @returns {Gambler}
-     */
-    ensureUser(users, username) {
-        throw new Error("Method 'ensureUser()' must be implemented.");
-    }
-}
+export class IGamblingRepository extends IBaseRepository {}
 
 /**
  * RPG inventory persistence contract.
@@ -394,16 +386,6 @@ export class IInventoryRepository extends IBaseRepository {
      */
     async getInventory(username) {
         throw new Error("Method 'getInventory()' must be implemented.");
-    }
-
-    /**
-     * Transaction safe finder for inventories.
-     * @param {import('../domain/rpg/Inventory.js').Inventory[]} inventories - Inventories pool.
-     * @param {string} username - Target owner name.
-     * @returns {import('../domain/rpg/Inventory.js').Inventory}
-     */
-    ensureInventory(inventories, username) {
-        throw new Error("Method 'ensureInventory()' must be implemented.");
     }
 }
 
@@ -421,16 +403,6 @@ export class IJobRepository extends IBaseRepository {
     async getProfile(username) {
         throw new Error("Method 'getProfile()' must be implemented.");
     }
-
-    /**
-     * Obtains or configures a new job profile within an active transaction.
-     * @param {JobProfile[]} jobs - Jobs pool.
-     * @param {string} username - Target username.
-     * @returns {JobProfile}
-     */
-    ensureJobProfile(jobs, username) {
-        throw new Error("Method 'ensureJobProfile()' must be implemented.");
-    }
 }
 
 /**
@@ -446,16 +418,6 @@ export class IPetRepository extends IBaseRepository {
      */
     async getProfile(username) {
         throw new Error("Method 'getProfile()' must be implemented.");
-    }
-
-    /**
-     * Safely targets and returns the active profile within an active transaction.
-     * @param {PetProfile[]} profiles - Profiles pool.
-     * @param {string} username - Target username.
-     * @returns {PetProfile}
-     */
-    ensureProfile(profiles, username) {
-        throw new Error("Method 'ensureProfile()' must be implemented.");
     }
 }
 
