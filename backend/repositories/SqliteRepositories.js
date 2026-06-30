@@ -86,6 +86,16 @@ export class SqliteEconomyRepository extends BaseSqliteRepository {
     mapToDomain(rows) { return rows.map((r) => new Wallet(r)); }
 
     /**
+     * Default Wallet creation.
+     * @protected
+     * @param {string} username - Target owner.
+     * @returns {Wallet}
+     */
+    createDefault(username) {
+        return new Wallet({ name: username, money: 100, debt: 0 });
+    }
+
+    /**
      * Finds a single player wallet by username.
      * @param {string} name - Username.
      * @returns {Promise<Wallet|null>} Target wallet entity, or null.
@@ -125,21 +135,6 @@ export class SqliteEconomyRepository extends BaseSqliteRepository {
             await this.saveSingle(db, w);
         }
     }
-
-    /**
-     * Ensures a wallet exists within an active array pool.
-     * @param {Wallet[]} wallets
-     * @param {string} username
-     * @returns {Wallet}
-     */
-    ensureWallet(wallets, username) {
-        let wallet = wallets.find((w) => w.name === username);
-        if (!wallet) {
-            wallet = new Wallet({ name: username, money: 100, debt: 0 });
-            wallets.push(wallet);
-        }
-        return wallet;
-    }
 }
 /**
  * @typedef {import('../core/types.js').IGamblingRepository} IGamblingRepository
@@ -163,41 +158,62 @@ export class SqliteGamblingRepository extends BaseSqliteRepository {
     }
 
     /**
+     * Default Gambler creation.
+     * @protected
+     * @param {string} username - Target owner.
+     * @returns {Gambler}
+     */
+    createDefault(username) {
+        return new Gambler({ 
+            name: username, 
+            totalEarnings: 0, 
+            spend: 0, 
+            timesSteal: 0, 
+            moneySteal: 0, 
+            duelWin: 0, 
+            duelLose: 0, 
+            bankRupt: 0, 
+            lastRobbery: 0, 
+            lastDaily: 0, 
+            dailyStreak: 0 
+        });
+    }
+    
+    /**
+     * Finds a single player gambling profile by username.
+     * @param {string} name - Username.
+     * @returns {Promise<Gambler|null>} Target gambler entity, or null.
+     */
+    async findById(name) {
+        const db = await this.client.getDb();
+        const row = await db.get('SELECT * FROM gambling WHERE name = ?', [name]);
+        if (!row) return null;
+        return new Gambler(row);
+    }
+
+    /**
+     * Inserts or replaces a single gambler instance inside a transaction.
+     * @protected
+     * @param {import('../core/types.js').ISqlConnection} db - SQL Connection.
+     * @param {Gambler} u - Domain Gambler instance.
+     * @returns {Promise<void>}
+     */
+    async saveSingle(db, u) {
+        await db.run(
+            `INSERT OR REPLACE INTO gambling (name, totalEarnings, spend, timesSteal, moneySteal, duelWin, duelLose, bankRupt, lastRobbery, lastDaily, dailyStreak) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [u.name, u.totalEarnings, u.spend, u.timesSteal, u.moneySteal, u.duelWin, u.duelLose, u.bankRupt, u.lastRobbery, u.lastDaily, u.dailyStreak]
+        );
+    }
+
+    /**
+     * Legacy transaction mechanism for full table updates.
      * @param {import('../core/types.js').ISqlConnection} db
      * @param {Gambler[]} users 
      */
     async saveAll(db, users) {
         for (const u of users) {
-            await db.run(
-                `INSERT OR REPLACE INTO gambling (name, totalEarnings, spend, timesSteal, moneySteal, duelWin, duelLose, bankRupt, lastRobbery, lastDaily, dailyStreak) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [u.name, u.totalEarnings, u.spend, u.timesSteal, u.moneySteal, u.duelWin, u.duelLose, u.bankRupt, u.lastRobbery, u.lastDaily, u.dailyStreak]
-            );
+            await this.saveSingle(db, u);
         }
-    }
-
-    /**
-     * @param {Gambler[]} users
-     * @param {string} username
-     */
-    ensureUser(users, username) {
-        let user = users.find(u => u.name === username);
-        if (!user) {
-            user = new Gambler({ 
-                name: username, 
-                totalEarnings: 0, 
-                spend: 0, 
-                timesSteal: 0, 
-                moneySteal: 0, 
-                duelWin: 0, 
-                duelLose: 0, 
-                bankRupt: 0, 
-                lastRobbery: 0, 
-                lastDaily: 0, 
-                dailyStreak: 0 
-            });
-            users.push(user);
-        }
-        return user;
     }
 }
 
@@ -226,27 +242,46 @@ export class SqliteInventoryRepository extends BaseSqliteRepository {
      */
     async saveAll(db, inventories) {
         for (const inv of inventories) {
-            await db.run('INSERT OR REPLACE INTO inventory (name, items) VALUES (?, ?)', [inv.name, JSON.stringify(inv.items)]);
+            await this.saveSingle(db, inv);
         }
+    }
+
+    /**
+     * Saves a single inventory row.
+     * @protected
+     * @param {import('../core/types.js').ISqlConnection} db - SQL Connection.
+     * @param {Inventory} inv - Domain instance.
+     * @returns {Promise<void>}
+     */
+    async saveSingle(db, inv) {
+        await db.run('INSERT OR REPLACE INTO inventory (name, items) VALUES (?, ?)', [inv.name, JSON.stringify(inv.items)]);
     }
 
     /**
      * @param {string} username
      */
     async getInventory(username) {
-        const db = await this.client.getDb();
-        const row = await db.get('SELECT * FROM inventory WHERE name = ?', [username]);
-        if (row) return new Inventory({ name: row.name, items: JSON.parse(row.items) });
+        const inventory = await this.findById(username);
+        return inventory || this.createDefault(username);
+    }
+    /**
+     * @protected
+     * @param {string} username - Target owner.
+     * @returns {Inventory}
+     */
+    createDefault(username) {
         return new Inventory({ name: username, items: {} });
     }
     /**
-     * @param {Inventory[]} inventories
-     * @param {string} username
+     * Finds a single inventory record.
+     * @param {string} username - The username identifier.
+     * @returns {Promise<Inventory|null>}
      */
-    ensureInventory(inventories, username) {
-        let inv = inventories.find(i => i.name === username);
-        if (!inv) { inv = new Inventory({ name: username, items: {} }); inventories.push(inv); }
-        return inv;
+    async findById(username) {
+        const db = await this.client.getDb();
+        const row = await db.get('SELECT * FROM inventory WHERE name = ?', [username]);
+        if (!row) return null;
+        return new Inventory({ name: row.name, items: JSON.parse(row.items) });
     }
 }
 
@@ -281,24 +316,33 @@ export class SqliteJobRepository extends BaseSqliteRepository {
     }
 
     /**
-     * @param {import('../core/types.js').ISqlConnection} db
-     * @param {JobProfile[]} jobs 
+     * Default JobProfile creation.
+     * @protected
+     * @param {string} username - Target owner.
+     * @returns {JobProfile}
      */
-    async saveAll(db, jobs) {
-        for (const j of jobs) {
-            await db.run('INSERT OR REPLACE INTO jobs (name, job, toolLevel, lastWork, activeBuffs, prestigeLevel, activeExpedition) VALUES (?, ?, ?, ?, ?, ?, ?)', 
-            [j.name, j.job, j.toolLevel, j.lastWork, JSON.stringify(j.activeBuffs), j.prestigeLevel || 0, JSON.stringify(j.activeExpedition)]);
-        }
+    createDefault(username) {
+        return new JobProfile({ 
+            name: username, 
+            job: null, 
+            toolLevel: 1, 
+            lastWork: 0, 
+            activeBuffs: {}, 
+            prestigeLevel: 0, 
+            activeExpedition: null 
+        }); 
     }
 
     /**
-     * @param {string} username
-     * @returns {Promise<JobProfile|undefined>}
+     * Finds a single job profile record.
+     * @param {string} username - Target identifier.
+     * @returns {Promise<JobProfile|null>}
      */
-    async getProfile(username) {
+    async findById(username) {
         const db = await this.client.getDb();
         const row = await db.get('SELECT * FROM jobs WHERE name = ?', [username]);
-        if (row) return new JobProfile({ 
+        if (!row) return null;
+        return new JobProfile({ 
             name: row.name, 
             job: row.job, 
             toolLevel: row.toolLevel, 
@@ -307,19 +351,39 @@ export class SqliteJobRepository extends BaseSqliteRepository {
             prestigeLevel: row.prestigeLevel || 0, 
             activeExpedition: JSON.parse(row.activeExpedition || 'null') 
         });
-        return undefined;
     }
+
     /**
-     * @param {any[]} jobs
-     * @param {string} username
+     * Saves a single job profile row.
+     * @protected
+     * @param {import('../core/types.js').ISqlConnection} db - SQL Connection.
+     * @param {JobProfile} j - Domain instance.
+     * @returns {Promise<void>}
      */
-    ensureJobProfile(jobs, username) {
-        let p = jobs.find(j => j.name === username);
-        if (!p) { 
-            p = new JobProfile({ name: username, job: null, toolLevel: 1, lastWork: 0, activeBuffs: {}, prestigeLevel: 0, activeExpedition: null }); 
-            jobs.push(p); 
+    async saveSingle(db, j) {
+        await db.run(
+            'INSERT OR REPLACE INTO jobs (name, job, toolLevel, lastWork, activeBuffs, prestigeLevel, activeExpedition) VALUES (?, ?, ?, ?, ?, ?, ?)', 
+            [j.name, j.job, j.toolLevel, j.lastWork, JSON.stringify(j.activeBuffs), j.prestigeLevel || 0, JSON.stringify(j.activeExpedition)]
+        );
+    }
+
+    /**
+     * @param {import('../core/types.js').ISqlConnection} db
+     * @param {JobProfile[]} jobs 
+     */
+    async saveAll(db, jobs) {
+        for (const j of jobs) {
+            await this.saveSingle(db, j);
         }
-        return p;
+    }
+
+    /**
+     * @param {string} username
+     * @returns {Promise<JobProfile|undefined>}
+     */
+    async getProfile(username) {
+        const profile = await this.findById(username);
+        return profile || undefined;
     }
 }
 
@@ -351,41 +415,61 @@ export class SqlitePetRepository extends BaseSqliteRepository {
     }
 
     /**
-     * @param {import('../core/types.js').ISqlConnection} db
-     * @param {PetProfile[]} profiles 
+     * Default PetProfile creation.
+     * @protected
+     * @param {string} username - Target owner.
+     * @returns {PetProfile}
      */
-    async saveAll(db, profiles) {
-        for (const p of profiles) {
-            await db.run('INSERT OR REPLACE INTO pets (name, eggs, pets, equipped) VALUES (?, ?, ?, ?)', [p.name, p.eggs, JSON.stringify(p.pets), p.equipped]);
-        }
+    createDefault(username) {
+        return new PetProfile({ name: username, eggs: 0, pets: [], equipped: null });
     }
 
     /**
-     * @param {string} username
-     * @returns {Promise<PetProfile>}
+     * Finds a single player companion profile by username.
+     * @param {string} username - Username.
+     * @returns {Promise<PetProfile|null>} Target pet profile entity, or null.
      */
-    async getProfile(username) {
+    async findById(username) {
         const db = await this.client.getDb();
         const row = await db.get('SELECT * FROM pets WHERE name = ?', [username]);
-        if (row) return new PetProfile({ 
+        if (!row) return null;
+        return new PetProfile({ 
             name: row.name, 
             eggs: row.eggs, 
             pets: JSON.parse(row.pets || '[]'), 
             equipped: row.equipped 
         });
-        return new PetProfile({ name: username, eggs: 0, pets: [], equipped: null });
     }
+
     /**
-     * @param {PetProfile[]} profiles
-     * @param {string} username
+     * @param {string} username - Username.
+     * @returns {Promise<PetProfile>}
      */
-    ensureProfile(profiles, username) {
-        let p = profiles.find(p => p.name === username);
-        if (!p) { 
-            p = new PetProfile({ name: username, eggs: 0, pets: [], equipped: null }); 
-            profiles.push(p); 
+    async getProfile(username) {
+        const profile = await this.findById(username);
+        return profile || this.createDefault(username);
+    }
+
+    /**
+     * Inserts or replaces a single pet profile instance inside a transaction.
+     * @protected
+     * @param {import('../core/types.js').ISqlConnection} db - SQL Connection.
+     * @param {PetProfile} p - Domain companion instance.
+     * @returns {Promise<void>}
+     */
+    async saveSingle(db, p) {
+        await db.run('INSERT OR REPLACE INTO pets (name, eggs, pets, equipped) VALUES (?, ?, ?, ?)', [p.name, p.eggs, JSON.stringify(p.pets), p.equipped]);
+    }
+
+    /**
+     * Legacy transaction mechanism for full table updates.
+     * @param {import('../core/types.js').ISqlConnection} db
+     * @param {PetProfile[]} profiles 
+     */
+    async saveAll(db, profiles) {
+        for (const p of profiles) {
+            await this.saveSingle(db, p);
         }
-        return p;
     }
 }
 
@@ -419,13 +503,53 @@ export class SqliteGuildRepository extends BaseSqliteRepository {
     }
 
     /**
+     * Default Guild creation.
+     * @protected
+     * @param {string} id - Guild unique ID.
+     * @returns {Guild}
+     */
+    createDefault(id) {
+        return new Guild({ id, name: "Placeholder", level: 1, bankMoney: 0, members: [] });
+    }
+
+    /**
+     * Finds a single guild by ID.
+     * @param {string} id - Guild ID.
+     * @returns {Promise<Guild|null>} Target guild entity, or null.
+     */
+    async findById(id) {
+        const db = await this.client.getDb();
+        const row = await db.get('SELECT * FROM guilds WHERE id = ?', [id]);
+        if (!row) return null;
+        return new Guild({
+            id: row.id,
+            name: row.name,
+            level: row.level,
+            bankMoney: row.bankMoney,
+            members: JSON.parse(row.members || '[]')
+        });
+    }
+
+    /**
+     * Inserts or replaces a single guild instance inside a transaction.
+     * @protected
+     * @param {import('../core/types.js').ISqlConnection} db - SQL Connection.
+     * @param {Guild} g - Domain guild instance.
+     * @returns {Promise<void>}
+     */
+    async saveSingle(db, g) {
+        await db.run('INSERT OR REPLACE INTO guilds (id, name, level, bankMoney, members) VALUES (?, ?, ?, ?, ?)', [g.id, g.name, g.level, g.bankMoney, JSON.stringify(g.members)]);
+    }
+
+    /**
+     * Legacy transaction mechanism for full table updates.
      * @param {import('../core/types.js').ISqlConnection} db
-     * @param {GuildProps[]} guilds 
+     * @param {Guild[]} guilds 
      */
     async saveAll(db, guilds) {
         await db.run('DELETE FROM guilds');
         for (const g of guilds) {
-            await db.run('INSERT INTO guilds (id, name, level, bankMoney, members) VALUES (?, ?, ?, ?, ?)', [g.id, g.name, g.level, g.bankMoney, JSON.stringify(g.members)]);
+            await this.saveSingle(db, g);
         }
     }
 }
@@ -451,17 +575,53 @@ export class SqliteAuctionRepository extends BaseSqliteRepository {
     mapToDomain(rows) { return rows; }
 
     /**
+     * Default AuctionItem creation.
+     * @protected
+     * @param {string} id - Auction ID.
+     * @returns {AuctionItem}
+     */
+    createDefault(id) {
+        return { id, seller: "System", itemName: "Trash", amount: 1, price: 9999, expiresAt: Date.now() };
+    }
+
+    /**
+     * Finds a single active auction by ID.
+     * @param {string} id - Auction ID.
+     * @returns {Promise<AuctionItem|null>} Target auction entity, or null.
+     */
+    async findById(id) {
+        const db = await this.client.getDb();
+        const row = await db.get('SELECT * FROM auctions WHERE id = ?', [id]);
+        if (!row) return null;
+        return row;
+    }
+
+    /**
+     * Inserts or replaces a single auction instance inside a transaction.
+     * @protected
+     * @param {import('../core/types.js').ISqlConnection} db - SQL Connection.
+     * @param {AuctionItem} a - Domain companion instance.
+     * @returns {Promise<void>}
+     */
+    async saveSingle(db, a) {
+        await db.run('INSERT OR REPLACE INTO auctions (id, seller, itemName, amount, price, expiresAt) VALUES (?, ?, ?, ?, ?, ?)', [a.id, a.seller, a.itemName, a.amount, a.price, a.expiresAt]);
+    }
+
+    /**
+     * Legacy transaction mechanism for full table updates.
      * @param {import('../core/types.js').ISqlConnection} db
      * @param {AuctionItem[]} auctions 
      */
     async saveAll(db, auctions) {
         await db.run('DELETE FROM auctions');
         for (const a of auctions) {
-            await db.run('INSERT INTO auctions (id, seller, itemName, amount, price, expiresAt) VALUES (?, ?, ?, ?, ?, ?)', [a.id, a.seller, a.itemName, a.amount, a.price, a.expiresAt]);
+            await this.saveSingle(db, a);
         }
     }
+
     /**
-     * @param {string} id
+     * @param {string} id - Auction unique ID.
+     * @returns {Promise<boolean>}
      */
     async removeAuction(id) {
         const db = await this.client.getDb();
