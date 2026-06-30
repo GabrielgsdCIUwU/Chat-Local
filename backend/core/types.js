@@ -89,19 +89,7 @@
  */
 
 /**
- * Individual instantiated pet properties.
- * @typedef {Object} PetInstance
- * @property {string} id - Unique UUID of the companion.
- * @property {string} type - Configuration key from RPG configs.
- */
-
-/**
- * Profile housing companion assets and eggs.
- * @typedef {Object} PetProfile
- * @property {string} name - Username of the owner.
- * @property {number} eggs - Quantity of unhatched eggs.
- * @property {PetInstance[]} pets - List of obtained companions.
- * @property {string|null} equipped - Instance ID of the active companion.
+ * @typedef {import('../domain/rpg/PetProfile.js').PetProfile} PetProfile
  */
 
 /**
