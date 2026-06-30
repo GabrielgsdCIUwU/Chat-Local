@@ -3,6 +3,7 @@ import { BaseSqliteRepository } from '../core/repositories/BaseSqliteRepository.
 import { Inventory } from '../domain/rpg/Inventory.js';
 import { JobProfile } from '../domain/rpg/JobProfile.js';
 import { PetProfile } from '../domain/rpg/PetProfile.js';
+import { Guild } from '../domain/guild/Guild.js';
 
 
 /**
@@ -340,7 +341,7 @@ export class SqlitePetRepository extends BaseSqliteRepository {
 }
 
 /**
- * @typedef {import('../core/types.js').GuildProps} GuildProps
+ * @typedef {import('../core/types.js').Guild} GuildProps
  * @typedef {import('../core/types.js').IGuildRepository} IGuildRepository
  */
 
@@ -359,7 +360,13 @@ export class SqliteGuildRepository extends BaseSqliteRepository {
      * @returns {GuildProps[]}
      */
     mapToDomain(rows) { 
-        return rows.map(r => ({ ...r, members: JSON.parse(r.members) })); 
+        return rows.map(r => new Guild({ 
+            id: r.id, 
+            name: r.name, 
+            level: r.level, 
+            bankMoney: r.bankMoney, 
+            members: JSON.parse(r.members || '[]') 
+        })); 
     }
 
     /**
