@@ -1,11 +1,12 @@
 import crypto from "node:crypto";
 import { GAME_CONFIG } from "../core/constants.js";
+import { Guild } from "../domain/guild/Guild.js";
 
 /**
  * @typedef {import('../core/types.js').IGuildService} IGuildService 
  * @typedef {import('../core/types.js').IEconomyService} IEconomyService
  * @typedef {import('../core/types.js').IGuildRepository} IGuildRepository
- * @typedef {import('../core/types.js').GuildProps} GuildProps
+ * @typedef {import('../core/types.js').Guild} GuildProps
  */
 
 /**
@@ -51,13 +52,13 @@ export class GuildService {
 
         await this.economyService.removeFunds(founderName, GAME_CONFIG.GUILD_CREATION_COST);
 
-        const newGuild = {
+        const newGuild = new Guild({
             id: crypto.randomBytes(4).toString("hex"),
             name: guildName,
             level: 1,
             bankMoney: 0,
             members: [{name: founderName, rank: "Leader"}],
-        };
+        });
 
         await this.guildRepository.executeTransaction((currentGuilds) => {
             currentGuilds.push(newGuild);
@@ -104,11 +105,7 @@ export class GuildService {
         const guild = guilds.find(g => g.members.some(m => m.name === inviterName));
         if (!guild) throw new Error("No estás en ningún gremio.");
         
-        const inviter = guild.members.find(m => m.name === inviterName);
-        if (!inviter) {
-            throw new Error("No existe este usuario.");
-        }
-        if (inviter.rank !== "Leader" && inviter.rank !== "Officer") {
+        if (!guild.isLeaderOrOfficer(inviterName)) {
             throw new Error("Solo los líderes u oficiales pueden invitar.");
         }
 
@@ -154,7 +151,7 @@ export class GuildService {
             const guild = guilds.find(g => g.id === invite.guildId);
             if (!guild) throw new Error("El gremio ha sido disuelto.");
 
-            guild.members.push({ name: targetName, rank: "Member" });
+            guild.addMember(targetName, "Member");
         });
 
         return invite.guildName;
@@ -181,15 +178,7 @@ export class GuildService {
                 throw new Error("No perteneces a ningún gremio.");
             }
 
-            guild.bankMoney += amount;
-
-            const nextLevelKey = /** @type {keyof typeof GAME_CONFIG.GUILD_LEVEL_COSTS} */ (guild.level + 1);
-            const nextLevelCost = GAME_CONFIG.GUILD_LEVEL_COSTS[nextLevelKey];
-            if (nextLevelCost && guild.bankMoney >= nextLevelCost) {
-                guild.bankMoney -= nextLevelCost;
-                guild.level += 1;
-                levelUp = true;
-            }
+            levelUp = guild.donate(amount);
             currentLevel = guild.level;
         });
 
@@ -206,14 +195,7 @@ export class GuildService {
             const guild = guilds.find(g => g.members.some(m => m.name === username));
             if (!guild) throw new Error("No perteneces a ningún gremio.");
 
-            const memberIndex = guild.members.findIndex(m => m.name === username);
-            const member = guild.members[memberIndex];
-
-            if (member.rank === "Leader" && guild.members.length > 1) {
-                throw new Error("Eres el líder. Debes nombrar otro líder o expulsar a todos antes de salir.");
-            }
-
-            guild.members.splice(memberIndex, 1);
+            guild.removeMember(username);
 
             if (guild.members.length === 0) {
                 const guildIndex = guilds.findIndex(g => g.id === guild.id);
