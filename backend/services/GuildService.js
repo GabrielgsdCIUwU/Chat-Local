@@ -1,13 +1,25 @@
 import crypto from "node:crypto";
 import { GAME_CONFIG } from "../core/constants.js";
 
+/**
+ * @typedef {import('../core/types.js').IGuildService} IGuildService 
+ * @typedef {import('../core/types.js').IEconomyService} IEconomyService
+ * @typedef {import('../core/types.js').IGuildRepository} IGuildRepository
+ * @typedef {import('../core/types.js').GuildProps} GuildProps
+ */
+
+/**
+ * Service managing user clans, fund deposits, level elevations, and team memberships.
+ * 
+ * @implements {IGuildService}
+ */
 export class GuildService {
     pendingInvites = new Map();
 
     /**
      * 
-     * @param {import('./EconomyService.js').EconomyService} economyService 
-     * @param {import('../repositories/GuildRepository.js').GuildRepository} guildRepository 
+     * @param {IEconomyService} economyService 
+     * @param {IGuildRepository} guildRepository 
      */
     constructor(economyService, guildRepository) {
         this.economyService = economyService;
@@ -18,7 +30,7 @@ export class GuildService {
      * Founds a new guild if the user has enough money and isn't in one already.
      * @param {string} founderName - The user creating the guild.
      * @param {string} guildName - The requested name for the guild.
-     * @returns {Promise<import('../repositories/GuildRepository.js').Guild>} The created guild.
+     * @returns {Promise<GuildProps>} The created guild.
      * @throws {Error} If user lacks funds or is already in a guild.
      */
     async createGuild(founderName, guildName) {
@@ -58,7 +70,7 @@ export class GuildService {
     /**
      * Retrieves the guild information for a specific user.
      * @param {string} username 
-     * @returns {Promise<import('../repositories/GuildRepository.js').Guild | undefined>}
+     * @returns {Promise<GuildProps | undefined>}
      */
     async getUserGuild(username) {
         const guilds = await this.guildRepository.getAll();
@@ -68,7 +80,7 @@ export class GuildService {
     /**
      * Retrieves the top guilds sorted by Level, then by Bank Money.
      * @param {number} limit - The maximum number of guilds to return.
-     * @returns {Promise<import('../repositories/GuildRepository.js').Guild[]>}
+     * @returns {Promise<GuildProps[]>}
      */
     async getTopGuilds(limit = 10) {
         const guilds = await this.guildRepository.getAll();
@@ -85,7 +97,7 @@ export class GuildService {
      * 
      * @param {string} inviterName 
      * @param {string} targetName 
-     * @returns {string}
+     * @returns {Promise<string>}
      */
     async inviteMember(inviterName, targetName) {
         const guilds = await this.guildRepository.getAll();
@@ -93,6 +105,9 @@ export class GuildService {
         if (!guild) throw new Error("No estás en ningún gremio.");
         
         const inviter = guild.members.find(m => m.name === inviterName);
+        if (!inviter) {
+            throw new Error("No existe este usuario.");
+        }
         if (inviter.rank !== "Leader" && inviter.rank !== "Officer") {
             throw new Error("Solo los líderes u oficiales pueden invitar.");
         }
@@ -130,7 +145,7 @@ export class GuildService {
         }
         
         this.pendingInvites.delete(targetName);
-        if (!accept) return false;
+        if (!accept) return "";
 
         await this.guildRepository.executeTransaction((guilds) => {
             const targetInGuild = guilds.some(g => g.members.some(m => m.name === targetName));
@@ -168,7 +183,8 @@ export class GuildService {
 
             guild.bankMoney += amount;
 
-            const nextLevelCost = GAME_CONFIG.GUILD_LEVEL_COSTS[guild.level + 1];
+            const nextLevelKey = /** @type {keyof typeof GAME_CONFIG.GUILD_LEVEL_COSTS} */ (guild.level + 1);
+            const nextLevelCost = GAME_CONFIG.GUILD_LEVEL_COSTS[nextLevelKey];
             if (nextLevelCost && guild.bankMoney >= nextLevelCost) {
                 guild.bankMoney -= nextLevelCost;
                 guild.level += 1;

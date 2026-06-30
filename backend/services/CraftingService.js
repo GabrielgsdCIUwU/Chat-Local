@@ -1,14 +1,16 @@
 import { RPG_CONFIG } from "../core/rpgConfig.js";
 
 /**
- * @typedef {import('../repositories/JobRepository.js').JobProfile} JobProfile
+ * @typedef {import('../core/types.js').ICraftingService} ICraftingService 
+ * @typedef {import('../core/types.js').IInventoryRepository} IInventoryRepository 
+ * @typedef {import('../core/types.js').IJobRepository} IJobRepository 
  */
 
 export class CraftingService {
     /**
      * 
-     * @param {import('../repositories/SqliteRepositories.js').SqliteInventoryRepository} inventoryRepository 
-     * @param {import('../repositories/SqliteRepositories.js').SqliteJobRepository} jobRepository  
+     * @param {IInventoryRepository} inventoryRepository 
+     * @param {IJobRepository} jobRepository  
      */
     constructor(inventoryRepository, jobRepository) {
         this.inventoryRepository = inventoryRepository;
@@ -23,10 +25,7 @@ export class CraftingService {
      * @throws {Error} If recipe doesn't exist or insufficient materials.
      */
     async craftItem(username, recipeKey) {
-        const recipeKeyLowerCase = recipeKey.toLowerCase();
-        /**
-         * @type {import("../core/rpgConfig.js").CraftingRecipe}
-         */
+        const recipeKeyLowerCase = /** @type {keyof typeof RPG_CONFIG.CRAFTING_RECIPES} */ (recipeKey.toLowerCase());        
         const recipe = RPG_CONFIG.CRAFTING_RECIPES[recipeKeyLowerCase];
 
         if (!recipe) {
@@ -64,6 +63,7 @@ export class CraftingService {
      * @returns {Promise<Object.<string, number>>} Map of active buffs and their remaining milliseconds.
      */
     async getActiveBuffs(username) {
+        /** @type {{[key: string]: number}} */
         let activeBuffsInfo = {};
         const now = Date.now();
 

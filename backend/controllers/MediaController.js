@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 export class MediaController {
     /**
-     * @param {import('../services/EmojiService.js').EmojiService} emojiService 
+     * @param {import('../core/types.js').IEmojiService} emojiService 
      */
     constructor(emojiService) {
         this.emojiService = emojiService;

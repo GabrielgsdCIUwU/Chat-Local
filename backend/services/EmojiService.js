@@ -2,6 +2,16 @@ import fs from "node:fs";
 import path from "node:path";
 import sizeOf from "image-size";
 
+/**
+ * @typedef {import('../core/types.js').IEmojiService} IEmojiService
+ * @typedef {import('../core/types.js').EmojiMetadata} EmojiMetadata
+ */
+
+/**
+ * Local files utility scanner determining absolute image geometries and formats for emojis.
+ * 
+ * @implements {IEmojiService}
+ */
 export class EmojiService {
     /**
      * 
@@ -13,9 +23,10 @@ export class EmojiService {
 
     /**
      * Retrieves a list of available emojis with their dimensions.
-     * @returns {Array<{name: string, width: number, height: number, url: string}>}
+     * @returns {EmojiMetadata[]}
      */
     getEmojiMetada() {
+        /** @type {EmojiMetadata[]} */
         const images = [];
         const files = fs.readdirSync(this.emojisDir);
 
@@ -37,7 +48,7 @@ export class EmojiService {
                     url: `/resources/emojis/${file}`
                 });
             } catch (error) {
-                console.warn(`No se pudo leer el emoji ${file}:`, error.message);
+                console.warn(`No se pudo leer el emoji ${file}:`, error);
             }
         });
 

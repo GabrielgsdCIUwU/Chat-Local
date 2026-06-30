@@ -2,13 +2,16 @@ import crypto from "node:crypto";
 import { RPG_CONFIG } from "../core/rpgConfig.js";
 
 /**
+ * @typedef {import('../core/types.js').IPetService} IPetService
+ * @typedef {import('../core/types.js').IPetRepository} IPetRepository
+ * @typedef {import('../core/types.js').IEconomyService} IEconomyService
  * @typedef {import('../core/rpgConfig.js').PetConfig} PetConfig
  */
 
 export class PetService {
     /**
-     * @param {import('../repositories/PetRepository.js').PetRepository} petRepository 
-     * @param {import('./EconomyService.js').EconomyService} economyService 
+     * @param {IPetRepository} petRepository 
+     * @param {IEconomyService} economyService 
      */
     constructor(petRepository, economyService) {
         this.petRepo = petRepository;
@@ -65,6 +68,8 @@ export class PetService {
 
             profile.pets.push({ id: newPetId, type: newPetType });
         });
+
+        if (!newPetType) throw new Error("Error al generar mascota.");
 
         return RPG_CONFIG.PETS[newPetType];
     }
@@ -148,6 +153,8 @@ export class PetService {
         });
 
         await this.economy.addFunds(username, refundAmount);
+
+        if (!releasedPetConfig) throw new Error("Error al liberar la mascota.");
 
         return { petConfig: releasedPetConfig, refundAmount };
     }

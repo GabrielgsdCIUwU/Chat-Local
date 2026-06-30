@@ -1,16 +1,26 @@
 import crypto from "node:crypto";
 import { GAME_CONFIG } from "../core/constants.js";
+import { RPG_CONFIG } from "../core/rpgConfig.js";
 
 /**
- * @typedef {import('../repositories/AuctionRepository.js').AuctionItem} AuctionItem
+ * @typedef {import('../core/types.js').IMarketService} IMarketService
+ * @typedef {import('../core/types.js').IEconomyService} IEconomyService
+ * @typedef {import('../core/types.js').IInventoryRepository} IInventoryRepository
+ * @typedef {import('../core/types.js').IAuctionRepository} IAuctionRepository
+ * @typedef {import('../core/types.js').AuctionItem} AuctionItem
  */
 
+/**
+ * Service orchestrating Global Auction Listings and safe direct peer trading.
+ * 
+ * @implements {IMarketService}
+ */
 export class MarketService {
     /**
      * 
-     * @param {import('./EconomyService.js').EconomyService} economyService 
-     * @param {import('../repositories/InventoryRepository.js').InventoryRepository} inventoryRepository 
-     * @param {import('../repositories/AuctionRepository.js').AuctionRepository} auctionRepository 
+     * @param {IEconomyService} economyService 
+     * @param {IInventoryRepository} inventoryRepository 
+     * @param {IAuctionRepository} auctionRepository 
      */
     constructor(economyService, inventoryRepository, auctionRepository) {
         this.economyService = economyService;
@@ -111,6 +121,7 @@ export class MarketService {
      */
     async checkExpiredAuctions() {
         const now = Date.now();
+        /** @type {AuctionItem[]} */
         let expiredAuctions = [];
 
         await this.auctionRepository.executeTransaction((auctions) => {
