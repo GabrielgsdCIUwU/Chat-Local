@@ -85,14 +85,7 @@
 
 /**
  * Profile and professional specialization metrics for RPG jobs.
- * @typedef {Object} JobProfile
- * @property {string} name - Username of the worker.
- * @property {string|null} job - Specialized class (e.g., 'minero', 'leñador', 'pescador').
- * @property {number} toolLevel - Current tier level of the workspace tool.
- * @property {number} lastWork - Epoch timestamp of the last work execution.
- * @property {Object.<string, number>} activeBuffs - Active temporary potion enhancements mapped to expiration times.
- * @property {number} prestigeLevel - The accumulated prestige tier.
- * @property {ActiveExpedition|null} activeExpedition - Progress markers for running passive expeditions.
+ * @typedef {import('../domain/rpg/JobProfile.js').JobProfile} JobProfile
  */
 
 /**
