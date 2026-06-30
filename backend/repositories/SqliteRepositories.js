@@ -2,6 +2,7 @@ import { Wallet } from '../domain/economy/Wallet.js';
 import { BaseSqliteRepository } from '../core/repositories/BaseSqliteRepository.js';
 import { Inventory } from '../domain/rpg/Inventory.js';
 import { JobProfile } from '../domain/rpg/JobProfile.js';
+import { PetProfile } from '../domain/rpg/PetProfile.js';
 
 
 /**
@@ -273,7 +274,6 @@ export class SqliteJobRepository extends BaseSqliteRepository {
 }
 
 /**
- * @typedef {import('../core/types.js').PetProfile} PetProfile
  * @typedef {import('../core/types.js').IPetRepository} IPetRepository
  */
 
@@ -288,11 +288,16 @@ export class SqlitePetRepository extends BaseSqliteRepository {
     constructor(client) { super(client, "pets"); }
 
     /**
-     * @param {any} rows
+     * @param {any[]} rows
      * @returns {PetProfile[]}
      */
     mapToDomain(rows) { 
-        return rows.map((/** @type {{ name: any; eggs: any; pets: any; equipped: any; }} */ r) => ({ name: r.name, eggs: r.eggs, pets: r.pets, equipped: r.equipped })); 
+        return rows.map(r => new PetProfile({ 
+            name: r.name, 
+            eggs: r.eggs, 
+            pets: JSON.parse(r.pets || '[]'), 
+            equipped: r.equipped 
+        })); 
     }
 
     /**
@@ -312,8 +317,13 @@ export class SqlitePetRepository extends BaseSqliteRepository {
     async getProfile(username) {
         const db = await this.client.getDb();
         const row = await db.get('SELECT * FROM pets WHERE name = ?', [username]);
-        if (row) return { name: row.name, eggs: row.eggs, pets: JSON.parse(row.pets), equipped: row.equipped };
-        return { name: username, eggs: 0, pets: [], equipped: null };
+        if (row) return new PetProfile({ 
+            name: row.name, 
+            eggs: row.eggs, 
+            pets: JSON.parse(row.pets || '[]'), 
+            equipped: row.equipped 
+        });
+        return new PetProfile({ name: username, eggs: 0, pets: [], equipped: null });
     }
     /**
      * @param {PetProfile[]} profiles
@@ -321,7 +331,10 @@ export class SqlitePetRepository extends BaseSqliteRepository {
      */
     ensureProfile(profiles, username) {
         let p = profiles.find(p => p.name === username);
-        if (!p) { p = { name: username, eggs: 0, pets: [], equipped: null }; profiles.push(p); }
+        if (!p) { 
+            p = new PetProfile({ name: username, eggs: 0, pets: [], equipped: null }); 
+            profiles.push(p); 
+        }
         return p;
     }
 }
