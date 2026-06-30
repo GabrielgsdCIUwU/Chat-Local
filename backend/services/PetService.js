@@ -31,8 +31,7 @@ export class PetService {
 
         await this.economy.removeFunds(username, totalCost);
 
-        await this.petRepo.executeTransaction((profiles) => {
-            const profile = this.petRepo.ensureProfile(profiles, username);
+        await this.petRepo.updateTransactional(username, (profile) => {
             profile.buyEggs(amount);
         });
 
@@ -49,9 +48,7 @@ export class PetService {
         let newPetType = null;
         const newPetId = crypto.randomUUID();
 
-        await this.petRepo.executeTransaction((profiles) => {
-            const profile = this.petRepo.ensureProfile(profiles, username);
-
+        await this.petRepo.updateTransactional(username, (profile) => {
             const roll = Math.random();
             let rarity = "COMMON";
             
@@ -80,8 +77,7 @@ export class PetService {
     async equipPet(username, petId) {
         let equippedPet = null;
 
-        await this.petRepo.executeTransaction((profiles) => {
-            const profile = this.petRepo.ensureProfile(profiles, username);
+        await this.petRepo.updateTransactional(username, (profile) => {
             profile.equipPet(petId);
 
             if (profile.equipped) {
@@ -129,10 +125,8 @@ export class PetService {
         let releasedPetConfig = null;
         const refundAmount = Math.floor(RPG_CONFIG.EGG_PRICE * RPG_CONFIG.PET_REFUND_PERCENTAGE);
 
-        await this.petRepo.executeTransaction((profiles) => {
-            const profile = this.petRepo.ensureProfile(profiles, username);
+        await this.petRepo.updateTransactional(username, (profile) => {
             const petInstance = profile.releasePet(petId);
-
             releasedPetConfig = RPG_CONFIG.PETS[petInstance.type];
         });
 

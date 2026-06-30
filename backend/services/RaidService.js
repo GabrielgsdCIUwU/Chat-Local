@@ -2,7 +2,7 @@ import { GAME_CONFIG } from "../core/constants.js";
 import { Raid } from "../domain/raid/Raid.js";
 
 /**
- * @typedef {import('../core/types.js').RaidProps} RaidProps
+ * @typedef {import('../core/types.js').RaidSession} RaidProps
  */
 
 export class RaidService {

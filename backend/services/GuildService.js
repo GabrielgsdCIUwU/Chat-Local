@@ -60,9 +60,8 @@ export class GuildService {
             members: [{name: founderName, rank: "Leader"}],
         });
 
-        await this.guildRepository.executeTransaction((currentGuilds) => {
-            currentGuilds.push(newGuild);
-        });
+        await this.guildRepository.save(newGuild);
+
 
         return newGuild;
     }
@@ -144,13 +143,7 @@ export class GuildService {
         this.pendingInvites.delete(targetName);
         if (!accept) return "";
 
-        await this.guildRepository.executeTransaction((guilds) => {
-            const targetInGuild = guilds.some(g => g.members.some(m => m.name === targetName));
-            if (targetInGuild) throw new Error("Ya perteneces a un gremio.");
-
-            const guild = guilds.find(g => g.id === invite.guildId);
-            if (!guild) throw new Error("El gremio ha sido disuelto.");
-
+        await this.guildRepository.updateTransactional(invite.guildId, (guild) => {
             guild.addMember(targetName, "Member");
         });
 
@@ -166,20 +159,19 @@ export class GuildService {
     async donate(username, amount) {
         if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error("Cantidad inválida.");
 
+        const guild = await this.getUserGuild(username);
+        if (!guild) {
+            throw new Error("No perteneces a ningún gremio.");
+        }
+
         await this.economyService.removeFunds(username, amount);
 
         let levelUp = false;
         let currentLevel = 0;
 
-        await this.guildRepository.executeTransaction((guilds) => {
-            const guild = guilds.find(g => g.members.some(m => m.name === username));
-            if (!guild) {
-                this.economyService.addFunds(username, amount).catch(console.error);
-                throw new Error("No perteneces a ningún gremio.");
-            }
-
-            levelUp = guild.donate(amount);
-            currentLevel = guild.level;
+        await this.guildRepository.updateTransactional(guild.id, (txGuild) => {
+            levelUp = txGuild.donate(amount);
+            currentLevel = txGuild.level;
         });
 
         return { levelUp, currentLevel };
@@ -191,16 +183,11 @@ export class GuildService {
      * @throws if the user doesn't have a guild or is a Leader and has members the guild
      */
     async leaveGuild(username) {
-        await this.guildRepository.executeTransaction((guilds) => {
-            const guild = guilds.find(g => g.members.some(m => m.name === username));
-            if (!guild) throw new Error("No perteneces a ningún gremio.");
-
-            guild.removeMember(username);
-
-            if (guild.members.length === 0) {
-                const guildIndex = guilds.findIndex(g => g.id === guild.id);
-                guilds.splice(guildIndex, 1);
-            }
+        const guild = await this.getUserGuild(username);
+        if (!guild) throw new Error("No perteneces a ningún gremio.");
+        
+        await this.guildRepository.updateTransactional(guild.id, (txGuild) => {
+            txGuild.removeMember(username);
         });
     }
 

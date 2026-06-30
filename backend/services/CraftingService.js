@@ -39,15 +39,14 @@ export class CraftingService {
             }
         }
 
-        await this.inventoryRepository.executeTransaction((inventories) => {
-            const txInventory = this.inventoryRepository.ensureInventory(inventories, username);
+        await this.inventoryRepository.updateTransactional(username, (txInventory) => {
             for (const [reqItem, reqAmount] of Object.entries(recipe.cost)) {
                 txInventory.removeItem(reqItem, reqAmount);
             }
         });
 
-        await this.jobRepository.executeTransaction((jobs) => {
-            const profile = this.jobRepository.ensureJobProfile(jobs, username);
+
+        await this.jobRepository.updateTransactional(username, (profile) => {
             profile.applyBuff(recipe.buffId, recipe.durationMs);
         });
 
@@ -64,8 +63,7 @@ export class CraftingService {
         /** @type {{[key: string]: number}} */
         let activeBuffsInfo = {};
 
-        await this.jobRepository.executeTransaction((jobs) => {
-            const profile = this.jobRepository.ensureJobProfile(jobs, username);
+         await this.jobRepository.updateTransactional(username, (profile) => {
             activeBuffsInfo = profile.cleanAndGetActiveBuffs();
         });
 
@@ -81,11 +79,8 @@ export class CraftingService {
     async consumeBuff(username, buffId) {
         let wasConsumed = false;
 
-        await this.jobRepository.executeTransaction((jobs) => {
-            const profile = jobs.find(j => j.name === username);
-            if (profile) {
-                wasConsumed = profile.removeBuff(buffId);
-            }
+        await this.jobRepository.updateTransactional(username, (profile) => {
+            wasConsumed = profile.removeBuff(buffId);
         });
 
         return wasConsumed;
