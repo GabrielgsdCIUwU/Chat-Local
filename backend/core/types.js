@@ -101,7 +101,7 @@
  */
 
 /**
- * @typedef {import('../domain/raid/Raid.js').RaidProps} RaidProps
+ * @typedef {import('../domain/raid/Raid.js').RaidProps} RaidSession
  */
 
 /**
@@ -282,6 +282,15 @@ export class IBaseRepository {
      */
     async findById(id) {
         throw new Error("Method 'findById()' must be implemented.");
+    }
+
+    /**
+     * Persists or updates a single domain entity in the persistent store.
+     * @param {T} entity - The entity instance to save.
+     * @returns {Promise<void>}
+     */
+    async save(entity) {
+        throw new Error("Method 'save()' must be implemented.");
     }
 
     /**
