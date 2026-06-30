@@ -69,8 +69,8 @@ export class SqliteUserRepository {
  * @typedef {import('../core/types.js').IEconomyRepository} IEconomyRepository
  */
 /**
- * @extends {BaseSqliteRepository<import('../domain/economy/Wallet.js').Wallet>}
- * @implements {IEconomyRepository}
+ * Granular economy data operations over SQLite database.
+ * @extends {BaseSqliteRepository<Wallet>}
  */
 export class SqliteEconomyRepository extends BaseSqliteRepository {
     /**
@@ -79,28 +79,63 @@ export class SqliteEconomyRepository extends BaseSqliteRepository {
     constructor(client) { super(client, "economy"); }
 
     /**
-     * @param {any[]} rows
+     * Maps raw DB records into Wallet instances.
+     * @param {any[]} rows - SQL DB raw rows.
+     * @returns {Wallet[]}
      */
     mapToDomain(rows) { return rows.map((r) => new Wallet(r)); }
 
     /**
+     * Finds a single player wallet by username.
+     * @param {string} name - Username.
+     * @returns {Promise<Wallet|null>} Target wallet entity, or null.
+     */
+    async findById(name) {
+        const db = await this.client.getDb();
+        const row = await db.get('SELECT * FROM economy WHERE name = ?', [name]);
+        if (!row) return null;
+        return new Wallet({
+            name: row.name,
+            money: row.money,
+            debt: row.debt
+        });
+    }
+
+    /**
+     * Inserts or replaces a single wallet instance inside a transaction.
+     * @protected
+     * @param {import('../core/types.js').ISqlConnection} db - SQL Connection.
+     * @param {Wallet} wallet - Domain Wallet instance.
+     * @returns {Promise<void>}
+     */
+    async saveSingle(db, wallet) {
+        await db.run(
+            'INSERT OR REPLACE INTO economy (name, money, debt) VALUES (?, ?, ?)', 
+            [wallet.name, wallet.money, wallet.debt]
+        );
+    }
+
+    /**
+     * Legacy transaction mechanism for full table updates.
      * @param {import('../core/types.js').ISqlConnection} db
      * @param {Wallet[]} wallets 
      */
     async saveAll(db, wallets) {
         for (const w of wallets) {
-            await db.run('INSERT OR REPLACE INTO economy (name, money, debt) VALUES (?, ?, ?)', [w.name, w.money, w.debt]);
+            await this.saveSingle(db, w);
         }
     }
 
     /**
+     * Ensures a wallet exists within an active array pool.
      * @param {Wallet[]} wallets
      * @param {string} username
+     * @returns {Wallet}
      */
     ensureWallet(wallets, username) {
         let wallet = wallets.find((w) => w.name === username);
         if (!wallet) {
-            wallet = new Wallet({name: username, money: 100, debt: 0});
+            wallet = new Wallet({ name: username, money: 100, debt: 0 });
             wallets.push(wallet);
         }
         return wallet;
