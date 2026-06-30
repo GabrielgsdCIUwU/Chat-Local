@@ -123,7 +123,7 @@ export class RPGService {
         await this.inventoryRepo.executeTransaction((inventories) => {
             const inv = this.inventoryRepo.ensureInventory(inventories, username);
             for (const [item, amount] of Object.entries(obtainedItems)) {
-                inv.items[item] = (inv.items[item] || 0) + amount;
+                inv.addItem(item, amount);
             }
         });
 
@@ -183,8 +183,7 @@ export class RPGService {
         await this.inventoryRepo.executeTransaction((inventories) => {
             const inventory = this.inventoryRepo.ensureInventory(inventories, username);
             for (const [reqItem, reqAmount] of Object.entries(costItems)) {
-                inventory.items[reqItem] -= reqAmount;
-                if (inventory.items[reqItem] === 0) delete inventory.items[reqItem];
+                inventory.removeItem(reqItem, reqAmount);
             }
         });
 
@@ -223,14 +222,10 @@ export class RPGService {
 
         await this.inventoryRepo.executeTransaction((inventories) => {
             const inventory = this.inventoryRepo.ensureInventory(inventories, username);
-            const userAmount = inventory.items[actualItemName] || 0;
-
-            if (userAmount < amount) {
-                throw new Error(`No tienes suficientes. Tienes ${userAmount}x ${actualItemName}.`);
+            if (!inventory.hasItem(actualItemName, amount)) {
+                throw new Error(`No tienes suficientes. Tienes ${inventory.getItemAmount(actualItemName)}x ${actualItemName}.`);
             }
-
-            inventory.items[actualItemName] -= amount;
-            if (inventory.items[actualItemName] === 0) delete inventory.items[actualItemName];
+            inventory.removeItem(actualItemName, amount);
         });
 
         const actualEarnings = await this.economy.addFunds(username, totalValue);
@@ -280,7 +275,7 @@ export class RPGService {
 
         await this.inventoryRepo.executeTransaction((inventories) => {
             const inventory = this.inventoryRepo.ensureInventory(inventories, username);
-            Object.keys(inventory.items).forEach((item) => delete inventory.items[item]);
+            inventory.clear();
         });
 
         let newPrestigeLevel = 1;
@@ -365,7 +360,7 @@ export class RPGService {
                     const inv = this.inventoryRepo.ensureInventory(inventories, reward.username);
                     
                     for (const [item, amount] of Object.entries(reward.loot)) {
-                        inv.items[item] = (inv.items[item] || 0) + amount;
+                        inv.addItem(item, amount);
                     }
                     
                     notifications.push(reward);
