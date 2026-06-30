@@ -268,26 +268,38 @@ export class IKeyValueStore {
 }
 
 /**
- * Generic Base Repository abstraction.
- * @template T
+ * Generic Base Repository abstraction contract.
+ * @template T - The Domain Entity type.
  * @abstract
  */
 export class IBaseRepository {
     /**
-     * Retrieves all records.
-     * @returns {Promise<T[]>}
+     * Retrieves all records from the persistent store.
+     * @returns {Promise<T[]>} Array of domain entities.
      */
     async getAll() {
         throw new Error("Method 'getAll()' must be implemented.");
     }
 
     /**
-     * Safely handles database transactions.
-     * @param {function(T[]): Promise<any>|any} callback
+     * Finds a single domain entity by its unique identifier.
+     * @param {string} id - The primary key or unique identifier.
+     * @returns {Promise<T|null>} The found entity, or null.
+     */
+    async findById(id) {
+        throw new Error("Method 'findById()' must be implemented.");
+    }
+
+    /**
+     * Safely executes an isolated transactional update on a single targeted entity.
+     * Mitigates memory bottlenecks by avoiding loading full tables during writes.
+     * 
+     * @param {string} id - The identifier of the aggregate root.
+     * @param {function(T): (Promise<any>|any)} callback - Mutation callback containing domain logic.
      * @returns {Promise<void>}
      */
-    async executeTransaction(callback) {
-        throw new Error("Method 'executeTransaction()' must be implemented.");
+    async updateTransactional(id, callback) {
+        throw new Error("Method 'updateTransactional()' must be implemented.");
     }
 }
 
