@@ -1,6 +1,7 @@
 import { Wallet } from '../domain/economy/Wallet.js';
 import { BaseSqliteRepository } from '../core/repositories/BaseSqliteRepository.js';
 import { Inventory } from '../domain/rpg/Inventory.js';
+import { JobProfile } from '../domain/rpg/JobProfile.js';
 
 
 /**
@@ -199,7 +200,6 @@ export class SqliteInventoryRepository extends BaseSqliteRepository {
 }
 
 /**
- * @typedef {import('../core/types.js').JobProfile} JobProfile
  * @typedef {import('../core/types.js').IJobRepository} IJobRepository
  */
 
@@ -218,7 +218,15 @@ export class SqliteJobRepository extends BaseSqliteRepository {
      * @returns {JobProfile[]}
      */
     mapToDomain(rows) { 
-        return rows.map(r => ({ ...r, activeBuffs: JSON.parse(r.activeBuffs), activeExpedition: JSON.parse(r.activeExpedition) })); 
+        return rows.map(r => new JobProfile({ 
+            name: r.name, 
+            job: r.job, 
+            toolLevel: r.toolLevel, 
+            lastWork: r.lastWork, 
+            activeBuffs: JSON.parse(r.activeBuffs || '{}'), 
+            prestigeLevel: r.prestigeLevel || 0, 
+            activeExpedition: JSON.parse(r.activeExpedition || 'null')
+        })); 
     }
 
     /**
@@ -239,7 +247,15 @@ export class SqliteJobRepository extends BaseSqliteRepository {
     async getProfile(username) {
         const db = await this.client.getDb();
         const row = await db.get('SELECT * FROM jobs WHERE name = ?', [username]);
-        if (row) return { ...row, activeBuffs: JSON.parse(row.activeBuffs), activeExpedition: JSON.parse(row.activeExpedition) };
+        if (row) return new JobProfile({ 
+            name: row.name, 
+            job: row.job, 
+            toolLevel: row.toolLevel, 
+            lastWork: row.lastWork, 
+            activeBuffs: JSON.parse(row.activeBuffs || '{}'), 
+            prestigeLevel: row.prestigeLevel || 0, 
+            activeExpedition: JSON.parse(row.activeExpedition || 'null') 
+        });
         return undefined;
     }
     /**
@@ -248,9 +264,10 @@ export class SqliteJobRepository extends BaseSqliteRepository {
      */
     ensureJobProfile(jobs, username) {
         let p = jobs.find(j => j.name === username);
-        if (!p) { p = { name: username, job: null, toolLevel: 1, lastWork: 0, activeBuffs: {}, activeExpedition: null }; jobs.push(p); }
-        if (!p.activeBuffs) p.activeBuffs = {};
-        if (p.activeExpedition === undefined) p.activeExpedition = null;
+        if (!p) { 
+            p = new JobProfile({ name: username, job: null, toolLevel: 1, lastWork: 0, activeBuffs: {}, prestigeLevel: 0, activeExpedition: null }); 
+            jobs.push(p); 
+        }
         return p;
     }
 }

@@ -29,13 +29,13 @@ export class CraftingService {
         const recipe = RPG_CONFIG.CRAFTING_RECIPES[recipeKeyLowerCase];
 
         if (!recipe) {
-            throw new Error(`La receta "${recipeKey}" no existe. Usa \`/rpg recipes\` para cer la lista.`);
+            throw new Error(`La receta "${recipeKey}" no existe. Usa \`/rpg recipes\` para ver la lista.`);
         }
 
         const inventory = await this.inventoryRepository.getInventory(username);
         for (const [reqItem, reqAmount] of Object.entries(recipe.cost)) {
             if (!inventory.hasItem(reqItem, reqAmount)) {
-                throw new Error(`Materiales insuficientes. Necesitas ${reqAmount}x ${reqItem} (Tienes ${inventory.items[reqItem] || 0})`);
+                throw new Error(`Materiales insuficientes. Necesitas ${reqAmount}x ${reqItem} (Tienes ${inventory.getItemAmount(reqItem)}).`);
             }
         }
 
@@ -48,9 +48,7 @@ export class CraftingService {
 
         await this.jobRepository.executeTransaction((jobs) => {
             const profile = this.jobRepository.ensureJobProfile(jobs, username);
-            const expirationTime = Date.now() + recipe.durationMs;
-
-            profile.activeBuffs[recipe.buffId] = expirationTime;
+            profile.applyBuff(recipe.buffId, recipe.durationMs);
         });
 
         return recipe;
@@ -65,21 +63,10 @@ export class CraftingService {
     async getActiveBuffs(username) {
         /** @type {{[key: string]: number}} */
         let activeBuffsInfo = {};
-        const now = Date.now();
 
         await this.jobRepository.executeTransaction((jobs) => {
             const profile = this.jobRepository.ensureJobProfile(jobs, username);
-            let hasChanges = false;
-
-            for (const [buffId, expirationTime] of Object.entries(profile.activeBuffs)) {
-                if (now > expirationTime) {
-                    delete profile.activeBuffs[buffId];
-                    hasChanges = true;
-                } else {
-                    activeBuffsInfo[buffId] = expirationTime - now;
-                }
-            }
-            return hasChanges ? jobs : undefined;
+            activeBuffsInfo = profile.cleanAndGetActiveBuffs();
         });
 
         return activeBuffsInfo
@@ -93,16 +80,11 @@ export class CraftingService {
      */
     async consumeBuff(username, buffId) {
         let wasConsumed = false;
-        const now = Date.now();
 
         await this.jobRepository.executeTransaction((jobs) => {
             const profile = jobs.find(j => j.name === username);
-            if (profile?.activeBuffs?.[buffId]) {
-                if (now < profile.activeBuffs[buffId]) {
-                    wasConsumed = true;
-                }
-                delete profile.activeBuffs[buffId];
-                return jobs;
+            if (profile) {
+                wasConsumed = profile.removeBuff(buffId);
             }
         });
 
