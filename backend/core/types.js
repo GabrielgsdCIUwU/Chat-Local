@@ -14,7 +14,7 @@
  * Represents a blacklisted IP record.
  * @typedef {Object} BannedIp
  * @property {string} ip - The banned IP address.
- * @property {string} reason - The reason for the ban.
+ * @property {string} motivo - The reason for the ban.
  */
 
 /**
@@ -50,6 +50,18 @@
  */
 
 /**
+ * @typedef {Object} ActiveExpedition
+ * @property {string} zoneId Expedition id.
+ * @property {number} endTime Timestamp when expedition ends.
+ */
+
+/**
+ * @typedef {Object} UserInventory
+ * @property {string} name - Username
+ * @property {Object.<string, number>} items - Items map and quantity
+ */
+
+/**
  * Details of an active auction item.
  * @typedef {Object} AuctionItem
  * @property {string} id - Unique identifier.
@@ -80,7 +92,7 @@
  * @property {number} lastWork - Epoch timestamp of the last work execution.
  * @property {Object.<string, number>} activeBuffs - Active temporary potion enhancements mapped to expiration times.
  * @property {number} prestigeLevel - The accumulated prestige tier.
- * @property {Object|null} activeExpedition - Progress markers for running passive expeditions.
+ * @property {ActiveExpedition|null} activeExpedition - Progress markers for running passive expeditions.
  */
 
 /**
@@ -126,20 +138,20 @@
  */
 
 /**
- * User emoji reactions
- * @typedef {Object} EmojiReactions
- * @property {string} name - Name of the emoji
- * @property {string[]} users - All users that reacted to this emoji 
+ * Tracks individual message emoji reactions.
+ * @typedef {Object} EmojiReactionCount
+ * @property {string} name - Name of the emoji.
+ * @property {string[]} users - List of usernames who reacted with this emoji.
  */
 
 /**
- * Live global boss raid metrics.
+ * Represents a dynamic raid boss state.
  * @typedef {Object} RaidSession
- * @property {boolean} active - Flags if a battle is running.
- * @property {number} hp - Active hitpoints.
- * @property {number} maxHp - Boundary hitpoints of the boss.
- * @property {Object.<string, number>} damageLog - Damage tracking map keying usernames to values.
- * @property {number} expiresAt - Epoch timestamp marking end of fight.
+ * @property {boolean} active - Indicates if a battle is running.
+ * @property {number} hp - Active boss hitpoints.
+ * @property {number} maxHp - Maximum health bounds.
+ * @property {Object.<string, number>} damageLog - Damage mapped to participant usernames.
+ * @property {number} expiresAt - Timestamp marking the end of the raid.
  */
 
 /**
@@ -147,248 +159,1010 @@
  * @typedef {Object} MessageProps
  * @property {string} id - Unique message UUID.
  * @property {string} user - Sender username.
- * @property {string} message - Unformatted string message.
- * @property {number} timestamp - Epoch timestamp of issuance.
+ * @property {string} message - Unformatted message string.
+ * @property {number} timestamp - Epoch timestamp of creation.
  * @property {boolean} edited - Flag representing modification state.
- * @property {number} prestige - Prestige level of the sender at the time of sending.
- * @property {EmojiReactions[]} emojis - Message reactions.
- * @property {Object|null} reply - Parent message meta in thread structures.
+ * @property {number} prestige - Prestige level of the sender at creation.
+ * @property {EmojiReactionCount[]} emojis - Message reactions catalog.
+ * @property {Object|null} reply - Optional parent message reference for threading.
  */
 
 
 //region Infrastructure & Persistence
 /**
- * @typedef {Object} ISocketServer
- * @property {function(string, ...any): void} emit - Broadcasts an event to all connected sockets.
+ * Interface representing a Socket.IO server instance capable of broadcasting
+ * events to all connected clients.
+ * @abstract
  */
+export class ISocketServer {
+    /**
+     * Broadcasts an event to all connected clients.
+     * @param {string} event - Event name.
+     * @param {...any} args - Event payload.
+     * @returns {void}
+     */
+    emit(event, ...args) {
+        throw new Error("Method 'emit()' must be implemented.");
+    }
+}
 
 /**
- * @typedef {Object} ISocket
- * @property {string} id - Unique socket connection identifier.
- * @property {function(string, ...any): void} emit - Sends an event to this specific socket client.
- * @property {function(string): void} join - Joins a specific room.
+ * Interface representing an individual Socket.IO client connection.
+ * @abstract
  */
+export class ISocket {
+    constructor() {
+        /**
+         * Unique socket connection identifier.
+         * @type {string}
+         */
+        this.id = "";
+    }
+
+    /**
+     * Sends an event to this specific connected client.
+     * @param {string} event - Event name.
+     * @param {...any} args - Event payload.
+     * @returns {void}
+     */
+    emit(event, ...args) {
+        throw new Error("Method 'emit()' must be implemented.");
+    }
+
+    /**
+     * Joins the socket to a specific room.
+     * @param {string} room - Room identifier.
+     * @returns {void}
+     */
+    join(room) {
+        throw new Error("Method 'join()' must be implemented.");
+    }
+}
 
 /**
- * Interface representing a transactional and queryable database client.
- * @typedef {Object} IDatabaseClient
- * @property {function(): Promise<any>} getDb - Retrieves the active connection instance.
+ * Interface representing a transactional and queryable database client connection.
+ * @abstract
  */
+export class IDatabaseClient {
+    /**
+     * Retrieves the active database connection instance.
+     * @returns {Promise<any>}
+     */
+    async getDb() {
+        throw new Error("Method 'getDb()' must be implemented.");
+    }
+}
 
 /**
  * Interface representing a transactional SQL connection context.
- * Duck-typed abstraction to avoid direct coupling with third-party libraries.
- * 
- * @typedef {Object} ISqlConnection
- * @property {function(string, ...any): Promise<any>} run - Executes statements (INSERT, UPDATE, DELETE).
- * @property {function(string, ...any): Promise<any[]>} all - Executes queries returning multiple rows.
- * @property {function(string, ...any): Promise<any>} get - Executes queries returning a single row.
- * @property {function(string): Promise<any>} exec - Executes raw multi-line SQL commands.
+ * Duck-typed abstraction to avoid direct coupling with SQLite libraries.
+ * @abstract
  */
+export class ISqlConnection {
+    /**
+     * Executes statements (INSERT, UPDATE, DELETE).
+     * @param {string} query
+     * @param {...any} params
+     * @returns {Promise<any>}
+     */
+    async run(query, ...params) {
+        throw new Error("Method 'run()' must be implemented.");
+    }
+
+    /**
+     * Executes queries returning multiple rows.
+     * @param {string} query
+     * @param {...any} params
+     * @returns {Promise<any[]>}
+     */
+    async all(query, ...params) {
+        throw new Error("Method 'all()' must be implemented.");
+    }
+
+    /**
+     * Executes queries returning a single row.
+     * @param {string} query
+     * @param {...any} params
+     * @returns {Promise<any>}
+     */
+    async get(query, ...params) {
+        throw new Error("Method 'get()' must be implemented.");
+    }
+
+    /**
+     * Executes raw multi-line SQL commands.
+     * @param {string} sql
+     * @returns {Promise<any>}
+     */
+    async exec(sql) {
+        throw new Error("Method 'exec()' must be implemented.");
+    }
+}
 
 /**
- * Interface representing a simple key-value file storage system.
- * @typedef {Object} IKeyValueStore
- * @property {function(): Promise<any>} read - Reads persistent raw data.
- * @property {function(any): Promise<void>} write - Overwrites active collection.
- * @property {function(function(any): any): Promise<any>} update - Executes an atomic transactional state update.
+ * Interface representing a simple key-value file storage system (e.g. JSON database).
+ * @abstract
  */
+export class IKeyValueStore {
+    /**
+     * Reads persistent raw data.
+     * @returns {Promise<any>}
+     */
+    async read() {
+        throw new Error("Method 'read()' must be implemented.");
+    }
+
+    /**
+     * Overwrites active collection on disk.
+     * @param {any} data
+     * @returns {Promise<void>}
+     */
+    async write(data) {
+        throw new Error("Method 'write()' must be implemented.");
+    }
+
+    /**
+     * Executes an atomic transactional state update callback.
+     * @param {function(any): any} callback
+     * @returns {Promise<any>}
+     */
+    async update(callback) {
+        throw new Error("Method 'update()' must be implemented.");
+    }
+}
 
 /**
  * Generic Base Repository abstraction.
  * @template T
- * @typedef {Object} IBaseRepository
- * @property {function(): Promise<T[]>} getAll - Retrieves all records.
- * @property {function(function(T[]): Promise<any>|any): Promise<void>} executeTransaction - Safely handles database transactions.
+ * @abstract
  */
+export class IBaseRepository {
+    /**
+     * Retrieves all records.
+     * @returns {Promise<T[]>}
+     */
+    async getAll() {
+        throw new Error("Method 'getAll()' must be implemented.");
+    }
+
+    /**
+     * Safely handles database transactions.
+     * @param {function(T[]): Promise<any>|any} callback
+     * @returns {Promise<void>}
+     */
+    async executeTransaction(callback) {
+        throw new Error("Method 'executeTransaction()' must be implemented.");
+    }
+}
 
 /**
  * User persistent repository interface.
- * @typedef {Object} IUserRepository
- * @property {function(): Promise<User[]>} findAll - Retrieves all users.
- * @property {function(string): Promise<User|undefined>} findByName - Searches a user by name.
- * @property {function(User): Promise<void>} save - Persists or updates a user profile.
+ * @abstract
  */
+export class IUserRepository {
+    /**
+     * Retrieves all users.
+     * @returns {Promise<User[]>}
+     */
+    async findAll() {
+        throw new Error("Method 'findAll()' must be implemented.");
+    }
+
+    /**
+     * Searches a user by name.
+     * @param {string} name - Username to query.
+     * @returns {Promise<User|undefined>}
+     */
+    async findByName(name) {
+        throw new Error("Method 'findByName()' must be implemented.");
+    }
+
+    /**
+     * Persists or updates a user profile.
+     * @param {User} user - User entity state.
+     * @returns {Promise<void>}
+     */
+    async save(user) {
+        throw new Error("Method 'save()' must be implemented.");
+    }
+
+    /**
+     * Deletes a user profile by name.
+     * @param {string} name - Username to delete.
+     * @returns {Promise<void>}
+     */
+    async deleteByName(name) {
+        throw new Error("Method 'deleteByName()' must be implemented.");
+    }
+}
 
 /**
  * Banned IP check repository interface.
- * @typedef {Object} IBannedIpRepository
- * @property {function(string): Promise<BannedIp|undefined>} isBanned - Checks if an IP is blacklisted.
+ * @abstract
  */
+export class IBannedIpRepository {
+    /**
+     * Checks if an IP is blacklisted.
+     * @param {string} ip - Target IP address.
+     * @returns {Promise<BannedIp|undefined>}
+     */
+    async isBanned(ip) {
+        throw new Error("Method 'isBanned()' must be implemented.");
+    }
+}
 
 /**
  * Economy persistent repository interface.
- * @typedef {IBaseRepository<import('../domain/economy/Wallet.js').Wallet>} IEconomyRepository
- * @property {function(any[], string): import('../domain/economy/Wallet.js').Wallet} ensureWallet - Returns active wallet or initializes it.
+ * @abstract
+ * @extends {IBaseRepository<import('../domain/economy/Wallet.js').Wallet>}
  */
+export class IEconomyRepository extends IBaseRepository {
+    /**
+     * Returns active wallet or initializes it.
+     * @param {import('../domain/economy/Wallet.js').Wallet[]} wallets - Wallets pool.
+     * @param {string} username - Target owner name.
+     * @returns {import('../domain/economy/Wallet.js').Wallet}
+     */
+    ensureWallet(wallets, username) {
+        throw new Error("Method 'ensureWallet()' must be implemented.");
+    }
+}
 
 /**
  * Gambling statistics repository interface.
- * @typedef {IBaseRepository<Gambler>} IGamblingRepository
- * @property {function(any[], string): Gambler} ensureUser - Returns active profile or initializes it.
+ * @abstract
+ * @extends {IBaseRepository<Gambler>}
  */
+export class IGamblingRepository extends IBaseRepository {
+    /**
+     * Returns active profile or initializes it.
+     * @param {Gambler[]} users - Gamblers dataset.
+     * @param {string} username - Target user.
+     * @returns {Gambler}
+     */
+    ensureUser(users, username) {
+        throw new Error("Method 'ensureUser()' must be implemented.");
+    }
+}
 
 /**
  * RPG inventory persistence contract.
- * @typedef {IBaseRepository<import('../domain/rpg/Inventory.js').Inventory> & {
- *   getInventory: function(string): Promise<import('../domain/rpg/Inventory.js').Inventory>,
- *   ensureInventory: function(any[], string): import('../domain/rpg/Inventory.js').Inventory
- * }} IInventoryRepository
+ * @abstract
+ * @extends {IBaseRepository<import('../domain/rpg/Inventory.js').Inventory>}
  */
+export class IInventoryRepository extends IBaseRepository {
+    /**
+     * Yields an Inventory domain class wrapper.
+     * @param {string} username - Target username.
+     * @returns {Promise<import('../domain/rpg/Inventory.js').Inventory>}
+     */
+    async getInventory(username) {
+        throw new Error("Method 'getInventory()' must be implemented.");
+    }
+
+    /**
+     * Transaction safe finder for inventories.
+     * @param {import('../domain/rpg/Inventory.js').Inventory[]} inventories - Inventories pool.
+     * @param {string} username - Target owner name.
+     * @returns {import('../domain/rpg/Inventory.js').Inventory}
+     */
+    ensureInventory(inventories, username) {
+        throw new Error("Method 'ensureInventory()' must be implemented.");
+    }
+}
 
 /**
  * Job profile persistence contract.
- * @typedef {IBaseRepository<JobProfile> & {
- *   getProfile: function(string): Promise<JobProfile|undefined>,
- *   ensureJobProfile: function(any[], string): JobProfile
- * }} IJobRepository
+ * @abstract
+ * @extends {IBaseRepository<JobProfile>}
  */
+export class IJobRepository extends IBaseRepository {
+    /**
+     * Fetches user job profile.
+     * @param {string} username - Target username.
+     * @returns {Promise<JobProfile|undefined>}
+     */
+    async getProfile(username) {
+        throw new Error("Method 'getProfile()' must be implemented.");
+    }
+
+    /**
+     * Obtains or configures a new job profile within an active transaction.
+     * @param {JobProfile[]} jobs - Jobs pool.
+     * @param {string} username - Target username.
+     * @returns {JobProfile}
+     */
+    ensureJobProfile(jobs, username) {
+        throw new Error("Method 'ensureJobProfile()' must be implemented.");
+    }
+}
 
 /**
  * Companion assets persistence contract.
- * @typedef {IBaseRepository<PetProfile>} IPetRepository
- * @property {function(string): Promise<PetProfile>} getProfile - Retrieves the companion profile.
- * @property {function(any[], string): PetProfile} ensureProfile - Safely targets and returns the active profile.
+ * @abstract
+ * @extends {IBaseRepository<PetProfile>}
  */
+export class IPetRepository extends IBaseRepository {
+    /**
+     * Retrieves the companion profile.
+     * @param {string} username - Target username.
+     * @returns {Promise<PetProfile>}
+     */
+    async getProfile(username) {
+        throw new Error("Method 'getProfile()' must be implemented.");
+    }
+
+    /**
+     * Safely targets and returns the active profile within an active transaction.
+     * @param {PetProfile[]} profiles - Profiles pool.
+     * @param {string} username - Target username.
+     * @returns {PetProfile}
+     */
+    ensureProfile(profiles, username) {
+        throw new Error("Method 'ensureProfile()' must be implemented.");
+    }
+}
 
 /**
  * Player clan persistence contract.
- * @typedef {IBaseRepository<GuildProps>} IGuildRepository
+ * @abstract
+ * @extends {IBaseRepository<GuildProps>}
  */
+export class IGuildRepository extends IBaseRepository {}
 
 /**
  * Active auctions persistence contract.
- * @typedef {IBaseRepository<AuctionItem>} IAuctionRepository
- * @property {function(string): Promise<boolean>} removeAuction - Removes auction record from store.
+ * @abstract
+ * @extends {IBaseRepository<AuctionItem>}
  */
+export class IAuctionRepository extends IBaseRepository {
+    /**
+     * Removes an auction record from active store.
+     * @param {string} id - Auction list UUID.
+     * @returns {Promise<boolean>}
+     */
+    async removeAuction(id) {
+        throw new Error("Method 'removeAuction()' must be implemented.");
+    }
+}
 
 /**
  * Message log persistence contract.
- * @typedef {Object} IMessageRepository
- * @property {function(): Promise<MessageProps[]>} getAll - Returns sorted historical message props.
- * @property {function(MessageProps): Promise<void>} saveMessage - Saves a message entry.
- * @property {function(string, string, string): Promise<void>} editMessage - Alters message text flag.
- * @property {function(string, string): Promise<void>} deleteMessage - Deletes an entry.
- * @property {function(string, string, string): Promise<void>} addReaction - Applies a user reaction to a message.
+ * @abstract
  */
+export class IMessageRepository {
+    /**
+     * Returns sorted historical message properties.
+     * @returns {Promise<MessageProps[]>}
+     */
+    async getAll() {
+        throw new Error("Method 'getAll()' must be implemented.");
+    }
+
+    /**
+     * Saves a message entry.
+     * @param {MessageProps} messageObj - Target message.
+     * @returns {Promise<void>}
+     */
+    async saveMessage(messageObj) {
+        throw new Error("Method 'saveMessage()' must be implemented.");
+    }
+
+    /**
+     * Alters message content and triggers edited flags.
+     * @param {string} id - Message unique UUID.
+     * @param {string} username - Author of the original message.
+     * @param {string} newText - New content string.
+     * @returns {Promise<void>}
+     */
+    async editMessage(id, username, newText) {
+        throw new Error("Method 'editMessage()' must be implemented.");
+    }
+
+    /**
+     * Deletes a message entry.
+     * @param {string} id - Message unique UUID.
+     * @param {string} username - Author username.
+     * @returns {Promise<void>}
+     */
+    async deleteMessage(id, username) {
+        throw new Error("Method 'deleteMessage()' must be implemented.");
+    }
+
+    /**
+     * Applies a user reaction to a message.
+     * @param {string} messageId - Message unique UUID.
+     * @param {string} emojiName - Emoji name identifier.
+     * @param {string} username - User who reacted.
+     * @returns {Promise<void>}
+     */
+    async addReaction(messageId, emojiName, username) {
+        throw new Error("Method 'addReaction()' must be implemented.");
+    }
+}
 
 /**
  * Adaptable world boss parameters persistence contract.
- * @typedef {Object} IBossRepository
- * @property {function(number): Promise<number>} getMaxHp - Returns maximum health parameters of the boss.
- * @property {function(number): Promise<void>} setMaxHp - Configures and writes new boss health dimensions.
+ * @abstract
  */
+export class IBossRepository {
+    /**
+     * Returns maximum health parameters of the boss.
+     * @param {number} defaultHP - Fallback HP.
+     * @returns {Promise<number>}
+     */
+    async getMaxHp(defaultHP) {
+        throw new Error("Method 'getMaxHp()' must be implemented.");
+    }
 
+    /**
+     * Configures and writes new boss health dimensions.
+     * @param {number} maxHp - New health.
+     * @returns {Promise<void>}
+     */
+    async setMaxHp(maxHp) {
+        throw new Error("Method 'setMaxHp()' must be implemented.");
+    }
+}
 
 //region APP & Domain Services
 /**
- * Identity and Access Management service.
- * @typedef {Object} IAuthService
- * @property {function(string, string, string): Promise<UserDTO>} login - Validates credentials and returns user metadata.
- * @property {function(string, string, string): Promise<void>} register - Validates and registers new identities.
+ * Identity and Access Management service contract.
+ * @abstract
  */
+export class IAuthService {
+    /**
+     * Validates credentials and returns user session metadata.
+     * @param {string} name - Username.
+     * @param {string} password - Input password.
+     * @param {string} ip - Origin request IP.
+     * @returns {Promise<UserDTO>}
+     */
+    async login(name, password, ip) {
+        throw new Error("Method 'login()' must be implemented.");
+    }
+
+    /**
+     * Validates and registers new identities.
+     * @param {string} name - Requested username.
+     * @param {string} password - User password.
+     * @param {string} ip - Origin request IP.
+     * @returns {Promise<void>}
+     */
+    async register(name, password, ip) {
+        throw new Error("Method 'register()' must be implemented.");
+    }
+}
 
 /**
- * Economy service domain orchestrator.
- * @typedef {Object} IEconomyService
- * @property {function(string): Promise<WalletProps>} getBalance - Fetches current financial state.
- * @property {function(string, number): Promise<number>} addFunds - Increases money balance (with dynamic debt repayment).
- * @property {function(string, number): Promise<void>} removeFunds - Decreases wallet funds.
- * @property {function(string, string, number): Promise<void>} transferFunds - Safely routes funds between wallets.
- * @property {function(number): Promise<WalletProps[]>} getTopRicher - Retrieves richest users sorted by funds.
- * @property {function(string, number): Promise<number>} forceRemoveFunds - Safe subtraction matching balance limit.
- * @property {function(string, number): Promise<void>} declareBankruptcy - Triggers bankruptcy protocols.
+ * Economy service domain orchestrator contract.
+ * @abstract
  */
+export class IEconomyService {
+    /**
+     * Fetches current financial state of a wallet.
+     * @param {string} username - Wallet owner name.
+     * @returns {Promise<WalletProps>}
+     */
+    async getBalance(username) {
+        throw new Error("Method 'getBalance()' must be implemented.");
+    }
+
+    /**
+     * Increases money balance (with automatic debt repayment handling).
+     * @param {string} username - Target wallet owner name.
+     * @param {number} amount - Safe integer to deposit.
+     * @returns {Promise<number>} Net amount credited after debt payoffs.
+     */
+    async addFunds(username, amount) {
+        throw new Error("Method 'addFunds()' must be implemented.");
+    }
+
+    /**
+     * Decreases wallet funds.
+     * @param {string} username - Target wallet owner name.
+     * @param {number} amount - Safe integer to subtract.
+     * @returns {Promise<void>}
+     */
+    async removeFunds(username, amount) {
+        throw new Error("Method 'removeFunds()' must be implemented.");
+    }
+
+    /**
+     * Safely routes funds between wallets.
+     * @param {string} senderName - Origin account.
+     * @param {string} targetName - Destination account.
+     * @param {number} amount - Safe integer.
+     * @returns {Promise<void>}
+     */
+    async transferFunds(senderName, targetName, amount) {
+        throw new Error("Method 'transferFunds()' must be implemented.");
+    }
+
+    /**
+     * Retrieves richest users sorted by funds.
+     * @param {number} limit - Slice boundaries.
+     * @returns {Promise<WalletProps[]>}
+     */
+    async getTopRicher(limit) {
+        throw new Error("Method 'getTopRicher()' must be implemented.");
+    }
+
+    /**
+     * Safe subtraction matching balance limit bounds.
+     * @param {string} username - Target owner.
+     * @param {number} amount - Requested amount.
+     * @returns {Promise<number>} Actual funds extracted.
+     */
+    async forceRemoveFunds(username, amount) {
+        throw new Error("Method 'forceRemoveFunds()' must be implemented.");
+    }
+
+    /**
+     * Triggers bankruptcy protocols resetting state and setting penalty debt.
+     * @param {string} username - Bankrupt user.
+     * @param {number} bankRuptCount - Occurrences multiplier.
+     * @returns {Promise<void>}
+     */
+    async declareBankruptcy(username, bankRuptCount) {
+        throw new Error("Method 'declareBankruptcy()' must be implemented.");
+    }
+}
 
 /**
- * Gacha, pets and companion modifier bonus service.
- * @typedef {Object} IPetService
- * @property {function(string, number): Promise<number>} buyEgg - Registers companion egg acquisitions.
- * @property {function(string): Promise<any>} openEgg - Hatches an egg and returns random companion attributes.
- * @property {function(string, string): Promise<any|null>} equipPet - Assigns or unequips active companion.
- * @property {function(string, string): Promise<number>} getBonus - Returns modifier percentage value for activities.
- * @property {function(string, string): Promise<{petConfig: any, refundAmount: number}>} releasePet - Recycles pet for flat currency value.
+ * Gacha, pets and companion modifier bonus service contract.
+ * @abstract
  */
+export class IPetService {
+    /**
+     * Registers companion egg acquisitions.
+     * @param {string} username - User name.
+     * @param {number} amount - Quantity.
+     * @returns {Promise<number>} Total currency subtracted.
+     */
+    async buyEgg(username, amount) {
+        throw new Error("Method 'buyEgg()' must be implemented.");
+    }
+
+    /**
+     * Hatches an egg and returns random companion attributes.
+     * @param {string} username - Active user.
+     * @returns {Promise<import('./rpgConfig.js').PetConfig>}
+     */
+    async openEgg(username) {
+        throw new Error("Method 'openEgg()' must be implemented.");
+    }
+
+    /**
+     * Assigns or unequips active companion.
+     * @param {string} username - Active user.
+     * @param {string} petId - Target UUID or 'none'.
+     * @returns {Promise<import('./rpgConfig.js').PetConfig|null>}
+     */
+    async equipPet(username, petId) {
+        throw new Error("Method 'equipPet()' must be implemented.");
+    }
+
+    /**
+     * Returns modifier percentage value for activities.
+     * @param {string} username - User name.
+     * @param {import('./rpgConfig.js').PetEffectType} effectType - Modifier type.
+     * @returns {Promise<number>}
+     */
+    async getBonus(username, effectType) {
+        throw new Error("Method 'getBonus()' must be implemented.");
+    }
+
+    /**
+     * Recycles a pet for flat currency value.
+     * @param {string} username - Target owner.
+     * @param {string} petId - Pet unique UUID.
+     * @returns {Promise<{petConfig: import('./rpgConfig.js').PetConfig, refundAmount: number}>}
+     */
+    async releasePet(username, petId) {
+        throw new Error("Method 'releasePet()' must be implemented.");
+    }
+}
 
 /**
- * Guild administration and ranking service.
- * @typedef {Object} IGuildService
- * @property {function(string, string): Promise<any>} createGuild - Funds a clan.
- * @property {function(string): Promise<any|undefined>} getUserGuild - Fetches active guild for player.
- * @property {function(number): Promise<any[]>} getTopGuilds - Obtains guild ranking metrics.
- * @property {function(string, string): Promise<string>} inviteMember - Issues a pending invitation.
- * @property {function(string, boolean): Promise<string>} resolveInvite - Accepts or rejects invitation.
- * @property {function(string, number): Promise<{levelUp: boolean, currentLevel: number}>} donate - Deposits funds into the guild treasury.
- * @property {function(string): Promise<void>} leaveGuild - Removes player from guild.
- * @property {function(string): Promise<number>} getUserGuildLevel - Quick check of player guild tier.
+ * Guild administration and ranking service contract.
+ * @abstract
  */
+export class IGuildService {
+    /**
+     * Funds a clan.
+     * @param {string} founderName - Funding user.
+     * @param {string} guildName - Clan name.
+     * @returns {Promise<GuildProps>}
+     */
+    async createGuild(founderName, guildName) {
+        throw new Error("Method 'createGuild()' must be implemented.");
+    }
+
+    /**
+     * Fetches active guild for player.
+     * @param {string} username - Target player name.
+     * @returns {Promise<GuildProps|undefined>}
+     */
+    async getUserGuild(username) {
+        throw new Error("Method 'getUserGuild()' must be implemented.");
+    }
+
+    /**
+     * Obtains guild ranking metrics.
+     * @param {number} limit - Slice bounds.
+     * @returns {Promise<GuildProps[]>}
+     */
+    async getTopGuilds(limit) {
+        throw new Error("Method 'getTopGuilds()' must be implemented.");
+    }
+
+    /**
+     * Issues a pending invitation.
+     * @param {string} inviterName - Issuer name.
+     * @param {string} targetName - Target name.
+     * @returns {Promise<string>} Guild display name.
+     */
+    async inviteMember(inviterName, targetName) {
+        throw new Error("Method 'inviteMember()' must be implemented.");
+    }
+
+    /**
+     * Accepts or rejects invitation.
+     * @param {string} targetName - Target invite candidate name.
+     * @param {boolean} accept - Outcome option.
+     * @returns {Promise<string>} Guild display name.
+     */
+    async resolveInvite(targetName, accept) {
+        throw new Error("Method 'resolveInvite()' must be implemented.");
+    }
+
+    /**
+     * Deposits funds into the guild treasury.
+     * @param {string} username - Depositor name.
+     * @param {number} amount - Value to deposit.
+     * @returns {Promise<{levelUp: boolean, currentLevel: number}>}
+     */
+    async donate(username, amount) {
+        throw new Error("Method 'donate()' must be implemented.");
+    }
+
+    /**
+     * Removes player from active guild.
+     * @param {string} username - Target username.
+     * @returns {Promise<void>}
+     */
+    async leaveGuild(username) {
+        throw new Error("Method 'leaveGuild()' must be implemented.");
+    }
+
+    /**
+     * Quick check of player guild tier index.
+     * @param {string} username - Target username.
+     * @returns {Promise<number>}
+     */
+    async getUserGuildLevel(username) {
+        throw new Error("Method 'getUserGuildLevel()' must be implemented.");
+    }
+}
 
 /**
- * Bot internal configurations and dynamic module parsing service.
- * @typedef {Object} ICommandService
- * @property {function(string=): Promise<Object>} getCommandTree - Dynamically discovers and builds the command permission tree.
+ * Bot internal configurations and dynamic module parsing service contract.
+ * @abstract
  */
+export class ICommandService {
+    /**
+     * Dynamically discovers and builds the command permission tree.
+     * @param {string} [dir] - Filesystem target.
+     * @returns {Promise<Object>}
+     */
+    async getCommandTree(dir) {
+        throw new Error("Method 'getCommandTree()' must be implemented.");
+    }
+}
 
 /**
- * Multi-dimensional analysis of emoji directories.
- * @typedef {Object} IEmojiService
- * @property {function(): EmojiMetadata[]} getEmojiMetada - Scans local directories returning emoji metadata structures.
+ * Multi-dimensional analysis of emoji directories contract.
+ * @abstract
  */
+export class IEmojiService {
+    /**
+     * Scans local directories returning emoji metadata structures.
+     * @returns {EmojiMetadata[]}
+     */
+    getEmojiMetada() {
+        throw new Error("Method 'getEmojiMetada()' must be implemented.");
+    }
+}
 
 /**
- * User visual customization adjustments.
- * @typedef {Object} IUserService
- * @property {function(string): Promise<{nombre: string, color: string, img: string|null}>} getUserData - Returns profiles metrics.
- * @property {function(string, string): Promise<boolean>} changeColor - Modifies name hex colors.
- * @property {function(string, string): Promise<boolean>} changeProfileImage - Updates avatar image format extension.
- * @property {function(string, string): Promise<void>} changename - Renegotiates username identity.
+ * User visual customization adjustments service contract.
+ * @abstract
  */
+export class IUserService {
+    /**
+     * Returns profiles customization metrics.
+     * @param {string} username - Target user.
+     * @returns {Promise<{nombre: string, color: string, img: string|null}>}
+     */
+    async getUserData(username) {
+        throw new Error("Method 'getUserData()' must be implemented.");
+    }
+
+    /**
+     * Modifies name hex colors.
+     * @param {string} username - Target user.
+     * @param {string} newColor - Hexadecimal color code.
+     * @returns {Promise<boolean>}
+     */
+    async changeColor(username, newColor) {
+        throw new Error("Method 'changeColor()' must be implemented.");
+    }
+
+    /**
+     * Updates avatar image format extension.
+     * @param {string} username - Target user.
+     * @param {string} extension - Image extension name (e.g. '.png').
+     * @returns {Promise<boolean>}
+     */
+    async changeProfileImage(username, extension) {
+        throw new Error("Method 'changeProfileImage()' must be implemented.");
+    }
+
+    /**
+     * Renegotiates username identity across persistent logs and files.
+     * @param {string} oldName - Current name.
+     * @param {string} newName - Target new name.
+     * @returns {Promise<void>}
+     */
+    async changename(oldName, newName) {
+        throw new Error("Method 'changename()' must be implemented.");
+    }
+}
 
 /**
- * Potions and magic status operations administrator.
- * @typedef {Object} ICraftingService
- * @property {function(string, string): Promise<Object>} craftItem - Consumes resources and applies buff parameters.
- * @property {function(string): Promise<Object.<string, number>>} getActiveBuffs - Exposes active buffs with remaining durations.
- * @property {function(string, string): Promise<boolean>} consumeBuff - Instantly removes and evaluates custom buff active states.
+ * Potions and magic status operations administrator contract.
+ * @abstract
  */
+export class ICraftingService {
+    /**
+     * Consumes resources and applies buff parameters.
+     * @param {string} username - Caller username.
+     * @param {string} recipeKey - Recipe target name.
+     * @returns {Promise<import('./rpgConfig.js').CraftingRecipe>}
+     */
+    async craftItem(username, recipeKey) {
+        throw new Error("Method 'craftItem()' must be implemented.");
+    }
+
+    /**
+     * Exposes active buffs with remaining durations.
+     * @param {string} username - Target user.
+     * @returns {Promise<Object.<string, number>>} Mapped remaining milliseconds.
+     */
+    async getActiveBuffs(username) {
+        throw new Error("Method 'getActiveBuffs()' must be implemented.");
+    }
+
+    /**
+     * Instantly removes and evaluates custom buff active states.
+     * @param {string} username - Target user.
+     * @param {string} buffId - Buff identifier key.
+     * @returns {Promise<boolean>}
+     */
+    async consumeBuff(username, buffId) {
+        throw new Error("Method 'consumeBuff()' must be implemented.");
+    }
+}
 
 /**
- * Main game engine coordinating RPG dynamics.
- * @typedef {Object} IRPGService
- * @property {function(string, string): Promise<string>} joinJob - Sets primary RPG profession class.
- * @property {function(string): Promise<{actionText: string, items: Object.<string, number>}>} work - Triggers active job collection.
- * @property {function(string): Promise<string>} upgradeTool - Upgrades equipment.
- * @property {function(string, string, number): Promise<{itemName: string, totalValue: number}>} sellItem - Liquidates backpack assets.
- * @property {function(string): Promise<{profile: JobProfile|null, inventory: any}>} getFullProfile - Fetches complete RPG metrics.
- * @property {function(string): Promise<number>} executePrestige - Resets active RPG levels for permanent modifiers.
- * @property {function(string, string): Promise<Object>} startExpedition - Starts idle expeditions.
- * @property {function(): Promise<any[]>} processFinishedExpeditions - Automatically evaluates and collects idle items.
+ * Main game engine coordinating RPG dynamics contract.
+ * @abstract
  */
+export class IRPGService {
+    /**
+     * Sets primary RPG profession class.
+     * @param {string} username - Target user name.
+     * @param {string} jobKey - Job configuration identifier.
+     * @returns {Promise<string>} Job display name.
+     */
+    async joinJob(username, jobKey) {
+        throw new Error("Method 'joinJob()' must be implemented.");
+    }
+
+    /**
+     * Triggers active job collection, updating inventory and returning action loot metrics.
+     * @param {string} username - Worker username.
+     * @returns {Promise<{actionText: string, items: Object.<string, number>}>}
+     */
+    async work(username) {
+        throw new Error("Method 'work()' must be implemented.");
+    }
+
+    /**
+     * Upgrades equipment to the next tier, consuming funds and resources.
+     * @param {string} username - Worker username.
+     * @returns {Promise<string>} Unlocked equipment display name.
+     */
+    async upgradeTool(username) {
+        throw new Error("Method 'upgradeTool()' must be implemented.");
+    }
+
+    /**
+     * Liquidates backpack assets at fixed base system prices.
+     * @param {string} username - Seller username.
+     * @param {string} itemName - Target material name.
+     * @param {number} amount - Quantity.
+     * @returns {Promise<{itemName: string, totalValue: number}>} Sold attributes.
+     */
+    async sellItem(username, itemName, amount) {
+        throw new Error("Method 'sellItem()' must be implemented.");
+    }
+
+    /**
+     * Fetches complete RPG metrics (job profiles and backpack inventories).
+     * @param {string} username - Target player name.
+     * @returns {Promise<{profile: JobProfile|null, inventory: any}>}
+     */
+    async getFullProfile(username) {
+        throw new Error("Method 'getFullProfile()' must be implemented.");
+    }
+
+    /**
+     * Resets active RPG levels for permanent modifiers.
+     * @param {string} username - Target player name.
+     * @returns {Promise<number>} Unlocked prestige index.
+     */
+    async executePrestige(username) {
+        throw new Error("Method 'executePrestige()' must be implemented.");
+    }
+
+    /**
+     * Starts idle passive explorations.
+     * @param {string} username - Target username.
+     * @param {string} zoneKey - Target zone identification.
+     * @returns {Promise<Object>} Exploration properties.
+     */
+    async startExpedition(username, zoneKey) {
+        throw new Error("Method 'startExpedition()' must be implemented.");
+    }
+
+    /**
+     * Automatically evaluates and collects idle completed items.
+     * @returns {Promise<any[]>}
+     */
+    async processFinishedExpeditions() {
+        throw new Error("Method 'processFinishedExpeditions()' must be implemented.");
+    }
+}
 
 /**
- * Market, Direct Trades and Auction House orchestrator.
- * @typedef {Object} IMarketService
- * @property {function(string, string, number, number): Promise<AuctionItem>} publishAuction - Publishes auction items.
- * @property {function(string, string): Promise<AuctionItem>} buyAuction - Buys an auction.
- * @property {function(): Promise<AuctionItem[]>} getActiveAuctions - Yields active non-expired auctions.
- * @property {function(): Promise<void>} checkExpiredAuctions - Checks and refunds expired auctions.
- * @property {function(string, string, string, number, string, number): Promise<Object>} proposeTrade - Starts transactional peer trading.
- * @property {function(string, boolean): Promise<any>} resolveTrade - Finalizes direct trade structures.
+ * Market, Direct Trades and Auction House orchestrator contract.
+ * @abstract
  */
+export class IMarketService {
+    /**
+     * Publishes auction items, subtracting resources from seller backpack.
+     * @param {string} sellerName - Seller username.
+     * @param {string} itemName - Target material name.
+     * @param {number} amount - Quantity.
+     * @param {number} price - Total requested price.
+     * @returns {Promise<AuctionItem>}
+     */
+    async publishAuction(sellerName, itemName, amount, price) {
+        throw new Error("Method 'publishAuction()' must be implemented.");
+    }
+
+    /**
+     * Buys an auction listing inside a safe ACID database transaction.
+     * @param {string} buyerName - Buyer username.
+     * @param {string} auctionId - Auction listing UUID.
+     * @returns {Promise<AuctionItem>}
+     */
+    async buyAuction(buyerName, auctionId) {
+        throw new Error("Method 'buyAuction()' must be implemented.");
+    }
+
+    /**
+     * Retrieves all active non-expired auctions.
+     * @returns {Promise<AuctionItem[]>}
+     */
+    async getActiveAuctions() {
+        throw new Error("Method 'getActiveAuctions()' must be implemented.");
+    }
+
+    /**
+     * Checks and returns expired active auctions back to seller inventories.
+     * @returns {Promise<void>}
+     */
+    async checkExpiredAuctions() {
+        throw new Error("Method 'checkExpiredAuctions()' must be implemented.");
+    }
+
+    /**
+     * Proposes a direct trade.
+     * @param {string} senderName - Proposing username.
+     * @param {string} targetName - Target recipient username.
+     * @param {string} sendItem - Material offered.
+     * @param {number} sendAmount - Quantity offered.
+     * @param {string} reqItem - Material requested.
+     * @param {number} reqAmount - Quantity requested.
+     * @returns {Promise<{sItemActual: string, rItemActual: string}>}
+     */
+    async proposeTrade(senderName, targetName, sendItem, sendAmount, reqItem, reqAmount) {
+        throw new Error("Method 'proposeTrade()' must be implemented.");
+    }
+
+    /**
+     * Finalizes direct trade structures.
+     * @param {string} targetName - Target buyer.
+     * @param {boolean} accept - Outcome option.
+     * @returns {Promise<Object|boolean>} Settled properties, yields false if rejected.
+     */
+    async resolveTrade(targetName, accept) {
+        throw new Error("Method 'resolveTrade()' must be implemented.");
+    }
+}
 
 /**
- * Real-time World Boss engine.
- * @typedef {Object} IRaidService
- * @property {function(any): Promise<void>} startRaid - Broadcasts raid commencement.
- * @property {function(string, any): Promise<void>} hitBoss - Deducts HP and registers damage logs.
- * @property {function(): Object|null} getSyncData - Syncs incoming live players with current session metrics.
+ * Real-time World Boss engine contract.
+ * @abstract
  */
+export class IRaidService {
+    /**
+     * Broadcasts raid commencement to the WS hub.
+     * @param {ISocketServer} io - Sockets server instance.
+     * @returns {Promise<void>}
+     */
+    async startRaid(io) {
+        throw new Error("Method 'startRaid()' must be implemented.");
+    }
+
+    /**
+     * Deducts boss HP and registers live damage log metrics.
+     * @param {string} username - Attacking username.
+     * @param {ISocketServer} io - Sockets server instance.
+     * @returns {Promise<void>}
+     */
+    async hitBoss(username, io) {
+        throw new Error("Method 'hitBoss()' must be implemented.");
+    }
+
+    /**
+     * Syncs incoming live players with current session metrics.
+     * @returns {Object|null}
+     */
+    getSyncData() {
+        throw new Error("Method 'getSyncData()' must be implemented.");
+    }
+}
 
 /**
- * Filters incoming messages in Socket.io threads.
- * @typedef {Object} IChatFilterService
- * @property {function(string, string, any, number): Promise<void>} processMessage - Evaluates and processes pipelines.
- * @property {function(string, string, any, number): Promise<void>} checkDonationSpam - Checks and counts developer donations.
+ * Filters incoming messages in Socket.io threads contract.
+ * @abstract
  */
+export class IChatFilterService {
+    /**
+     * Processes a message through all registered filters.
+     * @param {string} msg - The raw message content.
+     * @param {string} username - The sender's username.
+     * @param {ISocketServer} io - The socket.io server instance.
+     * @param {number} timestamp - The message timestamp.
+     * @returns {Promise<void>}
+     */
+    async processMessage(msg, username, io, timestamp) {
+        throw new Error("Method 'processMessage()' must be implemented.");
+    }
 
-export default {};
+    /**
+     * Processes a message through all registered filters.
+     * @param {string} msg - The raw message content.
+     * @param {string} username - The sender's username.
+     * @param {ISocketServer} io - The socket.io server instance.
+     * @param {number} timestamp - The message timestamp.
+     * @returns {Promise<void>}
+     */
+    async checkDonationSpam(msg, username, io, timestamp) {
+        throw new Error("Method 'checkDonationSpam()' must be implemented.");
+    }
+}
