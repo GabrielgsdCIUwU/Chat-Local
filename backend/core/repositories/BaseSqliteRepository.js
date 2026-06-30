@@ -8,21 +8,21 @@
  */
 
 /**
- * Abstract Base Repository for SQLite.
- * Handles generic database operations and safe transactions.
+ * Refactored Abstract Base Repository for SQLite.
+ * Executes granular operations instead of full-table scanning.
  * 
- * @template T - The Domain Entity type.
+ * @template T - The domain entity type.
  * @abstract
  * @implements {IBaseRepository<T>}
  */
 export class BaseSqliteRepository {
     /**
-     * @param {IDatabaseClient<T>} client - Abstract database connection client.
-     * @param {string} tableName - The name of the table this repository manages.
+     * @param {IDatabaseClient<T>} client - Database connection wrapper.
+     * @param {string} tableName - Managed SQL database table.
      */
     constructor(client, tableName) {
         if (new.target === BaseSqliteRepository) {
-            throw new TypeError("Cannot construct Abstract instances directly");
+            throw new TypeError("Cannot construct Abstract instances directly.");
         }
         /** @protected */
         this.client = client;
@@ -31,7 +31,7 @@ export class BaseSqliteRepository {
     }
 
     /**
-     * Retrieves all records from the table and maps them to domain entities.
+     * Retrieves all records from the table.
      * @returns {Promise<T[]>}
      */
     async getAll() {
@@ -41,34 +41,47 @@ export class BaseSqliteRepository {
     }
 
     /**
-     * Executes a thread-safe exclusive transaction.
+     * Finds a single entity by its unique primary identifier.
+     * @abstract
+     * @param {string} id - Row primary key.
+     * @returns {Promise<T|null>} Target entity, or null.
+     */
+    async findById(id) {
+        throw new Error("Method 'findById()' must be implemented.");
+    }
+
+    /**
+     * Safely executes an isolated update on a single entity within an immediate transaction.
+     * Avoids mass database updates and excessive system locks.
      * 
-     * @param {function(T[]): Promise<void> | void} callback - The mutation logic.
+     * @param {string} id - The entity identifier.
+     * @param {function(T): (Promise<void>|void)} callback - Pure modification business rule.
      * @returns {Promise<void>}
      */
-    async executeTransaction(callback) {
+    async updateTransactional(id, callback) {
         const db = await this.client.getDb();
-        await db.exec('BEGIN EXCLUSIVE TRANSACTION');
+        await db.exec('BEGIN IMMEDIATE TRANSACTION');
         try {
-            const rows = await db.all(`SELECT * FROM ${this.tableName}`);
-            const entities = this.mapToDomain(rows);
-            
-            await callback(entities);
-            
-            await this.saveAll(db, entities);
-            
+            const entity = await this.findById(id);
+            if (!entity) {
+                throw new Error(`Record with ID '${id}' not found in '${this.tableName}'.`);
+            }
+
+            await callback(entity);
+
+            await this.saveSingle(db, entity);
             await db.exec('COMMIT');
-        } catch(e) { 
-            await db.exec('ROLLBACK'); 
-            throw e; 
+        } catch (error) {
+            await db.exec('ROLLBACK');
+            throw error;
         }
     }
 
     /**
-     * Maps raw database rows to Domain Entities or structured objects.
+     * Maps raw database rows to Domain Entities.
      * @abstract
      * @protected
-     * @param {any[]} rows - Raw database rows.
+     * @param {any[]} rows - Raw SQL database rows.
      * @returns {T[]}
      */
     mapToDomain(rows) {
@@ -76,10 +89,22 @@ export class BaseSqliteRepository {
     }
 
     /**
-     * Saves a collection of entities back to the database within the transaction.
+     * Persists or replaces a single domain entity record.
      * @abstract
      * @protected
-     * @param {import('../types.js').ISqlConnection} db - The active database transaction connection.
+     * @param {import('../types.js').ISqlConnection} db - Active transaction reference.
+     * @param {T} entity - Domain entity to save.
+     * @returns {Promise<void>}
+     */
+    async saveSingle(db, entity) {
+        throw new Error("Method 'saveSingle()' must be implemented.");
+    }
+
+    /**
+     * Fallback batch save method required by interface structure.
+     * @abstract
+     * @protected
+     * @param {import('../types.js').ISqlConnection} db - Active transaction reference.
      * @param {T[]} entities - Array of domain entities.
      * @returns {Promise<void>}
      */
