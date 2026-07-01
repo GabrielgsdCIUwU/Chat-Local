@@ -93,7 +93,7 @@ export class Wallet extends Entity {
      */
     declareBankruptcy(bankruptCount) {
         if (this.money > 0) {
-            throw new Error(`Cannot declare bankruptcy. Wallet still has ${this.money}€.`);
+            throw new Error(`No puedes declararte en banca rota. Tienes ${this.money}€.`);
         }
 
         const baseMoney = GAME_CONFIG.ECONOMY.BANKRUPT_BASE_MONEY;
