@@ -4,6 +4,7 @@ import { BaseCommand } from "../../core/BaseCommand.js";
  * @typedef {import("../../core/BotContext.js").BotContext} BotContext
  */
 
+/** @type {Map<string, { challengerName: string, amount: number }>} */
 const pendingDuels = new Map();
 
 /**
@@ -16,23 +17,26 @@ class DueloCommand extends BaseCommand {
             name: "duelo",
             description: "Reta a otro jugador a duelo a muerte por dinero.",
             params: [
-                {name: "targetUser", displayName: "Usuario", type: "user", required: false, description: "Usuario a retar." },
-                {name: "amount", displayName: "Cantidad", type: "number", required: false, description: "Cantidad a apostar." },
-                {name: "action", displayName: "Acción", type: "string", required: false, values: ["aceptar", "rechazar"], description: "Acepta o rechaza un duelo pendiente." }
+                { name: "action", displayName: "Acción", type: "string", required: true, values: ["retar", "aceptar", "rechazar"], description: "Elige entre retar, aceptar o rechazar un duelo." },
+                { name: "targetUser", displayName: "Usuario", type: "user", required: false, description: "Usuario al que quieres retar (requerido para retar)." },
+                { name: "amount", displayName: "Cantidad", type: "number", required: false, description: "Cantidad de dinero a apostar (requerido para retar)." }
             ]
         });
     }
 
     /**
+     * Executes the duel resolution and statistics assignment.
      * 
-     * @param {BotContext} context 
-     * @param {Record<string, any>} args 
+     * @param {BotContext} context - Command execution context.
+     * @param {Record<string, any>} args - Parameter arguments.
+     * @returns {Promise<void>}
      */
     async run(context, args) {
         const { action, amount, targetUser } = args;
         const eco = context.container.economyService;
+        const actionLower = action.toLowerCase();
 
-        if (action === "aceptar") {
+        if (actionLower === "aceptar") {
             if (!pendingDuels.has(context.username)) {
                 throw new Error("No tienes ningún duelo pendiente.");
             }
@@ -64,16 +68,16 @@ class DueloCommand extends BaseCommand {
 
             return context.reply(finalMessage);
 
-        } else if (action === "rechazar") {
+        } else if (actionLower === "rechazar") {
             if (pendingDuels.has(context.username)) {
                 pendingDuels.delete(context.username);
                 return context.reply(`❌ **${context.username}** ha rechazado el duelo.`);
             }
             throw new Error("No tienes ningún duelo pendiente para rechazar.");
 
-        } else if (action === "retar" || (targetUser && amount)) {
+        } else if (actionLower === "retar") {
             if (!targetUser || !amount) {
-                throw new Error("Para retar debes especificar la cantidad y el usuario. Ej: `/gambling duelo retar 100 Usuario`.");
+                throw new Error("Para retar debes especificar la cantidad y el usuario. Ej: `/gambling duelo retar Usuario 100`.");
             }
             if (context.username === targetUser) throw new Error("No puedes retarte a ti mismo.");
 
