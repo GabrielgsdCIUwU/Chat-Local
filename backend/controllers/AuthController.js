@@ -4,10 +4,12 @@ export class AuthController {
     /**
      * @param {import('../core/types.js').IAuthService} authService - Service for authentication logic.
      * @param {import('../core/types.js').IUserRepository} userRepository - Repository for user data.
+     * @param {import('../core/types.js').IUserService} userService - Service for user profiles and roles logic.
      */
-    constructor(authService, userRepository) {
+    constructor(authService, userRepository, userService) {
         this.authService = authService;
         this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     /**
@@ -54,6 +56,9 @@ export class AuthController {
             }
 
             const location = req.ip;
+            if (!location) {
+                return ApiResponse.error(res, "Se ha producido un error al obtener tu IP local", 400);
+            }
             await this.authService.register(name, passwd, location);
 
             return ApiResponse.success(res, "Usuario creado exitosamente");
@@ -66,7 +71,6 @@ export class AuthController {
      * Retrieves a list of all registered usernames.
      * @param {import('express').Request} req - Express request object.
      * @param {import('express').Response} res - Express response object.
-     * @returns {string[]} usernames
      */
     listUsers = async (req, res) => {
         try {
@@ -76,6 +80,27 @@ export class AuthController {
         } catch (error) {
             console.error(error);
             return ApiResponse.error(res, "Se ha producido un error en el servidor.", 500);
+        }
+    };
+
+    /**
+     * Administrative handler to assign roles.
+     * @param {import('express').Request} req - Express request object.
+     * @param {import('express').Response} res - Express response object.
+     */
+    assignRoles = async (req, res) => {
+        try {
+            const adminName = req.session.user.name;
+            const { targetUser, roles } = req.body;
+
+            if (!targetUser || !Array.isArray(roles)) {
+                return ApiResponse.error(res, "La solicitud debe contener un targetUser y un array de roles.", 400);
+            }
+
+            await this.userService.updateUserRoles(adminName, targetUser, roles);
+            return ApiResponse.success(res, `Roles actualizados con éxito para ${targetUser}.`);
+        } catch (error) {
+            return ApiResponse.error(res, error.message, 400);
         }
     };
 }
