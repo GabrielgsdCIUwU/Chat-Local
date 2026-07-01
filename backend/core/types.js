@@ -858,6 +858,18 @@ export class IUserService {
     async changename(oldName, newName) {
         throw new Error("Method 'changename()' must be implemented.");
     }
+
+    /**
+     * Updates a user's system security roles. Enforces administrative checks and lockout prevention.
+     * 
+     * @param {string} adminUsername - The executing administrator's username.
+     * @param {string} targetUsername - The user whose roles will be updated.
+     * @param {string[]} newRoles - Array of valid role strings to assign.
+     * @returns {Promise<void>}
+     */
+    async updateUserRoles(adminUsername, targetUsername, newRoles) {
+        throw new Error("Method 'updateUserRoles()' must be implemented.");
+    }
 }
 
 /**
