@@ -91,7 +91,7 @@ class DIContainer {
             this.petService
         );
 
-        this.authController = new AuthController(this.authService, this.userRepository);
+        this.authController = new AuthController(this.authService, this.userRepository, this.userService);
         this.profileController = new ProfileController(this.userService);
         this.chatController = new ChatController(this.commandService);
         this.mediaController = new MediaController(this.emojiService);
