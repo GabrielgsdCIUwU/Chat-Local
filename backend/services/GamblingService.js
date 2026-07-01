@@ -16,17 +16,6 @@ export class GamblingService {
     }
 
     /**
-     * Ensures a gambler exists. If not, initializes a new profile.
-     * Note: This must be called INSIDE a transaction to be race-condition safe.
-     * @param {Gambler[]} users 
-     * @param {string} username 
-     * @returns {Gambler}
-     */
-    ensureUserExists(users, username) {
-        return this.repo.ensureUser(users, username);
-    }
-
-    /**
      * Adds funds to a user applying any active gambling bonuses from their pets and guild.
      * @param {string} username - The user receiving the reward.
      * @param {number} baseAmount - The original reward amount before bonuses.
