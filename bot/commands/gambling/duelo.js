@@ -37,7 +37,10 @@ class DueloCommand extends BaseCommand {
                 throw new Error("No tienes ningún duelo pendiente.");
             }
 
-            const { challengerName, amount: duelAmount } = pendingDuels.get(context.username);
+            const duelData = pendingDuels.get(context.username);
+            if (!duelData) throw new Error("No se pudo recuperar los datos del duelo.");
+
+            const { challengerName, amount: duelAmount } = duelData;
             pendingDuels.delete(context.username);
 
             const challengerWallet = await eco.getBalance(challengerName);
@@ -68,7 +71,7 @@ class DueloCommand extends BaseCommand {
             }
             throw new Error("No tienes ningún duelo pendiente para rechazar.");
 
-        } else if (action === "retar") {
+        } else if (action === "retar" || (targetUser && amount)) {
             if (!targetUser || !amount) {
                 throw new Error("Para retar debes especificar la cantidad y el usuario. Ej: `/gambling duelo retar 100 Usuario`.");
             }
@@ -84,12 +87,20 @@ class DueloCommand extends BaseCommand {
         }
     }
 
+    /**
+     * Sequentially updates statistical parameters of duelists.
+     * 
+     * @param {typeof import('../../../backend/core/DIContainer.js').container} container - Dependency injection container.
+     * @param {string} winner - Match winner username.
+     * @param {string} loser - Match loser username.
+     * @returns {Promise<void>}
+     */
     async #updateDuelStats(container, winner, loser) {
-        await container.gamblingRepository.executeTransaction(async (users) => {
-            const winnerGambler = container.gamblingRepository.ensureUser(users, winner);
-            const loserGambler = container.gamblingRepository.ensureUser(users, loser);
-            winnerGambler.duelWin = (winnerGambler.duelWin || 0) + 1;
-            loserGambler.duelLose = (loserGambler.duelLose || 0) + 1;
+        await container.gamblingRepository.updateTransactional(winner, (winnerGambler) => {
+            winnerGambler.recordDuelWin();
+        });
+        await container.gamblingRepository.updateTransactional(loser, (loserGambler) => {
+            loserGambler.recordDuelLose();
         });
     }
 }

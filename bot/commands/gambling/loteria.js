@@ -38,16 +38,14 @@ class LoteriaCommand extends BaseCommand {
             const baseWinnings = amount * 5;
             const { actualEarnings, petMsg } = await context.container.gamblingService.addRewardWithBonus(context.username, baseWinnings);
 
-            await context.container.gamblingRepository.executeTransaction(async (users) => {
-                const gambler = context.container.gamblingRepository.ensureUser(users, context.username);
-                gambler.spend = (gambler.spend || 0) + amount;
-                gambler.totalEarnings = (gambler.totalEarnings || 0) + actualEarnings;
+            await context.container.gamblingRepository.updateTransactional(context.username, (gambler) => {
+                gambler.recordSpend(amount);
+                gambler.recordEarnings(actualEarnings);
             });
             finalMessage = `🎉 ¡Felicidades **${context.username}**! Has ganado **${actualEarnings}€** netos en la lotería.${petMsg}`;
         } else {
-            await context.container.gamblingRepository.executeTransaction(async (users) => {
-                const gambler = context.container.gamblingRepository.ensureUser(users, context.username);
-                gambler.spend = (gambler.spend || 0) + amount;
+            await context.container.gamblingRepository.updateTransactional(context.username, (gambler) => {
+                gambler.recordSpend(amount);
             });
             finalMessage = `💸 Lo siento **${context.username}**, has perdido **${amount}€** en la lotería.`;
         }
