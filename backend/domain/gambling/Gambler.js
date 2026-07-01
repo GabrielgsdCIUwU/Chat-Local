@@ -64,8 +64,9 @@ export class Gambler extends Entity {
     get dailyStreak() { return this._props.dailyStreak; }
 
     /**
-     * Adds expenditures to the gambler's metrics.
-     * @param {number} amount - Spending amount.
+     * Records additional monetary expenditure into gambling statistics.
+     * @param {number} amount - Amount spent.
+     * @returns {void}
      */
     recordSpend(amount) {
         if (amount <= 0) return;
@@ -73,8 +74,9 @@ export class Gambler extends Entity {
     }
 
     /**
-     * Adds earnings to the gambler's metrics.
-     * @param {number} amount - Won amount.
+     * Records won earnings into gambling statistics.
+     * @param {number} amount - Amount won.
+     * @returns {void}
      */
     recordEarnings(amount) {
         if (amount <= 0) return;
@@ -83,75 +85,133 @@ export class Gambler extends Entity {
 
     /**
      * Increments the bankruptcy count.
+     * @returns {void}
      */
     recordBankruptcy() {
         this._props.bankRupt += 1;
     }
 
     /**
-     * Registers a win in dual matches.
+     * Registers a win in duel matches.
+     * @returns {void}
      */
     recordDuelWin() {
         this._props.duelWin += 1;
     }
 
     /**
-     * Registers a loss in dual matches.
+     * Registers a loss in duel matches.
+     * @returns {void}
      */
     recordDuelLose() {
         this._props.duelLose += 1;
     }
 
     /**
-     * Verifies and records a heist (robbery) attempt.
-     * @param {number} timestamp - The current timestamp.
-     * @param {number} stolenAmount - The cash stolen (if successful).
-     * @param {boolean} success - Whether the robbery succeeded.
-     * @throws {Error} If robbery cooldown has not expired.
+     * Validates if the robbery action is on cooldown.
+     * @param {number} timestamp - The current epoch timestamp.
+     * @throws {Error} If cooldown has not expired yet.
+     * @returns {void}
      */
-    executeRobbery(timestamp, stolenAmount, success) {
+    checkRobberyCooldown(timestamp) {
         const cooldown = GAME_CONFIG.ROB_CONFIG.COOLDOWN_MS;
         const timePassed = timestamp - this._props.lastRobbery;
 
         if (timePassed < cooldown) {
-            const remainingMs = cooldown - timePassed;
-            const remainingMinutes = Math.floor(remainingMs / 60000);
-            const remainingSeconds = Math.floor((remainingMs % 60000) / 1000);
-            throw new Error(`🚨 **Buscado por la policía:** Debes permanecer escondido durante **${remainingMinutes}m y ${remainingSeconds}s** antes de intentar robar de nuevo.`);
-        }
-
-        this._props.lastRobbery = timestamp;
-        this._props.timesSteal += 1;
-
-        if (success && stolenAmount > 0) {
-            this._props.moneySteal += stolenAmount;
+            throw new Error(this.#formatCooldownError(cooldown - timePassed));
         }
     }
 
     /**
-     * Verifies and records a daily reward claim.
-     * @param {number} timestamp - The current timestamp.
-     * @param {boolean} keepStreak - Whether the consecutive streak should be incremented or reset.
-     * @throws {Error} If the daily cooldown is still active.
+     * Sets the timestamp of the last robbery attempt and increments attempts.
+     * @param {number} timestamp - Current epoch timestamp.
+     * @returns {void}
      */
-    claimDaily(timestamp, keepStreak) {
-        const cooldown = GAME_CONFIG.GAMBLING.DAILY.COOLDOWN_MS;
-        const timePassed = timestamp - this._props.lastDaily;
+    markRobberyAttempt(timestamp) {
+        this._props.lastRobbery = timestamp;
+        this._props.timesSteal += 1;
+    }
 
-        if (timePassed < cooldown) {
-            const timeLeft = cooldown - timePassed;
+    /**
+     * Determines and updates the current daily streak depending on calendar parameters.
+     * 
+     * @param {number} timestamp - The current action epoch timestamp.
+     * @param {string[]} nonCountDays - List of ignored ISO date strings (e.g. holidays).
+     * @throws {Error} If the 12-hour claim cooldown is still active.
+     * @returns {{ streak: number, isNewStreak: boolean }} The resulting streak metrics.
+     */
+    calculateDailyStreak(timestamp, nonCountDays) {
+        const twelveHours = GAME_CONFIG.GAMBLING.DAILY.COOLDOWN_MS;
+        const twentyFourHours = GAME_CONFIG.GAMBLING.DAILY.EXPIRATION_MS;
+        const now = new Date(timestamp);
+
+        const timeSinceLastDaily = timestamp - this._props.lastDaily;
+        if (timeSinceLastDaily < twelveHours) {
+            const timeLeft = twelveHours - timeSinceLastDaily;
             const hours = Math.floor(timeLeft / (60 * 60 * 1000));
             const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
             throw new Error(`Ya has reclamado tu recompensa diaria. Tiempo restante: ${hours}h ${minutes}m.`);
         }
 
+        let keepStreak = false;
+
+        if (this._props.lastDaily === 0) {
+            this._props.dailyStreak = 1;
+        } else {
+            const lastDailyDate = new Date(this._props.lastDaily);
+            const isBusinessDay = (/** @type {Date} */ d) => d.getDay() >= 1 && d.getDay() <= 5;
+            const isNonCountDay = (/** @type {Date} */ d) => nonCountDays.includes(d.toISOString().split("T")[0]);
+
+            const getNextBusinessDay = (/** @type {Date} */ d) => {
+                const nextDay = new Date(d);
+                nextDay.setDate(nextDay.getDate() + 1);
+                while (!(nextDay.getDay() >= 1 && nextDay.getDay() <= 5)) {
+                    nextDay.setDate(nextDay.getDate() + 1);
+                }
+                return nextDay;
+            };
+
+            if (isBusinessDay(lastDailyDate) || isNonCountDay(lastDailyDate)) {
+                const nextExpectedBusinessDay = getNextBusinessDay(lastDailyDate);
+
+                if (now.getTime() <= nextExpectedBusinessDay.getTime() + twentyFourHours) {
+                    if (now.toDateString() === nextExpectedBusinessDay.toDateString() ||
+                        now.getTime() <= nextExpectedBusinessDay.getTime() + twentyFourHours) {
+                        keepStreak = true;
+                    }
+                }
+            }
+
+            if (now.getDay() === 1 && lastDailyDate.getDay() === 5) {
+                const daysSinceFriday = Math.floor((now.getTime() - lastDailyDate.getTime()) / (1000 * 60 * 60 * 24));
+                if (daysSinceFriday <= 4) {
+                    keepStreak = true;
+                }
+            }
+
+            if (keepStreak) {
+                this._props.dailyStreak += 1;
+            } else {
+                this._props.dailyStreak = 1;
+            }
+        }
+
         this._props.lastDaily = timestamp;
 
-        if (keepStreak) {
-            this._props.dailyStreak += 1;
-        } else {
-            this._props.dailyStreak = 1;
-        }
+        return {
+            streak: this._props.dailyStreak,
+            isNewStreak: this._props.dailyStreak === 1
+        };
+    }
+
+    /**
+     * @param {number} timeLeftMs - Milliseconds left on cooldown.
+     * @returns {string} Mapped readable string.
+     */
+    #formatCooldownError(timeLeftMs) {
+        const minutes = Math.floor(timeLeftMs / 60000);
+        const seconds = Math.floor((timeLeftMs % 60000) / 1000);
+        return `🚨 **Buscado por la policía:** Debes permanecer escondido durante **${minutes}m y ${seconds}s** antes de intentar robar de nuevo.`;
     }
 
     /**
