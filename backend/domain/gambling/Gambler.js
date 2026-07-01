@@ -226,6 +226,18 @@ export class Gambler extends Entity {
     }
 
     /**
+     * Reverts the last registered bankruptcy counter.
+     * This is an application-level rollback helper to maintain statistical consistency.
+     * 
+     * @returns {void}
+     */
+    revertBankruptcy() {
+        if (this._props.bankRupt > 0) {
+            this._props.bankRupt -= 1;
+        }
+    }
+
+    /**
      * @param {number} timeLeftMs - Milliseconds left on cooldown.
      * @returns {string} Mapped readable string.
      */
