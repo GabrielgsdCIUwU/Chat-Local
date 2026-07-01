@@ -233,7 +233,7 @@ export class RPGService {
 
         const wallet = await this.economy.getBalance(username);
         if (wallet.money > 0) {
-            await this.economy.removeFunds(username, wallet.money);
+            await this.economy.forceRemoveFunds(username, wallet.money);
         }
 
         await this.inventoryRepo.updateTransactional(username, (inventory) => {
