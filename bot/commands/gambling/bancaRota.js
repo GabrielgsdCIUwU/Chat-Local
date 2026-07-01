@@ -25,15 +25,14 @@ class BancaRotaCommand extends BaseCommand {
         const eco = context.container.economyService;
         let currentBankRupt = 0;
 
-        await context.container.gamblingRepository.executeTransaction(async (users) => {
-            const gambler = context.container.gamblingRepository.ensureUser(users, context.username);
-            gambler.bankRupt = (gambler.bankRupt || 0) + 1;
+        await context.container.gamblingRepository.updateTransactional(context.username, (gambler) => {
+            gambler.recordBankruptcy();
             currentBankRupt = gambler.bankRupt;
         });
 
         await eco.declareBankruptcy(context.username, currentBankRupt);
 
-        context.reply(`🏦 **${context.username}** acaba de llamar al banco y ha vuelto a tener **${GAME_CONFIG.BANKRUPT_BASE_MONEY}€**. Ha llamado a la banca un total de ${currentBankRupt} veces.`);
+        context.reply(`🏦 **${context.username}** acaba de llamar al banco y ha vuelto a tener **${GAME_CONFIG.ECONOMY.BANKRUPT_BASE_MONEY}€**. Ha llamado a la banca un total de ${currentBankRupt} veces.`);
     }
 
     /**
@@ -42,11 +41,8 @@ class BancaRotaCommand extends BaseCommand {
      * @param {Error} error
      */
     async rollback(context, args, error) {
-        await context.container.gamblingRepository.executeTransaction(async (users) => {
-            const gambler = context.container.gamblingRepository.ensureUser(users, context.username);
-            if (gambler.bankRupt > 0) {
-                gambler.bankRupt -= 1;
-            }
+        await context.container.gamblingRepository.updateTransactional(context.username, (gambler) => {
+            gambler.revertBankruptcy();
         });
     }
 }
