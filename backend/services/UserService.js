@@ -103,4 +103,42 @@ export class UserService {
             console.error("Error renaming profile image:", error);
         }
     }
+
+    /**
+     * Updates a user's system security roles. Includes self-lockout prevention safety logic.
+     * 
+     * @param {string} adminUsername - The executing administrator username.
+     * @param {string} targetUsername - The user whose roles will be updated.
+     * @param {string[]} newRoles - Array of valid role strings to assign.
+     * @returns {Promise<void>}
+     */
+    async updateUserRoles(adminUsername, targetUsername, newRoles) {
+        const admin = await this.userRepo.findByName(adminUsername);
+        if (!admin?.roles.includes(ROLES.ADMIN)) {
+            throw new Error("No posees privilegios de administrador para realizar esta acción.");
+        }
+
+        const targetUser = await this.userRepo.findByName(targetUsername);
+        if (!targetUser) {
+            throw new Error("El usuario objetivo no existe.");
+        }
+
+        /** @type {string[]} */
+        const allowedRoles = Object.values(ROLES);
+        const isValid = newRoles.every(role => allowedRoles.includes(role));
+        if (!isValid) {
+            throw new Error(`Roles inválidos. Roles permitidos: ${allowedRoles.join(", ")}`);
+        }
+
+        if (targetUsername === adminUsername && !newRoles.includes(ROLES.ADMIN)) {
+            const allUsers = await this.userRepo.findAll();
+            const totalAdmins = allUsers.filter(u => u.roles.includes(ROLES.ADMIN)).length;
+            if (totalAdmins <= 1) {
+                throw new Error("Operación cancelada: No puedes retirar tu propio rol de Administrador porque eres el único administrador en el sistema.");
+            }
+        }
+
+        targetUser.roles = newRoles;
+        await this.userRepo.save(targetUser);
+    }
 }
