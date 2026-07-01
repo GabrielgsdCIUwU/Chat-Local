@@ -117,6 +117,25 @@
  * @property {Object|null} reply - Optional parent message reference for threading.
  */
 
+/**
+ * Result data payload structure after a successful daily reward claim.
+ * @typedef {Object} ClaimDailyResult
+ * @property {number} actualEarnings - The net funds credited after database processing and debt deduction.
+ * @property {number} streakBonus - The computed bonus money given based on user consecutive streak.
+ * @property {number} finalStreak - The final daily streak value after calculation.
+ * @property {string} petMsg - Formatted visual indicators showing active companion and guild percentage modifiers.
+ * @property {boolean} isNewStreak - Flag indicating if the streak had been broken and was reset to 1.
+ */
+
+/**
+ * Result metrics structure representing the state of a processed player heist.
+ * @typedef {Object} RobberyResult
+ * @property {string} outcome - Outcome classification representing the attempt outcome ('ward' | 'success' | 'fail').
+ * @property {number} penalty - Absolute money fine subtracted from the thief upon failure or protection activation.
+ * @property {number} stolenAmount - The base unbuffed amount of cash taken from the victim.
+ * @property {number} totalEarned - The total amount of money actually credited to the thief (base stolen + active bonuses).
+ * @property {string} petMsg - Visual breakdown details showing active percentage multipliers applied.
+ */
 
 //region Infrastructure & Persistence
 /**
