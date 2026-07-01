@@ -2,8 +2,8 @@ import { ApiResponse } from "../core/ApiResponse.js";
 
 export class AuthController {
     /**
-     * @param {import('../services/AuthService.js').AuthService} authService - Service for authentication logic.
-     * @param {import('../repositories/UserRepository.js').UserRepository} userRepository - Repository for user data.
+     * @param {import('../core/types.js').IAuthService} authService - Service for authentication logic.
+     * @param {import('../core/types.js').IUserRepository} userRepository - Repository for user data.
      */
     constructor(authService, userRepository) {
         this.authService = authService;

@@ -2,16 +2,13 @@ import bcrypt from "bcrypt";
 import { VALIDATION_CONFIG } from "../core/constants.js";
 
 /**
- * @typedef {Object} UserDTO
- * @property {string} name - Username.
- * @property {string[]} roles - User assigned roles.
- * @property {string} [color] - User custom color if available.
+ * @typedef {import('../core/types.js').UserDTO} UserDTO
  */
 
 export class AuthService {
     /**
-     * @param {import('../repositories/UserRepository.js').UserRepository} userRepository 
-     * @param {import('../repositories/BannedIpRepository.js').BannedIpRepository} bannedIpRepository 
+     * @param {import('../core/types.js').IUserRepository} userRepository 
+     * @param {import('../core/types.js').IBannedIpRepository} bannedIpRepository 
      */
     constructor(userRepository, bannedIpRepository) {
         this.userRepository = userRepository;

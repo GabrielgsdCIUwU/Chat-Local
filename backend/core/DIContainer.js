@@ -61,7 +61,7 @@ class DIContainer {
         this.guildRepository = new SqliteGuildRepository(this.sqliteClient);
         this.petRepository = new SqlitePetRepository(this.sqliteClient);
 
-        // Base Services (No dependencies or just repositories)
+        // Base Services
         this.economyService = new EconomyService(this.economyRepository);
         this.commandService = new CommandService(this.commandsDir);
         this.emojiService = new EmojiService(this.emojisDir);
@@ -69,15 +69,21 @@ class DIContainer {
         this.authService = new AuthService(this.userRepository, this.bannedIpRepository);
         this.userService = new UserService(this.userRepository, this.profileDir);
         
-        // Mid-level Services (Depend on Base Services)
+        // Mid-level Services
         this.petService = new PetService(this.petRepository, this.economyService);
         this.guildService = new GuildService(this.economyService, this.guildRepository);
         this.craftingService = new CraftingService(this.inventoryRepository, this.jobRepository);
         this.marketService = new MarketService(this.economyService, this.inventoryRepository, this.auctionRepository);
         this.raidService = new RaidService(this.economyService, this.bossRepository);
 
-        // High-level Services (Depend on Mid-level and Base Services)
-        this.gamblingService = new GamblingService(this.gamblingRepository, this.economyService, this.petService, this.guildService);
+        // High-level Services
+        this.gamblingService = new GamblingService(
+            this.gamblingRepository,
+            this.economyService,
+            this.petService,
+            this.guildService,
+            this.craftingService
+        );
         this.rpgService = new RPGService(
             this.economyService,
             this.inventoryRepository,

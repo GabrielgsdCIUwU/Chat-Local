@@ -14,6 +14,7 @@ export class CommandLoader {
             const commandPath = pathToFileURL(path.join(basePath, `${commandName}.js`)).href;
             return await import(commandPath);
         } catch (error) {
+            console.error(`[CommandLoader] Error loading module '${commandName}':`, error.message);
             return null;
         }
     }

@@ -1,51 +1,60 @@
 import { ROLES } from "../../backend/core/constants.js";
 import { EmbedMessage } from "../utility/EmbedMessage.js";
-
-export const description = "Muestra la lista de comandos disponibles o detalles de un comando específico.";
-
-export const params = [
-    {
-        name: "comando",
-        type: "string",
-        required: false,
-        description: "Nombre del comando a consultar (ej: gambling robar)"
-    }
-];
+import { BaseCommand } from "../core/BaseCommand.js";
 
 /**
- * Executes the dynamic help system.
- * @param {import('../core/BotContext.js').BotContext} context
+ * Help command.
+ * @extends BaseCommand
  */
-export async function execute(context) {
-    const tree = await context.container.commandService.getCommandTree();
-    const embed = new EmbedMessage();
+class HelpCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "help",
+            description: "Muestra la lista de comandos disponibles o detalles de un comando específico.",
+            params: [
+                {
+                    name: "comando",
+                    type: "string",
+                    required: false,
+                    description: "Nombre del comando a consultar (ej: gambling robar)"
+                }
+            ]
+        });
+    }
 
-    const user = await context.container.userRepository.findByName(context.username);
-    const isAdmin = user?.roles.includes(ROLES.ADMIN) || false;
+    async run(context, args) {
+        const tree = await context.container.commandService.getCommandTree();
+        const embed = new EmbedMessage();
 
-    const query = context.args.join(" ").toLowerCase().trim();
+        const user = await context.container.userRepository.findByName(context.username);
+        const isAdmin = user?.roles.includes(ROLES.ADMIN) || false;
 
-    if (!query) {
-        buildCommandList(embed, tree, isAdmin);
+        const query = context.args.join(" ").toLowerCase().trim();
+
+        if (!query) {
+            buildCommandList(embed, tree, isAdmin);
+            return context.reply(embed.toString());
+        }
+
+        const result = findCommandNode(tree, query);
+
+        if (!result) {
+            return context.reply(
+                `❌ No se encontró el comando: \`/${query}\``
+            );
+        }
+
+        if (result.node.adminOnly && !isAdmin) {
+            return context.reply(`❌ No tienes permisos para ver información sobre este comando.`);
+        }
+
+        buildCommandDetails(embed, result.node, result.path, isAdmin);
+
         return context.reply(embed.toString());
     }
-
-    const result = findCommandNode(tree, query);
-
-    if (!result) {
-        return context.reply(
-            `❌ No se encontró el comando: \`/${query}\``
-        );
-    }
-
-    if (result.node.adminOnly && !isAdmin) {
-        return context.reply(`❌ No tienes permisos para ver información sobre este comando.`);
-    }
-
-    buildCommandDetails(embed, result.node, result.path, isAdmin);
-
-    return context.reply(embed.toString());
 }
+
+export default new HelpCommand();
 
 /**
  * @param {object} node

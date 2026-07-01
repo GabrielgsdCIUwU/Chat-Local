@@ -1,36 +1,53 @@
 import { RPG_CONFIG } from '../../../backend/core/rpgConfig.js';
 import { EmbedMessage } from "../../utility/EmbedMessage.js";
-
-export const description = "Muestra tu mochila, materiales obtenidos y nivel de herramienta.";
+import { BaseCommand } from "../../core/BaseCommand.js";
 
 /**
- * 
- * @param {import('../../core/BotContext.js').BotContext} context 
+ * @typedef {import("../../core/BotContext.js").BotContext} BotContext
  */
-export async function execute(context) {
-    const { profile, inventory } = await context.container.rpgService.getFullProfile(context.username);
-    const wallet = await context.container.economyService.getBalance(context.username);
 
-    if (!profile?.job) {
-        return context.reply(`No tienes un oficio asignado. Usa \`/rpg job\` para ver la lista.`);
+/**
+ * Command to show RPG inventory and profile.
+ * @extends BaseCommand
+ */
+class InventoryCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "inventory",
+            description: "Muestra tu mochila, materiales obtenidos y nivel de herramienta."
+        });
     }
 
     /**
-     * @type {import('../../../backend/core/rpgConfig.js').JobConfig}
+     * 
+     * @param {BotContext} context 
      */
-    const jobConfig = RPG_CONFIG.JOBS[profile.job];
-    const toolName = jobConfig.tools[profile.toolLevel].name;
+    async run(context) {
+        const { profile, inventory } = await context.container.rpgService.getFullProfile(context.username);
+        const wallet = await context.container.economyService.getBalance(context.username);
 
-    const embed = new EmbedMessage()
-        .addField("💼 Oficio", `${jobConfig.emoji} ${jobConfig.name}`)
-        .addField("🛠️ Herramienta", `Nivel ${profile.toolLevel}: ${toolName}`)
-        .addField("💰 Dinero", `${wallet.money}€`);
-    
-    const itemsStr = Object.entries(inventory?.items || {})
-        .map(([item, amount]) => `${amount}x ${item}`)
-        .join("\n");
+        if (!profile?.job) {
+            throw new Error(`No tienes un oficio asignado. Usa \`/rpg job\` para ver la lista.`);
+        }
 
-    embed.addField("🎒 Mochila", itemsStr || "Vacía");
+        /**
+         * @type {import('../../../backend/core/rpgConfig.js').JobConfig}
+         */
+        const jobConfig = RPG_CONFIG.JOBS[profile.job];
+        const toolName = jobConfig.tools[profile.toolLevel].name;
 
-    context.reply(`📊 **Perfil de Rol de ${context.username}**\n${embed.toString()}`);
+        const embed = new EmbedMessage()
+            .addField("💼 Oficio", `${jobConfig.emoji} ${jobConfig.name}`)
+            .addField("🛠️ Herramienta", `Nivel ${profile.toolLevel}: ${toolName}`)
+            .addField("💰 Dinero", `${wallet.money}€`);
+
+        const itemsStr = Object.entries(inventory?.items || {})
+            .map(([item, amount]) => `${amount}x ${item}`)
+            .join("\n");
+
+        embed.addField("🎒 Mochila", itemsStr || "Vacía");
+
+        context.reply(`📊 **Perfil de Rol de ${context.username}**\n${embed.toString()}`);
+    }
 }
+export default new InventoryCommand();

@@ -1,15 +1,33 @@
-export const description = "Trabaja en tu oficio para obtener materiales (tiene tiempo de enfriamiento).";
+import { BaseCommand } from "../../core/BaseCommand.js";
 
 /**
- * 
- * @param {import('../../core/BotContext.js').BotContext} context 
+ * @typedef {import("../../core/BotContext.js").BotContext} BotContext
  */
-export async function execute(context) {
-    const result = await context.container.rpgService.work(context.username);
 
-    const itemsText = Object.entries(result.items)
-        .map(([item, amount]) => `${amount}x ${item}`)
-        .join(", ");
-    
-    context.reply(`${result.actionText} y ha conseguido:\n📦 **Botín:** ${itemsText}`);
+/**
+ * Command to execute a work actions.
+ * @extends BaseCommand
+ */
+class WorkCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "work",
+            description: "Trabaja en tu oficio para obtener materiales (tiene tiempo de enfriamiento)."
+        });
+    }
+
+    /**
+     * 
+     * @param {BotContext} context 
+     */
+    async run(context) {
+        const result = await context.container.rpgService.work(context.username);
+
+        const itemsText = Object.entries(result.items)
+            .map(([item, amount]) => `${amount}x ${item}`)
+            .join(", ");
+
+        context.reply(`${result.actionText} y ha conseguido:\n📦 **Botín:** ${itemsText}`);
+    }
 }
+export default new WorkCommand();

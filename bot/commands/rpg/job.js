@@ -1,18 +1,35 @@
 import { RPG_CONFIG } from '../../../backend/core/rpgConfig.js';
 import { EmbedMessage } from '../../utility/EmbedMessage.js';
-
-export const description = "Muestra la lista de oficios disponibles para elegir.";
+import { BaseCommand } from "../../core/BaseCommand.js";
 
 /**
- * 
- * @param {import('../../core/BotContext.js').BotContext} context 
+ * @typedef {import("../../core/BotContext.js").BotContext} BotContext
  */
-export function execute(context) {
-    const embed = new EmbedMessage();
 
-    for (const [key, job] of Object.entries(RPG_CONFIG.JOBS)) {
-        embed.addField(`${job.emoji} ${job.name}`, `Usa: \`/rpg join ${key}\``);
+/**
+ * Command to list available jobs.
+ * @extends BaseCommand
+ */
+class JobCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "job",
+            description: "Muestra la lista de oficios disponibles para elegir."
+        });
     }
 
-    context.reply(`📜 **Oficios Disponibles**\n${embed.toString()}`);
+    /**
+     * 
+     * @param {BotContext} context 
+     */
+    async run(context) {
+        const embed = new EmbedMessage();
+
+        for (const [key, job] of Object.entries(RPG_CONFIG.JOBS)) {
+            embed.addField(`${job.emoji} ${job.name}`, `Usa: \`/rpg join ${key}\``);
+        }
+
+        context.reply(`📜 **Oficios Disponibles**\n${embed.toString()}`);
+    }
 }
+export default new JobCommand();

@@ -1,13 +1,26 @@
 import crypto from "node:crypto";
 import { GAME_CONFIG } from "../core/constants.js";
+import { Guild } from "../domain/guild/Guild.js";
 
+/**
+ * @typedef {import('../core/types.js').IGuildService} IGuildService 
+ * @typedef {import('../core/types.js').IEconomyService} IEconomyService
+ * @typedef {import('../core/types.js').IGuildRepository} IGuildRepository
+ * @typedef {import('../core/types.js').Guild} GuildProps
+ */
+
+/**
+ * Service managing user clans, fund deposits, level elevations, and team memberships.
+ * 
+ * @implements {IGuildService}
+ */
 export class GuildService {
     pendingInvites = new Map();
 
     /**
      * 
-     * @param {import('./EconomyService.js').EconomyService} economyService 
-     * @param {import('../repositories/GuildRepository.js').GuildRepository} guildRepository 
+     * @param {IEconomyService} economyService 
+     * @param {IGuildRepository} guildRepository 
      */
     constructor(economyService, guildRepository) {
         this.economyService = economyService;
@@ -18,7 +31,7 @@ export class GuildService {
      * Founds a new guild if the user has enough money and isn't in one already.
      * @param {string} founderName - The user creating the guild.
      * @param {string} guildName - The requested name for the guild.
-     * @returns {Promise<import('../repositories/GuildRepository.js').Guild>} The created guild.
+     * @returns {Promise<GuildProps>} The created guild.
      * @throws {Error} If user lacks funds or is already in a guild.
      */
     async createGuild(founderName, guildName) {
@@ -39,17 +52,16 @@ export class GuildService {
 
         await this.economyService.removeFunds(founderName, GAME_CONFIG.GUILD_CREATION_COST);
 
-        const newGuild = {
+        const newGuild = new Guild({
             id: crypto.randomBytes(4).toString("hex"),
             name: guildName,
             level: 1,
             bankMoney: 0,
             members: [{name: founderName, rank: "Leader"}],
-        };
-
-        await this.guildRepository.executeTransaction((currentGuilds) => {
-            currentGuilds.push(newGuild);
         });
+
+        await this.guildRepository.save(newGuild);
+
 
         return newGuild;
     }
@@ -58,7 +70,7 @@ export class GuildService {
     /**
      * Retrieves the guild information for a specific user.
      * @param {string} username 
-     * @returns {Promise<import('../repositories/GuildRepository.js').Guild | undefined>}
+     * @returns {Promise<GuildProps | undefined>}
      */
     async getUserGuild(username) {
         const guilds = await this.guildRepository.getAll();
@@ -68,7 +80,7 @@ export class GuildService {
     /**
      * Retrieves the top guilds sorted by Level, then by Bank Money.
      * @param {number} limit - The maximum number of guilds to return.
-     * @returns {Promise<import('../repositories/GuildRepository.js').Guild[]>}
+     * @returns {Promise<GuildProps[]>}
      */
     async getTopGuilds(limit = 10) {
         const guilds = await this.guildRepository.getAll();
@@ -85,15 +97,16 @@ export class GuildService {
      * 
      * @param {string} inviterName 
      * @param {string} targetName 
-     * @returns {string}
+     * @returns {Promise<string>}
      */
     async inviteMember(inviterName, targetName) {
+        this.#purgeExpiredInvites()
+
         const guilds = await this.guildRepository.getAll();
         const guild = guilds.find(g => g.members.some(m => m.name === inviterName));
         if (!guild) throw new Error("No estás en ningún gremio.");
         
-        const inviter = guild.members.find(m => m.name === inviterName);
-        if (inviter.rank !== "Leader" && inviter.rank !== "Officer") {
+        if (!guild.isLeaderOrOfficer(inviterName)) {
             throw new Error("Solo los líderes u oficiales pueden invitar.");
         }
 
@@ -123,6 +136,8 @@ export class GuildService {
      * @throws If invite expired, already has a guild o guild doesn't exist
      */
     async resolveInvite(targetName, accept) {
+        this.#purgeExpiredInvites();
+
         const invite = this.pendingInvites.get(targetName);
         if (!invite || Date.now() > invite.expiresAt) {
             this.pendingInvites.delete(targetName);
@@ -130,16 +145,10 @@ export class GuildService {
         }
         
         this.pendingInvites.delete(targetName);
-        if (!accept) return false;
+        if (!accept) return "";
 
-        await this.guildRepository.executeTransaction((guilds) => {
-            const targetInGuild = guilds.some(g => g.members.some(m => m.name === targetName));
-            if (targetInGuild) throw new Error("Ya perteneces a un gremio.");
-
-            const guild = guilds.find(g => g.id === invite.guildId);
-            if (!guild) throw new Error("El gremio ha sido disuelto.");
-
-            guild.members.push({ name: targetName, rank: "Member" });
+        await this.guildRepository.updateTransactional(invite.guildId, (guild) => {
+            guild.addMember(targetName, "Member");
         });
 
         return invite.guildName;
@@ -154,27 +163,19 @@ export class GuildService {
     async donate(username, amount) {
         if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error("Cantidad inválida.");
 
+        const guild = await this.getUserGuild(username);
+        if (!guild) {
+            throw new Error("No perteneces a ningún gremio.");
+        }
+
         await this.economyService.removeFunds(username, amount);
 
         let levelUp = false;
         let currentLevel = 0;
 
-        await this.guildRepository.executeTransaction((guilds) => {
-            const guild = guilds.find(g => g.members.some(m => m.name === username));
-            if (!guild) {
-                this.economyService.addFunds(username, amount).catch(console.error);
-                throw new Error("No perteneces a ningún gremio.");
-            }
-
-            guild.bankMoney += amount;
-
-            const nextLevelCost = GAME_CONFIG.GUILD_LEVEL_COSTS[guild.level + 1];
-            if (nextLevelCost && guild.bankMoney >= nextLevelCost) {
-                guild.bankMoney -= nextLevelCost;
-                guild.level += 1;
-                levelUp = true;
-            }
-            currentLevel = guild.level;
+        await this.guildRepository.updateTransactional(guild.id, (txGuild) => {
+            levelUp = txGuild.donate(amount);
+            currentLevel = txGuild.level;
         });
 
         return { levelUp, currentLevel };
@@ -186,23 +187,11 @@ export class GuildService {
      * @throws if the user doesn't have a guild or is a Leader and has members the guild
      */
     async leaveGuild(username) {
-        await this.guildRepository.executeTransaction((guilds) => {
-            const guild = guilds.find(g => g.members.some(m => m.name === username));
-            if (!guild) throw new Error("No perteneces a ningún gremio.");
-
-            const memberIndex = guild.members.findIndex(m => m.name === username);
-            const member = guild.members[memberIndex];
-
-            if (member.rank === "Leader" && guild.members.length > 1) {
-                throw new Error("Eres el líder. Debes nombrar otro líder o expulsar a todos antes de salir.");
-            }
-
-            guild.members.splice(memberIndex, 1);
-
-            if (guild.members.length === 0) {
-                const guildIndex = guilds.findIndex(g => g.id === guild.id);
-                guilds.splice(guildIndex, 1);
-            }
+        const guild = await this.getUserGuild(username);
+        if (!guild) throw new Error("No perteneces a ningún gremio.");
+        
+        await this.guildRepository.updateTransactional(guild.id, (txGuild) => {
+            txGuild.removeMember(username);
         });
     }
 
@@ -214,5 +203,18 @@ export class GuildService {
     async getUserGuildLevel(username) {
         const guild = await this.getUserGuild(username);
         return guild ? guild.level : 0;
+    }
+
+    /**
+     * Passive garbage collector running opportunistically to clear expired memory references.
+     * @returns {void}
+     */
+    #purgeExpiredInvites() {
+        const now = Date.now();
+        for (const [targetUser, invite] of this.pendingInvites.entries()) {
+            if (now > invite.expiresAt) {
+                this.pendingInvites.delete(targetUser);
+            }
+        }
     }
 }

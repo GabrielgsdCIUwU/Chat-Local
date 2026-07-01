@@ -1,11 +1,25 @@
-export const description = "Mejora tu herramienta al siguiente nivel gastando dinero y materiales.";
+import { BaseCommand } from "../../core/BaseCommand.js";
 
 /**
- * 
- * @param {import('../../core/BotContext.js').BotContext} context 
+ * @typedef {import("../../core/BotContext.js").BotContext} BotContext
  */
-export async function execute(context) {
-    const newToolName = await context.container.rpgService.upgradeTool(context.username);
 
-    context.reply(`⬆️ ¡ÉXITO! **${context.username}** ha mejorado su equipo. Ahora usa: **${newToolName}**.`);
+/**
+ * Command to upgrade the current tool.
+ * @extends BaseCommand
+ */
+class UpgradeCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "upgrade",
+            description: "Mejora tu herramienta al siguiente nivel gastando dinero y materiales."
+        });
+    }
+
+    async run(context) {
+        const newToolName = await context.container.rpgService.upgradeTool(context.username);
+
+        context.reply(`⬆️ ¡ÉXITO! **${context.username}** ha mejorado su equipo. Ahora usa: **${newToolName}**.`);
+    }
 }
+export default new UpgradeCommand();

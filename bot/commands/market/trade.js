@@ -1,40 +1,57 @@
-export const description = "Propón un intercambio directo a otro jugador o acepta/rechaza uno.";
-export const params = [
-    { name: "accion_o_usuario", type: "string", required: true, description: "Usuario, o 'aceptar'/'rechazar'." },
-    { name: "mi_cantidad", type: "number", required: false, description: "Cantidad que ofreces." },
-    { name: "mi_item", type: "inventory_item", required: false, description: "Item que ofreces." },
-    { name: "su_cantidad", type: "number", required: false, description: "Cantidad que pides." },
-    { name: "su_item", type: "string", required: false, description: "Item que pides." }
-];
+import { BaseCommand } from "../../core/BaseCommand.js";
 
 /**
- * @param {import('../../core/BotContext.js').BotContext} context 
+ * @typedef {import("../../core/BotContext.js").BotContext} BotContext
  */
-export async function execute(context) {
-    const action = context.args[0].toLowerCase();
+
+/**
+ * Command to propose or resolve a direct trade between players.
+ * @extends BaseCommand
+ */
+class TradeCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "trade",
+            description: "Propón un intercambio directo a otro jugador o acepta/rechaza uno.",
+            params: [
+                { name: "action", displayName: "Usuario o acción", type: "string", required: true, description: "Usuario, o 'aceptar'/'rechazar'." },
+                { name: "sendAmount", displayName: "Cantidad ofreces", type: "number", required: false, description: "Cantidad que ofreces." },
+                { name: "sendItem", displayName: "Item ofreces", type: "inventory_item", required: false, description: "Item que ofreces." },
+                { name: "reqAmount", displayName: "Cantidad pides", type: "number", required: false, description: "Cantidad que pides." },
+                { name: "reqItem", displayName: "Item pides", type: "string", required: false, description: "Item que pides." }
+            ]
+        });
+    }
     
-    if (action === "aceptar" || action === "rechazar") {
-        const isAccept = action === "aceptar";
-        const trade = await context.container.marketService.resolveTrade(context.username, isAccept);
+    /**
+     * 
+     * @param {BotContext} context 
+     * @param {Record<string, any>} args 
+     */
+    async run(context, args) {
+         const { action, sendAmount, sendItem, reqAmount, reqItem } = args;
+        const actionLower = action.toLowerCase();
         
-        if (!isAccept) {
-            return context.reply(`❌ **${context.username}** ha rechazado el intercambio pendiente.`);
+        if (actionLower === "aceptar" || actionLower === "rechazar") {
+            const isAccept = actionLower === "aceptar";
+            const trade = await context.container.marketService.resolveTrade(context.username, isAccept);
+            
+            if (!isAccept) {
+                return context.reply(`❌ **${context.username}** ha rechazado el intercambio pendiente.`);
+            }
+
+            return context.reply(`🤝 **¡INTERCAMBIO EXITOSO!**\n**${trade.senderName}** ha entregado ${trade.sendAmount}x ${trade.sendItem} a cambio de ${trade.reqAmount}x ${trade.reqItem} de **${context.username}**.`);
         }
 
-        return context.reply(`🤝 **¡INTERCAMBIO EXITOSO!**\n**${trade.senderName}** ha entregado ${trade.sendAmount}x ${trade.sendItem} a cambio de ${trade.reqAmount}x ${trade.reqItem} de **${context.username}**.`);
+        const targetName = action;
+
+        if (!sendAmount || !sendItem || !reqAmount || !reqItem) {
+            throw new Error("Faltan parámetros. Uso: `/market trade [usuario] [mi_cantidad] [mi_item] [su_cantidad] [su_item]`");
+        }
+
+        const result = await context.container.marketService.proposeTrade(context.username, targetName, sendItem, sendAmount, reqItem, reqAmount);
+
+        context.reply(`🔄 **NUEVA PROPUESTA DE INTERCAMBIO**\n**${context.username}** ofrece **${sendAmount}x ${result.sItemActual}** a **${targetName}** a cambio de **${reqAmount}x ${result.rItemActual}**.\n*(Usa \`/market trade aceptar\` o \`/market trade rechazar\`)*`);
     }
-
-    if (context.args.length < 5) {
-        throw new Error("Faltan parámetros. Uso: `/market trade [usuario] [mi_cantidad] [mi_item] [su_cantidad] [su_item]`");
-    }
-
-    const targetName = context.args[0];
-    const sendAmount = Number.parseInt(context.args[1], 10);
-    const sendItem = context.args[2];
-    const reqAmount = Number.parseInt(context.args[3], 10);
-    const reqItem = context.args.slice(4).join(" "); 
-
-    const result = await context.container.marketService.proposeTrade(context.username, targetName, sendItem, sendAmount, reqItem, reqAmount);
-
-    context.reply(`🔄 **NUEVA PROPUESTA DE INTERCAMBIO**\n**${context.username}** ofrece **${sendAmount}x ${result.sItemActual}** a **${targetName}** a cambio de **${reqAmount}x ${result.rItemActual}**.\n*(Usa \`/market trade aceptar\` o \`/market trade rechazar\`)*`);
 }
+export default new TradeCommand();

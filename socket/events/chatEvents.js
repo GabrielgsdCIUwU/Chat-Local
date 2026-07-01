@@ -180,9 +180,18 @@ export default function registerChatEvents(io, socket, user, container) {
 
     // Enviar mensaje
     socket.on("sendmsg", async (msg, reply) => {
-         if (!msg || typeof msg !== 'string' || msg.length > VALIDATION_CONFIG.CHAT.MAX_MESSAGE_LENGTH) {
+         if (!msg || typeof msg !== 'string') {
+             return socket.emit("error", { message: "Mensaje inválido." });
+         }
+
+         const sanitizedMsg = msg.trim();
+         if (sanitizedMsg.length === 0) {
+             return socket.emit("error", { message: "No puedes enviar un mensaje vacío." });
+         }
+
+         if (sanitizedMsg.length > VALIDATION_CONFIG.CHAT.MAX_MESSAGE_LENGTH) {
             return socket.emit("error", { message: `El mensaje excede el límite de ${VALIDATION_CONFIG.CHAT.MAX_MESSAGE_LENGTH} caracteres.` });
-        }
+         }
 
         const timestamp = Date.now();
         const id = crypto.randomUUID();
@@ -192,7 +201,7 @@ export default function registerChatEvents(io, socket, user, container) {
             const newMessage = { 
                 id,
                 user: user.name, 
-                message: msg, 
+                message: sanitizedMsg, 
                 timestamp, 
                 prestige: prestigeLevel,
                 ...(reply && { reply: { replyUser: reply.user, replyMessage: reply.message } })

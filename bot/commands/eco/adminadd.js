@@ -1,30 +1,37 @@
-import { ROLES } from "../../../backend/core/constants.js"; 
-
-export const description = "Comando de administrador para inyectar dinero a un usuario.";
-export const adminOnly = true;
-export const params = [
-    { name: "usuario", type: "user", required: true, description: "Usuario al que se le dará el dinero." },
-    { name: "cantidad", type: "number", required: true, description: "Cantidad de dinero a añadir." }
-];
+import { BaseCommand } from "../../core/BaseCommand.js";
 
 /**
- * @param {import('../../core/BotContext.js').BotContext} context 
+ * Administrator command to inject money into the economy.
+ * @extends BaseCommand
  */
-export async function execute(context) {
-    const user = await context.container.userRepository.findByName(context.username);
-    if (!user?.roles.includes(ROLES.ADMIN)) {
-        return context.reply("❌ No tienes permisos de administrador para usar este comando.");
+class AdminAddCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "adminadd",
+            description: "Comando de administrador para inyectar dinero a un usuario.",
+            adminOnly: true,
+            params: [
+                { name: "targetUser", displayName: "Usuario", type: "user", required: true, description: "Usuario al que se le dará el dinero." },
+                { name: "amount", displayName: "Cantidad", type: "number", required: true, description: "Cantidad de dinero a añadir." }
+            ]
+        });
     }
 
-    const targetName = context.args.slice(0, -1).join(" ");
-    const amount = Number.parseInt(context.args.at(-1));
+    /**
+     * Executes the injection domain logic.
+     * 
+     * @param {import('../../core/BotContext.js').BotContext} context 
+     * @param {Object} args 
+     * @param {string} args.targetUser - The recipient's username.
+     * @param {number} args.amount - The amount to inject.
+     */
+    async run(context, args) {
+        const { targetUser, amount } = args;
 
-    if (Number.isNaN(amount)) return context.reply("Cantidad inválida.");
-
-    try {
-        await context.container.economyService.addFunds(targetName, amount);
-        context.reply(`👑 **ADMIN:** Se han inyectado ${amount}€ en la cuenta de **${targetName}**.`);
-    } catch (error) {
-        context.reply(`❌ Error: ${error.message}`);
+        await context.container.economyService.addFunds(targetUser, amount);
+        
+        context.reply(`👑 **ADMIN:** Se han inyectado ${amount}€ en la cuenta de **${targetUser}**.`);
     }
 }
+
+export default new AdminAddCommand();

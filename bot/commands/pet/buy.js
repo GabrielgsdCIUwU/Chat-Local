@@ -1,20 +1,36 @@
 import { RPG_CONFIG } from "../../../backend/core/rpgConfig.js";
-
-export const description = `Compra uno o varios huevos sorpresa de mascota (Precio: ${RPG_CONFIG.EGG_PRICE}€ c/u).`;
-export const params = [
-    { name: "cantidad", type: "number", required: false, description: "Cantidad de huevos a comprar (por defecto 1)." }
-];
+import { BaseCommand } from "../../core/BaseCommand.js";
 
 /**
- * @param {import('../../core/BotContext.js').BotContext} context 
+ * @typedef {import("../../core/BotContext.js").BotContext} BotContext
  */
-export async function execute(context) {
-    let amount = 1;
-    if (context.args[0]) {
-        amount = Number.parseInt(context.args[0], 10);
+
+/**
+ * Command to purchase gacha eggs.
+ * @extends BaseCommand
+ */
+class BuyCommand extends BaseCommand {
+    constructor() {
+        super({
+            name: "buy",
+            description: `Compra uno o varios huevos sorpresa de mascota (Precio: ${RPG_CONFIG.EGG_PRICE}€ c/u).`,
+            params: [
+                { name: "amount", displayName: "Cantidad", type: "number", required: false, description: "Cantidad de huevos a comprar (por defecto 1)." }
+            ]
+        });
     }
 
-    const totalCost = await context.container.petService.buyEgg(context.username, amount);
+    /**
+     * 
+     * @param {BotContext} context 
+     * @param {Record<string, any>} args 
+     */
+    async run(context, args) {
+        const amount = args.amount || 1;
 
-    context.reply(`🥚 **¡COMPRA EXITOSA!**\n**${context.username}** ha comprado **${amount} huevo(s)** por **${totalCost}€**.\n*(Usa \`/pet open\` para ver qué hay dentro)*`);
+        const totalCost = await context.container.petService.buyEgg(context.username, amount);
+
+        context.reply(`🥚 **¡COMPRA EXITOSA!**\n**${context.username}** ha comprado **${amount} huevo(s)** por **${totalCost}€**.\n*(Usa \`/pet open\` para ver qué hay dentro)*`);
+    }
 }
+export default new BuyCommand();

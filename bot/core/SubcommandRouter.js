@@ -13,17 +13,14 @@ export class SubcommandRouter {
         }
 
         const subcommandName = context.subcommands[0];
-        const subcommandLoaded = await CommandLoader.load(subcommandsPath, subcommandName);
+        const moduleLoaded = await CommandLoader.load(subcommandsPath, subcommandName);
 
-        if (!subcommandLoaded?.execute) {
+        const commandInstance = moduleLoaded?.default || moduleLoaded;
+
+        if (!commandInstance || typeof commandInstance.execute !== 'function') {
             return context.reply(`El subcomando "/${moduleName} ${subcommandName}" no existe.`);
         }
 
-        try {
-            await subcommandLoaded.execute(context);
-        } catch (error) {
-            console.error(`[Error Command] /${moduleName} ${subcommandName}:`, error);
-            context.reply(`❌ ${context.username}, ${error.message}`);
-        }
+        await commandInstance.execute(context);
     }
 }

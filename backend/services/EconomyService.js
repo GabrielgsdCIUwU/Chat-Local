@@ -1,9 +1,9 @@
-import { GAME_CONFIG } from '../core/constants.js';
-
+/**
+ * Economy application service handling safe transactions, fund transfers, and balance audits.
+ */
 export class EconomyService {
     /**
-     * 
-     * @param {import('../repositories/EconomyRepository.js').EconomyRepository} economyRepository 
+     * @param {import('../core/types.js').IEconomyRepository} economyRepository - The persistent SQLite economy repository.
      */
     constructor(economyRepository) {
         this.repo = economyRepository;
@@ -16,14 +16,14 @@ export class EconomyService {
      * created with the default starting values.
      *
      * @param {string} username - Username whose wallet should be retrieved.
-     * @returns {Promise<import('../repositories/EconomyRepository.js').Wallet>} The user's wallet data.
+     * @returns {Promise<import('../core/types.js').WalletProps>} The user's wallet data structure.
      */
     async getBalance(username) {
-        let userWallet;
-        await this.repo.executeTransaction((wallets) => {
-            userWallet = { ...this.repo.ensureWallet(wallets, username) };
-        });
-        return userWallet;
+        const wallet = await this.repo.findById(username);
+        if (!wallet) {
+            return { name: username, money: 100, debt: 0 };
+        }
+        return wallet.toJSON();
     }
 
     /**
@@ -32,26 +32,18 @@ export class EconomyService {
      * If the user has outstanding debt, 20% of the deposited amount is
      * automatically used to repay the debt (up to the remaining debt amount).
      * The rest is credited to the user's balance.
-     * @param {string} username - Username of the wallet owner
-     * @param {number} amount - Positive integer amount to add
-     * @returns {Promise<number>} - The net amount credited to the user's balance after debt repayment
-     * @throws If the amount is not a positive safe integer
+     * 
+     * @param {string} username - Username of the wallet owner.
+     * @param {number} amount - Positive integer amount to add.
+     * @returns {Promise<number>} The net amount credited to the user's balance after debt repayment.
+     * @throws {Error} If the amount is not a positive safe integer.
      */
     async addFunds(username, amount) {
         if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error("La cantidad no es válida");
 
-        let actualEarnings = amount;
-        await this.repo.executeTransaction((wallets) => {
-            const wallet = this.repo.ensureWallet(wallets, username);
-
-            if (wallet.debt > 0) {
-                let payDebt = Math.floor(amount * GAME_CONFIG.ECONOMY.DEBT_REPAY_PERCENTAGE);
-                if (payDebt > wallet.debt) payDebt = wallet.debt;
-
-                wallet.debt -= payDebt;
-                actualEarnings = amount - payDebt;
-            }
-            wallet.money += actualEarnings;
+        let actualEarnings = 0;
+        await this.repo.updateTransactional(username, (wallet) => {
+            actualEarnings = wallet.addFunds(amount);
         });
         return actualEarnings;
     }
@@ -65,16 +57,14 @@ export class EconomyService {
      * @param {string} username - Username of the wallet owner.
      * @param {number} amount - Positive integer amount to remove.
      * @returns {Promise<void>}
-     * @throws If the amount is not a positive safe integer.
-     * @throws If the user does not have enough funds.
+     * @throws {Error} If the amount is not a positive safe integer.
+     * @throws {Error} If the user does not have enough funds.
      */
     async removeFunds(username, amount) {
         if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error("La cantidad no es válida");
 
-        await this.repo.executeTransaction((wallets) => {
-            const wallet = this.repo.ensureWallet(wallets, username);
-            if (wallet.money < amount) throw new Error(`No tienes suficience dinero. Tienes ${wallet.money}€`);
-            wallet.money -= amount;
+        await this.repo.updateTransactional(username, (wallet) => {
+            wallet.removeFunds(amount);
         });
     }
 
@@ -88,22 +78,20 @@ export class EconomyService {
      * @param {string} targetName - Username of the recipient.
      * @param {number} amount - Positive integer amount to transfer.
      * @returns {Promise<void>}
-     * @throws If the sender and recipient are the same user.
-     * @throws If the amount is not a positive safe integer.
-     * @throws If the sender does not have enough funds.
+     * @throws {Error} If the sender and recipient are the same user.
+     * @throws {Error} If the amount is not a positive safe integer.
+     * @throws {Error} If the sender does not have enough funds.
      */
     async transferFunds(senderName, targetName, amount) {
         if (senderName === targetName) throw new Error("No puedes transferir dinero a ti mismo");
         if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error("La cantidad no es válida");
 
-        await this.repo.executeTransaction((wallets) => {
-            const sender = this.repo.ensureWallet(wallets, senderName);
-            const target = this.repo.ensureWallet(wallets, targetName);
+        await this.repo.updateTransactional(senderName, (sender) => {
+            sender.removeFunds(amount);
+        });
 
-            if (sender.money < amount) throw new Error(`No tienes suficiente dinero. Tienes ${sender.money}€`);
-
-            sender.money -= amount;
-            this.addFunds(target.name, amount);
+        await this.repo.updateTransactional(targetName, (target) => {
+            target.addFunds(amount);
         });
 
     }
@@ -115,11 +103,11 @@ export class EconomyService {
      * current balance, limited to the specified number of entries.
      *
      * @param {number} [limit=10] - Maximum number of wallets to return.
-     * @returns {Promise<Array<Object>>} A list of wallets sorted by wealth.
+     * @returns {Promise<import('../core/types.js').WalletProps[]>} A list of wallets sorted by wealth.
      */
     async getTopRicher(limit = 10) {
         const wallets = await this.repo.getAll();
-        return wallets.toSorted((a, b) => b.money - a.money).slice(0, limit);
+        return wallets.toSorted((a, b) => b.money - a.money).slice(0, limit).map(w => w.toJSON());
     }
 
     /**
@@ -135,10 +123,8 @@ export class EconomyService {
      */
     async forceRemoveFunds(username, amount) {
         let removedAmount = 0;
-        await this.repo.executeTransaction((wallets) => {
-            const wallet = this.repo.ensureWallet(wallets, username);
-            removedAmount = Math.min(wallet.money, amount);
-            wallet.money -= removedAmount;
+        await this.repo.updateTransactional(username, (wallet) => {
+            removedAmount = wallet.forceRemoveFunds(amount);
         });
         return removedAmount;
     }
@@ -157,15 +143,8 @@ export class EconomyService {
      * @throws {Error} If the user still has funds available.
      */
     async declareBankruptcy(username, bankRuptCount) {
-        await this.repo.executeTransaction((wallets) => {
-            const wallet = this.repo.ensureWallet(wallets, username);
-            if (wallet.money > 0) throw new Error(`Tienes ${wallet.money}€, no puedes declarate en bancarrota`);
-
-            const base_money = GAME_CONFIG.BANKRUPT_BASE_MONEY;
-
-            wallet.money = base_money;
-
-            wallet.debt += base_money + Math.floor(Math.random() * bankRuptCount * GAME_CONFIG.ECONOMY.BANKRUPT_PENALTY_MULT);
+        await this.repo.updateTransactional(username, (wallet) => {
+            wallet.declareBankruptcy(bankRuptCount);
         });
     }
 }

@@ -2,10 +2,10 @@ import { RPG_CONFIG } from "../core/rpgConfig.js";
 
 export class RPGService {
     /**
-     * @param {import('./EconomyService.js').EconomyService} economyService 
-     * @param {import('../repositories/InventoryRepository.js').InventoryRepository} inventoryRepository 
-     * @param {import('../repositories/JobRepository.js').JobRepository} jobRepository 
-     * @param {import('./PetService.js').PetService} petService 
+     * @param {import('../core/types.js').IEconomyService} economyService 
+     * @param {import('../core/types.js').IInventoryRepository} inventoryRepository 
+     * @param {import('../core/types.js').IJobRepository} jobRepository 
+     * @param {import('../core/types.js').IPetService} petService 
      */
     constructor(economyService, inventoryRepository, jobRepository, petService) {
         this.economy = economyService;
@@ -27,18 +27,13 @@ export class RPGService {
      * @throws {Error} If the user already belongs to the specified profession.
      */
     async joinJob(username, jobKey) {
-        const jobKeyLowerCase = jobKey.toLowerCase();
+        const jobKeyLowerCase = /** @type {keyof typeof RPG_CONFIG.JOBS} */ (jobKey.toLowerCase());
         if (!RPG_CONFIG.JOBS[jobKeyLowerCase]) {
             throw new Error(`El oficio ${jobKey} no existe. Usa: minero, leñador o pescador`);
         }
 
-        await this.jobRepo.executeTransaction((jobs) => {
-            const profile = this.jobRepo.ensureJobProfile(jobs, username);
-            if (profile.job === jobKeyLowerCase) {
-                throw new Error(`Ya eres ${RPG_CONFIG.JOBS[jobKeyLowerCase].name}`);
-            }
-            profile.job = jobKeyLowerCase;
-            profile.toolLevel = 1;
+        await this.jobRepo.updateTransactional(username, (profile) => {
+        profile.changeJob(jobKeyLowerCase);
         });
 
         return RPG_CONFIG.JOBS[jobKeyLowerCase].name
@@ -60,49 +55,24 @@ export class RPGService {
      * @throws {Error} If the work cooldown has not yet expired.
      */
     async work(username) {
+        /** @type {import("../core/types.js").JobProfile} */
         let profileInfo;
         const now = Date.now();
 
         const petBonus = await this.petService.getBonus(username, "WORK_COOLDOWN");
 
-        await this.jobRepo.executeTransaction((jobs) => {
-            const profile = this.jobRepo.ensureJobProfile(jobs, username);
-            if (!profile.job) throw new Error("Aun no tienes oficio. Usa `/rpg join`");
+        await this.jobRepo.updateTransactional(username, (profile) => {
+        profile.verifyWorkCooldown(petBonus);
+        profile.registerWork(now);
+        profileInfo = profile;
+    });
 
-            let currentCooldownMs = RPG_CONFIG.WORK_COOLDOWN_MS;
-            if (profile.activeBuffs?.["haste"]) {
-                if (now < profile.activeBuffs["haste"]) {
-                    currentCooldownMs = Math.floor(currentCooldownMs / 2);
-                } else {
-                    delete profile.activeBuffs["haste"];
-                }
-            }
-
-            if (petBonus > 0) {
-                currentCooldownMs -= Math.floor(currentCooldownMs * (petBonus / 100));
-            }
-
-            const timePassed = now - profile.lastWork;
-            if (timePassed < currentCooldownMs) {
-                const totalSeconds = Math.ceil((currentCooldownMs - timePassed) / 1000);
-                const minutes = Math.floor(totalSeconds / 60);
-                const seconds = totalSeconds % 60;
-                
-                let timeString = "";
-                if (minutes > 0) timeString += `${minutes} minuto(s) y `;
-                timeString += `${seconds} segundo(s)`;
-
-                throw new Error(`Estás cansado. Debes esperar ${timeString} para volver a trabajar.`);
-            }
-
-            profile.lastWork = now;
-            profileInfo = { ...profile };
-        });
-
-        const jobConfig = RPG_CONFIG.JOBS[profileInfo.job];
-        const toolConfig = jobConfig.tools[profileInfo.toolLevel];
+        // @ts-ignore
+        if (!profileInfo?.job) throw new Error("Aun no tienes oficio. Usa `/rpg join`");
+        const jobConfig = RPG_CONFIG.JOBS[/** @type {keyof typeof RPG_CONFIG.JOBS} */ (profileInfo.job)];
+        const toolConfig = jobConfig.tools[/** @type {keyof typeof jobConfig.tools} */ (profileInfo.toolLevel)];
         const prestigeBonus = profileInfo.prestigeLevel || 0;
-        const obtainedItems = {};
+        const obtainedItems = /** @type {Record<string, number>} */ ({});
 
         for (const drop of toolConfig.lootTable) {
             if (Math.random() <= drop.chance) {
@@ -116,10 +86,9 @@ export class RPGService {
             obtainedItems[guaranteed.item] = guaranteed.min + prestigeBonus;
         }
 
-        await this.inventoryRepo.executeTransaction((inventories) => {
-            const inv = this.inventoryRepo.ensureInventory(inventories, username);
+        await this.inventoryRepo.updateTransactional(username, (inv) => {
             for (const [item, amount] of Object.entries(obtainedItems)) {
-                inv.items[item] = (inv.items[item] || 0) + amount;
+                inv.addItem(item, amount);
             }
         });
 
@@ -150,7 +119,7 @@ export class RPGService {
         /**
          * @type {import("../core/rpgConfig.js").JobConfig}
          */
-        const jobConfig = RPG_CONFIG.JOBS[profile.job];
+        const jobConfig = RPG_CONFIG.JOBS[/** @type {keyof typeof RPG_CONFIG.JOBS} */ (profile.job)];
         const currentLevel = profile.toolLevel;
         const nextLevel = currentLevel + 1;
         /**
@@ -176,17 +145,15 @@ export class RPGService {
 
         await this.economy.removeFunds(username, costMoney);
 
-        await this.inventoryRepo.executeTransaction((inventories) => {
-            const inventory = this.inventoryRepo.ensureInventory(inventories, username);
+        await this.inventoryRepo.updateTransactional(username, (inv) => {
             for (const [reqItem, reqAmount] of Object.entries(costItems)) {
-                inventory.items[reqItem] -= reqAmount;
-                if (inventory.items[reqItem] === 0) delete inventory.items[reqItem];
+                inv.removeItem(reqItem, reqAmount);
             }
         });
 
-        await this.jobRepo.executeTransaction((jobs) => {
-            const profile = this.jobRepo.ensureJobProfile(jobs, username);
-            profile.toolLevel = nextLevel;
+        await this.jobRepo.updateTransactional(username, (prof) => {
+            const maxLevel = Object.keys(jobConfig.tools).length;
+            prof.upgradeTool(maxLevel);
         });
 
         return nextToolConfig.name;
@@ -211,25 +178,17 @@ export class RPGService {
     async sellItem(username, itemName, amount) {
         if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error("Cantidad no válida.");
 
-        /**
-         * @type {import("../core/rpgConfig.js").MarketItem}
-         */
-        const actualItemName = Object.keys(RPG_CONFIG.MARKET_PRICES).find(k => k.toLowerCase() === itemName.toLowerCase());
+        const actualItemName = /** @type {import("../core/rpgConfig.js").MarketItem} */ (Object.keys(RPG_CONFIG.MARKET_PRICES).find(k => k.toLowerCase() === itemName.toLowerCase()));
         if (!actualItemName) throw new Error(`El ítem "${itemName}" no existe o no se puede vender.`);
 
         const pricePerUnit = RPG_CONFIG.MARKET_PRICES[actualItemName];
         const totalValue = pricePerUnit * amount;
 
-        await this.inventoryRepo.executeTransaction((inventories) => {
-            const inventory = this.inventoryRepo.ensureInventory(inventories, username);
-            const userAmount = inventory.items[actualItemName] || 0;
-
-            if (userAmount < amount) {
-                throw new Error(`No tienes suficientes. Tienes ${userAmount}x ${actualItemName}.`);
+        await this.inventoryRepo.updateTransactional(username, (inventory) => {
+            if (!inventory.hasItem(actualItemName, amount)) {
+                throw new Error(`No tienes suficientes. Tienes ${inventory.getItemAmount(actualItemName)}x ${actualItemName}.`);
             }
-
-            inventory.items[actualItemName] -= amount;
-            if (inventory.items[actualItemName] === 0) delete inventory.items[actualItemName];
+            inventory.removeItem(actualItemName, amount);
         });
 
         const actualEarnings = await this.economy.addFunds(username, totalValue);
@@ -244,12 +203,13 @@ export class RPGService {
      *
      * @param {string} username - Username whose RPG profile should be retrieved.
      * @returns {Promise<{
-     *   profile: import('../repositories/JobRepository.js').JobProfile | null,
-     *   inventory: import('../repositories/InventoryRepository.js').UserInventory
+     *   profile: import('../core/types.js').JobProfile | null,
+     *   inventory: import('../core/types.js').UserInventory
      * }>} The user's profession profile and inventory data.
      */
     async getFullProfile(username) {
         const profile = await this.jobRepo.getProfile(username);
+        if (!profile) throw new Error("No existe este usuario");
         const inventory = await this.inventoryRepo.getInventory(username);
         return { profile, inventory };
     }
@@ -264,7 +224,7 @@ export class RPGService {
         const profile = await this.jobRepo.getProfile(username);
         if (!profile?.job) throw new Error("No tienes un trabajo");
 
-        const jobConfig = RPG_CONFIG.JOBS[profile.job];
+        const jobConfig = RPG_CONFIG.JOBS[/** @type {keyof typeof RPG_CONFIG.JOBS}*/(profile.job)];
         const maxToolLevel = Object.keys(jobConfig.tools).length;
 
         if (profile.toolLevel < maxToolLevel) {
@@ -273,20 +233,17 @@ export class RPGService {
 
         const wallet = await this.economy.getBalance(username);
         if (wallet.money > 0) {
-            await this.economy.removeFunds(username, wallet.money);
+            await this.economy.forceRemoveFunds(username, wallet.money);
         }
 
-        await this.inventoryRepo.executeTransaction((inventories) => {
-            const inventory = this.inventoryRepo.ensureInventory(inventories, username);
-            inventory.items = {};
+        await this.inventoryRepo.updateTransactional(username, (inventory) => {
+            inventory.clear();
         });
 
         let newPrestigeLevel = 1;
-        await this.jobRepo.executeTransaction((jobs) => {
-            const profile = this.jobRepo.ensureJobProfile(jobs, username);
-            profile.toolLevel = 1;
-            profile.prestigeLevel = (profile.prestigeLevel || 0) + 1;
-            newPrestigeLevel = profile.prestigeLevel;
+        await this.jobRepo.updateTransactional(username, (jobProfile) => {
+            jobProfile.incrementPrestige();
+            newPrestigeLevel = jobProfile.prestigeLevel;
         });
 
         return newPrestigeLevel;
@@ -297,16 +254,14 @@ export class RPGService {
      * Start an indle expedition.
      * @param {string} username 
      * @param {string} zoneKey 
-     * @returns {Object}
+     * @returns {Promise<Object>}
      */
     async startExpedition(username, zoneKey) {
         const zoneKeyLower = zoneKey.toLowerCase();
-        const expeditionConfig = RPG_CONFIG.EXPEDITIONS[zoneKeyLower];
+        const expeditionConfig = RPG_CONFIG.EXPEDITIONS[/** @type {keyof typeof RPG_CONFIG.EXPEDITIONS} */ (zoneKeyLower)];
         if (!expeditionConfig) throw new Error("La zona de expedición no existe.");
 
-        await this.jobRepo.executeTransaction((jobs) => {
-            const profile = this.jobRepo.ensureJobProfile(jobs, username);
-            
+        await this.jobRepo.updateTransactional(username, (profile) => {
             if (profile.activeExpedition) {
                 throw new Error("Ya tienes una expedición en curso.");
             }
@@ -314,60 +269,56 @@ export class RPGService {
 
         await this.economy.removeFunds(username, expeditionConfig.cost);
 
-        await this.jobRepo.executeTransaction((jobs) => {
-            const profile = this.jobRepo.ensureJobProfile(jobs, username);
-            profile.activeExpedition = {
-                zoneId: zoneKeyLower,
-                endTime: Date.now() + expeditionConfig.durationMs
-            };
+        await this.jobRepo.updateTransactional(username, (profile) => {
+            profile.startExpedition(zoneKeyLower, expeditionConfig.durationMs);
         });
+
 
         return expeditionConfig;
     }
 
     /**
-     * Claim expeditions when ended
-     * @returns {Promise<Array>} Loot notifications
+     * Claim expeditions when ended.
+     * @returns {Promise<Array<{username:string, zoneName:string, loot:Record<string, number>}>>} Loot notifications
      */
     async processFinishedExpeditions() {
-        const now = Date.now();
+        /** @type {Array<{username: string, zoneName: string, loot: Record<string, number>}>} */
         const notifications = [];
-        const rewardsToDistribute = [];
+        
+        const allJobs = await this.jobRepo.getAll();
+        const finishedProfiles = allJobs.filter(p => p.activeExpedition && Date.now() >= p.activeExpedition.endTime);
 
-        await this.jobRepo.executeTransaction((jobs) => {
-            for (const profile of jobs) {
-                
-                if (profile.activeExpedition && now >= profile.activeExpedition.endTime) {
-                    const config = RPG_CONFIG.EXPEDITIONS[profile.activeExpedition.zoneId];
-                    
-                    const obtainedItems = {};
-                    for (const drop of config.lootTable) {
-                        const amount = Math.floor(Math.random() * (drop.max - drop.min + 1)) + drop.min;
-                        obtainedItems[drop.item] = amount;
-                    }
-
-                    rewardsToDistribute.push({
-                        username: profile.name,
-                        zoneName: config.name,
-                        loot: obtainedItems
-                    });
-
-                    profile.activeExpedition = null;
-                }
+        for (const profile of finishedProfiles) {
+            const activeExp = profile.activeExpedition;
+            
+            if (!activeExp) {
+                continue;
             }
-        });
+            
+            const config = RPG_CONFIG.EXPEDITIONS[/** @type {keyof typeof RPG_CONFIG.EXPEDITIONS} */ (profile.activeExpedition.zoneId)];
+            
+            /** @type {Record<string, number>} */
+            const obtainedLoot = {};
+            
+            for (const drop of config.lootTable) {
+                const amount = Math.floor(Math.random() * (drop.max - drop.min + 1)) + drop.min;
+                obtainedLoot[drop.item] = amount;
+            }
 
-        if (rewardsToDistribute.length > 0) {
-            await this.inventoryRepo.executeTransaction((inventories) => {
-                for (const reward of rewardsToDistribute) {
-                    const inv = this.inventoryRepo.ensureInventory(inventories, reward.username);
-                    
-                    for (const [item, amount] of Object.entries(reward.loot)) {
-                        inv.items[item] = (inv.items[item] || 0) + amount;
-                    }
-                    
-                    notifications.push(reward);
+            await this.jobRepo.updateTransactional(profile.name, (prof) => {
+                prof.clearExpedition();
+            });
+
+            await this.inventoryRepo.updateTransactional(profile.name, (inv) => {
+                for (const [item, amount] of Object.entries(obtainedLoot)) {
+                    inv.addItem(item, amount);
                 }
+            });
+
+            notifications.push({
+                username: profile.name,
+                zoneName: config.name,
+                loot: obtainedLoot
             });
         }
 

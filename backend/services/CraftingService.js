@@ -1,14 +1,13 @@
 import { RPG_CONFIG } from "../core/rpgConfig.js";
 
 /**
- * @typedef {import('../repositories/JobRepository.js').JobProfile} JobProfile
+ * Service managing potion crafting, resource consumption, and active player buff sessions.
  */
 
 export class CraftingService {
     /**
-     * 
-     * @param {import('../repositories/InventoryRepository.js').InventoryRepository} inventoryRepository 
-     * @param {import('../repositories/JobRepository.js').JobRepository} jobRepository 
+     * @param {import('../core/types.js').IInventoryRepository} inventoryRepository - RPG backpack repository.
+     * @param {import('../core/types.js').IJobRepository} jobRepository - RPG work profile repository.
      */
     constructor(inventoryRepository, jobRepository) {
         this.inventoryRepository = inventoryRepository;
@@ -19,41 +18,33 @@ export class CraftingService {
      * Crafts a recipe, consumes materials, and applies the buff to the user.
      * @param {string} username - The user executing the craft.
      * @param {string} recipeKey - The ID of the recipe from RPG_CONFIG.
-     * @returns {Promise<Object>} The recipe configuration that was successfully crafted.
+     * @returns {Promise<import('../core/rpgConfig.js').CraftingRecipe>} The recipe configuration that was successfully crafted.
      * @throws {Error} If recipe doesn't exist or insufficient materials.
      */
     async craftItem(username, recipeKey) {
-        const recipeKeyLowerCase = recipeKey.toLowerCase();
-        /**
-         * @type {import("../core/rpgConfig.js").CraftingRecipe}
-         */
+        const recipeKeyLowerCase = /** @type {keyof typeof RPG_CONFIG.CRAFTING_RECIPES} */ (recipeKey.toLowerCase());        
         const recipe = RPG_CONFIG.CRAFTING_RECIPES[recipeKeyLowerCase];
 
         if (!recipe) {
-            throw new Error(`La receta "${recipeKey}" no existe. Usa \`/rpg recipes\` para cer la lista.`);
+            throw new Error(`La receta "${recipeKey}" no existe. Usa \`/rpg recipes\` para ver la lista.`);
         }
 
         const inventory = await this.inventoryRepository.getInventory(username);
         for (const [reqItem, reqAmount] of Object.entries(recipe.cost)) {
-            const userAmount = inventory.items[reqItem] || 0;
-            if (userAmount < reqAmount) {
-                throw new Error(`Materiales insuficientes. Necesitas ${reqAmount}x ${reqItem} (Tienes ${userAmount})`);
+            if (!inventory.hasItem(reqItem, reqAmount)) {
+                throw new Error(`Materiales insuficientes. Necesitas ${reqAmount}x ${reqItem} (Tienes ${inventory.getItemAmount(reqItem)}).`);
             }
         }
 
-        await this.inventoryRepository.executeTransaction((inventories) => {
-            const inventory = this.inventoryRepository.ensureInventory(inventories, username);
+        await this.inventoryRepository.updateTransactional(username, (txInventory) => {
             for (const [reqItem, reqAmount] of Object.entries(recipe.cost)) {
-                inventory.items[reqItem] -= reqAmount;
-                if (inventory.items[reqItem] <= 0) delete inventory.items[reqItem];
+                txInventory.removeItem(reqItem, reqAmount);
             }
         });
 
-        await this.jobRepository.executeTransaction((jobs) => {
-            const profile = this.jobRepository.ensureJobProfile(jobs, username);
-            const expirationTime = Date.now() + recipe.durationMs;
 
-            profile.activeBuffs[recipe.buffId] = expirationTime;
+        await this.jobRepository.updateTransactional(username, (profile) => {
+            profile.applyBuff(recipe.buffId, recipe.durationMs);
         });
 
         return recipe;
@@ -63,28 +54,17 @@ export class CraftingService {
      * Retrieves the list of currently active buffs for a user.
      * Automatically cleans up expired buffs.
      * @param {string} username - The user to check.
-     * @returns {Promise<Object.<string, number>>} Map of active buffs and their remaining milliseconds.
+     * @returns {Promise<Record<string, number>>} Map of active buffs and their remaining milliseconds.
      */
     async getActiveBuffs(username) {
+        /** @type {Record<string, number>} */
         let activeBuffsInfo = {};
-        const now = Date.now();
 
-        await this.jobRepository.executeTransaction((jobs) => {
-            const profile = this.jobRepository.ensureJobProfile(jobs, username);
-            let hasChanges = false;
-
-            for (const [buffId, expirationTime] of Object.entries(profile.activeBuffs)) {
-                if (now > expirationTime) {
-                    delete profile.activeBuffs[buffId];
-                    hasChanges = true;
-                } else {
-                    activeBuffsInfo[buffId] = expirationTime - now;
-                }
-            }
-            return hasChanges ? jobs : undefined;
+         await this.jobRepository.updateTransactional(username, (profile) => {
+            activeBuffsInfo = profile.cleanAndGetActiveBuffs();
         });
 
-        return activeBuffsInfo
+        return activeBuffsInfo;
     }
 
     /**
@@ -95,17 +75,9 @@ export class CraftingService {
      */
     async consumeBuff(username, buffId) {
         let wasConsumed = false;
-        const now = Date.now();
 
-        await this.jobRepository.executeTransaction((jobs) => {
-            const profile = jobs.find(j => j.name === username);
-            if (profile?.activeBuffs?.[buffId]) {
-                if (now < profile.activeBuffs[buffId]) {
-                    wasConsumed = true;
-                }
-                delete profile.activeBuffs[buffId];
-                return jobs;
-            }
+        await this.jobRepository.updateTransactional(username, (profile) => {
+            wasConsumed = profile.removeBuff(buffId);
         });
 
         return wasConsumed;

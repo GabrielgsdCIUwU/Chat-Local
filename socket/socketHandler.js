@@ -7,8 +7,21 @@ import registerPollEvents from "./events/pollEvents.js";
 
 import { container } from "../backend/core/DIContainer.js";
 import registerActivityEvents from "./events/activityEvents.js";
+import { DomainEventPublisher } from "../backend/core/domain/DomainEvents.js";
+import { GAME_CONFIG } from "../backend/core/constants.js";
 
 export default function setupSockets(io, sessionMiddleware) {
+    DomainEventPublisher.subscribe("RaidDefeatedEvent", async (event) => {
+        for (const [user, dmg] of Object.entries(event.damageLog)) {
+            const reward = Math.floor(dmg * GAME_CONFIG.BOSS_CONFIG.REWARD_PER_DAMAGE);
+            await container.economyService.addFunds(user, reward).catch(console.error);
+        }
+
+        io.emit("activity:raidEnded", {
+            success: true,
+            leaderboard: event.damageLog
+        });
+    });
     // Middleware de sesión para Sockets
     io.use((socket, next) => {
         sessionMiddleware(socket.request, {}, (err) => {

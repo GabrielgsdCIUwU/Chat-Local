@@ -1,35 +1,135 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { GAME_CONFIG } from '../core/constants.js';
+import { Gambler } from '../domain/gambling/Gambler.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 export class GamblingService {
     /**
-     * @param {import('../repositories/GamblingRepository.js').GamblingRepository} gamblingRepository 
-     * @param {import('./EconomyService.js').EconomyService} economyService
-     * @param {import('./PetService.js').PetService} petService
-     * @param {import('./GuildService.js').GuildService} guildService
+     * @param {import('../core/types.js').IGamblingRepository} gamblingRepository - Gambling repository interface.
+     * @param {import('../core/types.js').IEconomyService} economyService - Economy service interface.
+     * @param {import('../core/types.js').IPetService} petService - Companion service interface.
+     * @param {import('../core/types.js').IGuildService} guildService - Clan service interface.
+     * @param {import('../core/types.js').ICraftingService} craftingService - Buff manager service interface.
      */
-    constructor(gamblingRepository, economyService, petService, guildService) {
+    constructor(gamblingRepository, economyService, petService, guildService, craftingService) {
         this.repo = gamblingRepository;
         this.economy = economyService;
         this.petService = petService;
         this.guildService = guildService;
+        this.craftingService = craftingService;
+        this.nonCountDaysPath = path.join(__dirname, "../../public/json/nonCountDays.json");
     }
 
     /**
-     * Ensures a gambler exists. If not, initializes a new profile.
-     * Note: This must be called INSIDE a transaction to be race-condition safe.
-     * @param {import('../repositories/GamblingRepository.js').Gambler[]} users 
-     * @param {string} username 
-     * @returns {import('../repositories/GamblingRepository.js').Gambler}
+     * Claims the daily reward, calculating streak and applying bonuses sequentially.
+     * 
+     * @param {string} username - User claiming the reward.
+     * @param {number} timestamp - Action execution time.
+     * @returns {Promise<import('../core/types.js').ClaimDailyResult>} Structured response of the claim.
      */
-    ensureUserExists(users, username) {
-        let user = users.find(u => u.name === username);
-        if (!user) {
-            user = {
-                name: username, totalEarnings: 0, spend: 0,
-                timesSteal: 0, moneySteal: 0, duelWin: 0, duelLose: 0,
-                bankRupt: 0
-            };
-            users.push(user);
+    async claimDaily(username, timestamp) {
+        /** @type {string[]} */
+        let nonCountDays = [];
+        try {
+            const rawData = await fs.readFile(this.nonCountDaysPath, "utf-8");
+            nonCountDays = JSON.parse(rawData);
+        } catch {
+            nonCountDays = [];
         }
-        return user;
+
+        const baseAmount = GAME_CONFIG.GAMBLING.DAILY.BASE_REWARD;
+        let finalStreak = 0;
+        let isNewStreak = false;
+        let streakBonus = 0;
+
+        await this.repo.updateTransactional(username, (gambler) => {
+            const result = gambler.calculateDailyStreak(timestamp, nonCountDays);
+            finalStreak = result.streak;
+            isNewStreak = result.isNewStreak;
+
+            const { BONUS_MIN, BONUS_MAX } = GAME_CONFIG.GAMBLING.DAILY;
+            const randomBonusFactor = Math.floor(Math.random() * (BONUS_MAX - BONUS_MIN + 1)) + BONUS_MIN;
+            streakBonus = finalStreak * randomBonusFactor;
+        });
+
+        const totalBaseReward = baseAmount + streakBonus;
+        const { actualEarnings, petMsg } = await this.addRewardWithBonus(username, totalBaseReward);
+
+        await this.repo.updateTransactional(username, (gambler) => {
+            gambler.recordEarnings(actualEarnings);
+        });
+
+        return {
+            actualEarnings,
+            streakBonus,
+            finalStreak,
+            petMsg,
+            isNewStreak
+        };
+    }
+
+    /**
+     * Processes robbery attempts securely, managing anti-rob protection, balance checks, and fines.
+     * 
+     * @param {string} thiefName - Username initiating robbery.
+     * @param {string} victimName - Target victim username.
+     * @param {number} amount - Desired amount to steal.
+     * @param {number} timestamp - Action execution timestamp.
+     * @returns {Promise<import('../core/types.js').RobberyResult>} The formatted result metrics.
+     */
+    async rob(thiefName, victimName, amount, timestamp) {
+        if (thiefName === victimName) {
+            throw new Error("No puedes robarte a ti mismo.");
+        }
+
+        const existingProfile = await this.repo.findById(thiefName);
+        const thiefProfile = existingProfile || Gambler.createDefault(thiefName);
+        thiefProfile.checkRobberyCooldown(timestamp);
+
+        const penaltyAmount = amount + Math.floor(amount / GAME_CONFIG.ROB_CONFIG.PENALTY_DIVISOR);
+        const thiefWallet = await this.economy.getBalance(thiefName);
+        if (thiefWallet.money < penaltyAmount) {
+            throw new Error(`Para intentar robar **${amount}€**, necesitas tener al menos **${penaltyAmount}€** para cubrir la fianza.`);
+        }
+
+        const victimWallet = await this.economy.getBalance(victimName);
+        if (victimWallet.money < amount) {
+            throw new Error(`La víctima solo tiene **${victimWallet.money}€**.`);
+        }
+
+        const wardConsumed = await this.craftingService.consumeBuff(victimName, "anti_rob");
+        
+        if (wardConsumed) {
+            const actualPenalty = await this.economy.forceRemoveFunds(thiefName, penaltyAmount);
+            await this.repo.updateTransactional(thiefName, (thief) => {
+                thief.markRobberyAttempt(timestamp);
+                thief.recordSpend(actualPenalty);
+            });
+            return { outcome: 'ward', penalty: actualPenalty, stolenAmount: 0, totalEarned: 0, petMsg: "" };
+        }
+
+        const percentageStolen = amount / victimWallet.money;
+        const { MAX_CHANCE, CHANCE_SCALING } = GAME_CONFIG.ROB_CONFIG;
+        const successChance = MAX_CHANCE - (percentageStolen * CHANCE_SCALING);
+
+        if (Math.random() < successChance) {
+            const { totalEarned, petMsg } = await this.processRobberyWin(thiefName, victimName, amount);
+            await this.repo.updateTransactional(thiefName, (thief) => {
+                thief.markRobberyAttempt(timestamp);
+                thief.recordEarnings(totalEarned);
+            });
+            return { outcome: 'success', penalty: 0, stolenAmount: amount, totalEarned, petMsg };
+        } else {
+            const actualPenalty = await this.economy.forceRemoveFunds(thiefName, penaltyAmount);
+            await this.repo.updateTransactional(thiefName, (thief) => {
+                thief.markRobberyAttempt(timestamp);
+                thief.recordSpend(actualPenalty);
+            });
+            return { outcome: 'fail', penalty: actualPenalty, stolenAmount: 0, totalEarned: 0, petMsg: "" };
+        }
     }
 
     /**

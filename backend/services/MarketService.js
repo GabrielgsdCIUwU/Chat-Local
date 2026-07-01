@@ -1,16 +1,26 @@
 import crypto from "node:crypto";
 import { GAME_CONFIG } from "../core/constants.js";
+import { RPG_CONFIG } from "../core/rpgConfig.js";
 
 /**
- * @typedef {import('../repositories/AuctionRepository.js').AuctionItem} AuctionItem
+ * @typedef {import('../core/types.js').IMarketService} IMarketService
+ * @typedef {import('../core/types.js').IEconomyService} IEconomyService
+ * @typedef {import('../core/types.js').IInventoryRepository} IInventoryRepository
+ * @typedef {import('../core/types.js').IAuctionRepository} IAuctionRepository
+ * @typedef {import('../core/types.js').AuctionItem} AuctionItem
  */
 
+/**
+ * Service orchestrating Global Auction Listings and safe direct peer trading.
+ * 
+ * @implements {IMarketService}
+ */
 export class MarketService {
     /**
      * 
-     * @param {import('./EconomyService.js').EconomyService} economyService 
-     * @param {import('../repositories/InventoryRepository.js').InventoryRepository} inventoryRepository 
-     * @param {import('../repositories/AuctionRepository.js').AuctionRepository} auctionRepository 
+     * @param {IEconomyService} economyService 
+     * @param {IInventoryRepository} inventoryRepository 
+     * @param {IAuctionRepository} auctionRepository 
      */
     constructor(economyService, inventoryRepository, auctionRepository) {
         this.economyService = economyService;
@@ -32,31 +42,29 @@ export class MarketService {
         if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error("Cantidad inválida.");
         if (!Number.isSafeInteger(price) || price <= 0) throw new Error("Precio inválido.");
 
-        await this.inventoryRepository.executeTransaction((inventories) => {
-            const inventory = this.inventoryRepository.ensureInventory(inventories, sellerName);
+        let finalItemName = itemName;
 
-            const actualItem = Object.keys(inventory.items).find(k => k.toLowerCase() === itemName.toLowerCase());
-            if (!actualItem || inventory.items[actualItem] < amount) {
+        await this.inventoryRepository.updateTransactional(sellerName, (inventory) => {
+            const actualKey = inventory.findItemKey(itemName);
+
+            if (!actualKey || !inventory.hasItem(actualKey, amount)) {
                 throw new Error(`Tú no tienes suficientes items: ${amount}x ${itemName}`);
             }
 
-            itemName = actualItem;
-            inventory.items[actualItem] -= amount;
-            if (inventory.items[actualItem] === 0) delete inventory.items[actualItem];
+            finalItemName = actualKey;
+            inventory.removeItem(actualKey, amount);
         });
 
         const newAuction = {
             id: crypto.randomBytes(3).toString("hex"),
             seller: sellerName,
-            itemName: itemName,
+            itemName: finalItemName,
             amount: amount,
             price: price,
-            expiresAt: Date.now() + (GAME_CONFIG.AUCTION_EXPIRATION_MS),
+            expiresAt: Date.now() + GAME_CONFIG.AUCTION_EXPIRATION_MS,
         };
 
-        await this.auctionRepository.executeTransaction((auctions) => {
-            auctions.push(newAuction);
-        });
+        await this.auctionRepository.save(newAuction);
 
         return newAuction;
     }
@@ -87,9 +95,8 @@ export class MarketService {
 
         await this.economyService.addFunds(auction.seller, auction.price);
 
-        await this.inventoryRepository.executeTransaction((inventories) => {
-            const inventory = this.inventoryRepository.ensureInventory(inventories, buyerName);
-            inventory.items[auction.itemName] = (inventory.items[auction.itemName] || 0) + auction.amount;
+        await this.inventoryRepository.updateTransactional(buyerName, (inventory) => {
+            inventory.addItem(auction.itemName, auction.amount);
         });
 
         return auction;
@@ -111,26 +118,18 @@ export class MarketService {
      */
     async checkExpiredAuctions() {
         const now = Date.now();
-        let expiredAuctions = [];
-
-        await this.auctionRepository.executeTransaction((auctions) => {
-            expiredAuctions = auctions.filter(a => a.expiresAt <= now);
-            
-            for (let i = auctions.length - 1; i >= 0; i--) {
-                if (auctions[i].expiresAt <= now) {
-                    auctions.splice(i, 1);
-                }
-            }
-        });
+        const auctions = await this.auctionRepository.getAll();
+        const expiredAuctions = auctions.filter(a => a.expiresAt <= now);
 
         if (expiredAuctions.length === 0) return;
 
-        await this.inventoryRepository.executeTransaction((inventories) => {
-            for (const auction of expiredAuctions) {
-                const inventory = this.inventoryRepository.ensureInventory(inventories, auction.seller);
-                inventory.items[auction.itemName] = (inventory.items[auction.itemName] || 0) + auction.amount;
-            }
-        });
+        for (const auction of expiredAuctions) {
+            await this.auctionRepository.removeAuction(auction.id);
+            
+            await this.inventoryRepository.updateTransactional(auction.seller, (inventory) => {
+                inventory.addItem(auction.itemName, auction.amount);
+            });
+        }
 
         console.log(`[Market] Se han devuelto ${expiredAuctions.length} subastas expiradas a sus dueños.`);
     }
@@ -154,8 +153,8 @@ export class MarketService {
         if (!sItemActual || !rItemActual) throw new Error("Uno de los ítems no existe en el juego.");
 
         const senderInv = await this.inventoryRepository.getInventory(senderName);
-        if ((senderInv.items[sItemActual] || 0) < sendAmount) {
-            throw new Error(`No tienes suficientes ${sItemActual}. Tienes ${senderInv.items[sItemActual] || 0}.`);
+        if (!senderInv.hasItem(sItemActual, sendAmount)) {
+            throw new Error(`No tienes suficientes ${sItemActual}. Tienes ${senderInv.getItemAmount(sItemActual)}.`);
         }
 
         const existingTrade = this.pendingTrades.get(targetName);
@@ -194,25 +193,19 @@ export class MarketService {
         this.pendingTrades.delete(targetName);
         if (!accept) return false;
 
-        await this.inventoryRepository.executeTransaction((inventories) => {
-            const senderInv = this.inventoryRepository.ensureInventory(inventories, trade.senderName);
-            const targetInv = this.inventoryRepository.ensureInventory(inventories, targetName);
+        const senderInv = await this.inventoryRepository.getInventory(trade.senderName);
+        if (!senderInv.hasItem(trade.sendItem, trade.sendAmount)) {
+            throw new Error(`El intercambio falló: ${trade.senderName} ya no tiene suficientes ${trade.sendItem}.`);
+        }
 
-            if ((senderInv.items[trade.sendItem] || 0) < trade.sendAmount) {
-                throw new Error(`El intercambio falló: ${trade.senderName} ya no tiene suficientes ${trade.sendItem}.`);
-            }
-            if ((targetInv.items[trade.reqItem] || 0) < trade.reqAmount) {
-                throw new Error(`No tienes suficientes ${trade.reqItem} para completar este intercambio.`);
-            }
+        await this.inventoryRepository.updateTransactional(trade.senderName, (txSender) => {
+            txSender.removeItem(trade.sendItem, trade.sendAmount);
+            txSender.addItem(trade.reqItem, trade.reqAmount);
+        });
 
-            senderInv.items[trade.sendItem] -= trade.sendAmount;
-            if (senderInv.items[trade.sendItem] === 0) delete senderInv.items[trade.sendItem];
-
-            targetInv.items[trade.reqItem] -= trade.reqAmount;
-            if (targetInv.items[trade.reqItem] === 0) delete targetInv.items[trade.reqItem];
-
-            senderInv.items[trade.reqItem] = (senderInv.items[trade.reqItem] || 0) + trade.reqAmount;
-            targetInv.items[trade.sendItem] = (targetInv.items[trade.sendItem] || 0) + trade.sendAmount;
+        await this.inventoryRepository.updateTransactional(targetName, (txTarget) => {
+            txTarget.removeItem(trade.reqItem, trade.reqAmount);
+            txTarget.addItem(trade.sendItem, trade.sendAmount);
         });
 
         return trade;

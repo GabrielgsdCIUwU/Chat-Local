@@ -1,6 +1,16 @@
+/**
+ * @typedef {import('../core/types.js').IChatFilterService} IChatFilterService 
+ * @typedef {import('../core/types.js').ISocketServer} ISocketServer
+ */
+
+/**
+ * Service dedicated to scanning incoming chat streams for blacklisted terms or triggers.
+ * 
+ * @implements {IChatFilterService}
+ */
 export class ChatFilterService {
     /**
-     * @param {import('../database/JsonDatabaseClient.js').JsonDatabaseClient} spamDbClient 
+     * @param {import('../core/types.js').IKeyValueStore} spamDbClient 
      */
     constructor(spamDbClient) {
         this.spamDbClient = spamDbClient;
@@ -13,7 +23,7 @@ export class ChatFilterService {
      * Processes a message through all registered filters.
      * @param {string} msg - The message content.
      * @param {string} username - The sender's username.
-     * @param {import('socket.io').Server} io - The socket.io instance.
+     * @param {ISocketServer} io - The socket.io instance.
      * @param {number} timestamp - The message timestamp.
      */
     async processMessage(msg, username, io, timestamp) {
@@ -26,7 +36,7 @@ export class ChatFilterService {
      * Processes a message through all registered filters.
      * @param {string} msg - The message content.
      * @param {string} username - The sender's username.
-     * @param {import('socket.io').Server} io - The socket.io instance.
+     * @param {ISocketServer} io - The socket.io instance.
      * @param {number} timestamp - The message timestamp.
      */
     async checkDonationSpam(msg, username, io, timestamp) {

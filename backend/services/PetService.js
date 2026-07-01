@@ -2,13 +2,16 @@ import crypto from "node:crypto";
 import { RPG_CONFIG } from "../core/rpgConfig.js";
 
 /**
+ * @typedef {import('../core/types.js').IPetService} IPetService
+ * @typedef {import('../core/types.js').IPetRepository} IPetRepository
+ * @typedef {import('../core/types.js').IEconomyService} IEconomyService
  * @typedef {import('../core/rpgConfig.js').PetConfig} PetConfig
  */
 
 export class PetService {
     /**
-     * @param {import('../repositories/PetRepository.js').PetRepository} petRepository 
-     * @param {import('./EconomyService.js').EconomyService} economyService 
+     * @param {IPetRepository} petRepository 
+     * @param {IEconomyService} economyService 
      */
     constructor(petRepository, economyService) {
         this.petRepo = petRepository;
@@ -28,9 +31,8 @@ export class PetService {
 
         await this.economy.removeFunds(username, totalCost);
 
-        await this.petRepo.executeTransaction((profiles) => {
-            const profile = this.petRepo.ensureProfile(profiles, username);
-            profile.eggs += amount;
+        await this.petRepo.updateTransactional(username, (profile) => {
+            profile.buyEggs(amount);
         });
 
         return totalCost;
@@ -44,14 +46,9 @@ export class PetService {
      */
     async openEgg(username) {
         let newPetType = null;
-        let newPetId = crypto.randomUUID();
+        const newPetId = crypto.randomUUID();
 
-        await this.petRepo.executeTransaction((profiles) => {
-            const profile = this.petRepo.ensureProfile(profiles, username);
-            if (profile.eggs < 1) throw new Error("No tienes huevos. Compra uno con `/pet buy`.");
-            
-            profile.eggs -= 1;
-
+        await this.petRepo.updateTransactional(username, (profile) => {
             const roll = Math.random();
             let rarity = "COMMON";
             
@@ -59,12 +56,13 @@ export class PetService {
             else if (roll <= RPG_CONFIG.GACHA_RATES.EPIC) rarity = "EPIC";
 
             const availablePets = Object.entries(RPG_CONFIG.PETS).filter(([k, v]) => v.rarity === rarity);
-            
             const chosenIndex = Math.floor(Math.random() * availablePets.length);
             newPetType = availablePets[chosenIndex][0];
 
-            profile.pets.push({ id: newPetId, type: newPetType });
+            profile.hatchEgg(newPetId, newPetType);
         });
+
+        if (!newPetType) throw new Error("Error al generar mascota.");
 
         return RPG_CONFIG.PETS[newPetType];
     }
@@ -79,19 +77,15 @@ export class PetService {
     async equipPet(username, petId) {
         let equippedPet = null;
 
-        await this.petRepo.executeTransaction((profiles) => {
-            const profile = this.petRepo.ensureProfile(profiles, username);
-            
-            if (petId.toLowerCase() === "none") {
-                profile.equipped = null;
-                return;
+        await this.petRepo.updateTransactional(username, (profile) => {
+            profile.equipPet(petId);
+
+            if (profile.equipped) {
+                const petInstance = profile.pets.find(p => p.id === profile.equipped);
+                if (petInstance) {
+                    equippedPet = RPG_CONFIG.PETS[petInstance.type];
+                }
             }
-
-            const petExists = profile.pets.find(p => p.id.startsWith(petId));
-            if (!petExists) throw new Error("No posees una mascota con ese ID.");
-
-            profile.equipped = petExists.id;
-            equippedPet = RPG_CONFIG.PETS[petExists.type];
         });
 
         return equippedPet;
@@ -131,21 +125,12 @@ export class PetService {
         let releasedPetConfig = null;
         const refundAmount = Math.floor(RPG_CONFIG.EGG_PRICE * RPG_CONFIG.PET_REFUND_PERCENTAGE);
 
-        await this.petRepo.executeTransaction((profiles) => {
-            const profile = this.petRepo.ensureProfile(profiles, username);
-            
-            const petIndex = profile.pets.findIndex(p => p.id.startsWith(petId));
-            if (petIndex === -1) throw new Error("No posees una mascota con ese ID.");
-
-            const petInstance = profile.pets[petIndex];
-
-            if (profile.equipped === petInstance.id) {
-                throw new Error("No puedes liberar una mascota que tienes equipada. Desequípala usando '/pet equip none' primero.");
-            }
-
+        await this.petRepo.updateTransactional(username, (profile) => {
+            const petInstance = profile.releasePet(petId);
             releasedPetConfig = RPG_CONFIG.PETS[petInstance.type];
-            profile.pets.splice(petIndex, 1);
         });
+
+        if (!releasedPetConfig) throw new Error("Error al liberar la mascota.");
 
         await this.economy.addFunds(username, refundAmount);
 
