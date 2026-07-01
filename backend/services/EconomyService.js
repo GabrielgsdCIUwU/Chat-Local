@@ -1,9 +1,9 @@
-import { GAME_CONFIG } from '../core/constants.js';
-
+/**
+ * Economy application service handling safe transactions, fund transfers, and balance audits.
+ */
 export class EconomyService {
     /**
-     * 
-     * @param {import('../core/types.js').IEconomyRepository} economyRepository 
+     * @param {import('../core/types.js').IEconomyRepository} economyRepository - The persistent SQLite economy repository.
      */
     constructor(economyRepository) {
         this.repo = economyRepository;
@@ -16,7 +16,7 @@ export class EconomyService {
      * created with the default starting values.
      *
      * @param {string} username - Username whose wallet should be retrieved.
-     * @returns {Promise<import('../core/types.js').WalletProps>} The user's wallet data.
+     * @returns {Promise<import('../core/types.js').WalletProps>} The user's wallet data structure.
      */
     async getBalance(username) {
         const wallet = await this.repo.findById(username);
@@ -32,10 +32,11 @@ export class EconomyService {
      * If the user has outstanding debt, 20% of the deposited amount is
      * automatically used to repay the debt (up to the remaining debt amount).
      * The rest is credited to the user's balance.
-     * @param {string} username - Username of the wallet owner
-     * @param {number} amount - Positive integer amount to add
-     * @returns {Promise<number>} - The net amount credited to the user's balance after debt repayment
-     * @throws If the amount is not a positive safe integer
+     * 
+     * @param {string} username - Username of the wallet owner.
+     * @param {number} amount - Positive integer amount to add.
+     * @returns {Promise<number>} The net amount credited to the user's balance after debt repayment.
+     * @throws {Error} If the amount is not a positive safe integer.
      */
     async addFunds(username, amount) {
         if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error("La cantidad no es válida");
@@ -56,8 +57,8 @@ export class EconomyService {
      * @param {string} username - Username of the wallet owner.
      * @param {number} amount - Positive integer amount to remove.
      * @returns {Promise<void>}
-     * @throws If the amount is not a positive safe integer.
-     * @throws If the user does not have enough funds.
+     * @throws {Error} If the amount is not a positive safe integer.
+     * @throws {Error} If the user does not have enough funds.
      */
     async removeFunds(username, amount) {
         if (!Number.isSafeInteger(amount) || amount <= 0) throw new Error("La cantidad no es válida");
@@ -77,9 +78,9 @@ export class EconomyService {
      * @param {string} targetName - Username of the recipient.
      * @param {number} amount - Positive integer amount to transfer.
      * @returns {Promise<void>}
-     * @throws If the sender and recipient are the same user.
-     * @throws If the amount is not a positive safe integer.
-     * @throws If the sender does not have enough funds.
+     * @throws {Error} If the sender and recipient are the same user.
+     * @throws {Error} If the amount is not a positive safe integer.
+     * @throws {Error} If the sender does not have enough funds.
      */
     async transferFunds(senderName, targetName, amount) {
         if (senderName === targetName) throw new Error("No puedes transferir dinero a ti mismo");
@@ -102,7 +103,7 @@ export class EconomyService {
      * current balance, limited to the specified number of entries.
      *
      * @param {number} [limit=10] - Maximum number of wallets to return.
-     * @returns {Promise<Array<Object>>} A list of wallets sorted by wealth.
+     * @returns {Promise<import('../core/types.js').WalletProps[]>} A list of wallets sorted by wealth.
      */
     async getTopRicher(limit = 10) {
         const wallets = await this.repo.getAll();
