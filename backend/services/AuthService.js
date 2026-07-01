@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { VALIDATION_CONFIG } from "../core/constants.js";
+import { ROLES, VALIDATION_CONFIG } from "../core/constants.js";
 
 /**
  * @typedef {import('../core/types.js').UserDTO} UserDTO
@@ -84,11 +84,14 @@ export class AuthService {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        const allUsers = await this.userRepository.findAll();
+        const initialRoles = allUsers.length === 0 ? [ROLES.ADMIN] : [];
+
         await this.userRepository.save({
             name,
             passwd: hashedPassword,
             location: ip,
-            roles: []
+            roles: initialRoles
         });
     }
 }
