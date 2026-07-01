@@ -6,7 +6,7 @@ import { BaseCommand } from "../../core/BaseCommand.js";
  */
 
 /**
- * Command to attempt stealing from another user
+ * Command to attempt stealing from another user.
  * @extends BaseCommand
  */
 class RobarCommand extends BaseCommand {
@@ -22,75 +22,46 @@ class RobarCommand extends BaseCommand {
     }
 
     /**
+     * Executes the robbery command logic.
      * 
-     * @param {BotContext} context 
-     * @param {Record<string, any>} args 
+     * @param {BotContext} context - Execution command context.
+     * @param {Record<string, any>} args - Clean parameters parsed.
+     * @returns {Promise<void>}
      */
     async run(context, args) {
         const { amount, targetUser } = args;
-        const eco = context.container.economyService;
-        const now = Date.now();
 
-        if (context.username === targetUser) throw new Error("No puedes robarte a ti mismo.");
+        const result = await context.container.gamblingService.rob(
+            context.username,
+            targetUser,
+            amount,
+            context.timestamp
+        );
 
-        const users = await context.container.gamblingRepository.getAll();
-        const thiefProfile = users.find(u => u.name === context.username);
+        const victimWallet = await context.container.economyService.getBalance(targetUser);
+        const percentage = amount / (victimWallet.money + result.stolenAmount);
 
-        if (thiefProfile?.lastRobbery) {
-            const timePassed = now - thiefProfile.lastRobbery;
-            if (timePassed < GAME_CONFIG.ROB_CONFIG.COOLDOWN_MS) {
-                throw new Error(this.#getCooldownMessage(GAME_CONFIG.ROB_CONFIG.COOLDOWN_MS - timePassed));
-            }
-        }
-
-        const maxPossibleFine = this.#calculatePenalty(amount);
-        const thiefWallet = await eco.getBalance(context.username);
-
-        if (thiefWallet.money < maxPossibleFine) {
-            throw new Error(`Para intentar robar **${amount}€**, necesitas tener al menos **${maxPossibleFine}€** en tu cuenta para cubrir la fianza en caso de que la policía te atrape.`);
-        }
-
-        const victimWallet = await eco.getBalance(targetUser);
-        if (victimWallet.money < amount) throw new Error(`La víctima solo tiene **${victimWallet.money}€**.`);
-
-        const percentageStolen = amount / victimWallet.money;
-        const { MAX_CHANCE, CHANCE_SCALING } = GAME_CONFIG.ROB_CONFIG;
-        const successChance = MAX_CHANCE - (percentageStolen * CHANCE_SCALING);
-
-        const wardConsumed = await context.container.craftingService.consumeBuff(targetUser, "anti_rob");
         let finalMessage = "";
 
-        if (wardConsumed) {
-            const penaltyLost = await eco.forceRemoveFunds(context.username, this.#calculatePenalty(amount));
-            await this.#updateStats(context.container, context.username, now, 0, penaltyLost);
-            finalMessage = `🛡️ **¡THIEF WARD ACTIVADO!**\n¡**${targetUser}** estaba protegido por una poderosa barrera mágica! La protección se rompió al bloquear el robo y **${context.username}** fue repelido violentamente, pagando una multa de **${penaltyLost}€**.`;
-
-        } else if (Math.random() < successChance) {
-            const { totalEarned, petMsg } = await context.container.gamblingService.processRobberyWin(context.username, targetUser, amount);
-            await this.#updateStats(context.container, context.username, now, totalEarned, 0);
-            finalMessage = this.#getSuccessMessage(context.username, targetUser, amount, percentageStolen, petMsg);
-
+        if (result.outcome === "ward") {
+            finalMessage = `🛡️ **¡THIEF WARD ACTIVADO!**\n¡**${targetUser}** estaba protegido por una poderosa barrera mágica! La protección se rompió al bloquear el robo y **${context.username}** fue repelido violentamente, pagando una multa de **${result.penalty}€**.`;
+        } else if (result.outcome === "success") {
+            finalMessage = this.#getSuccessMessage(context.username, targetUser, result.totalEarned, percentage, result.petMsg);
         } else {
-            const penaltyLost = await eco.forceRemoveFunds(context.username, this.#calculatePenalty(amount));
-            await this.#updateStats(context.container, context.username, now, 0, penaltyLost);
-            finalMessage = this.#getFailureMessage(context.username, targetUser, penaltyLost, percentageStolen);
+            finalMessage = this.#getFailureMessage(context.username, targetUser, result.penalty, percentage);
         }
 
         context.reply(finalMessage);
     }
 
-
-
-    #calculatePenalty(amount) {
-        return amount + Math.floor(amount / GAME_CONFIG.ROB_CONFIG.PENALTY_DIVISOR);
-    }
-
-    #getCooldownMessage(timeLeftMs) {
-        const minutes = Math.floor(timeLeftMs / 60000);
-        const seconds = Math.floor((timeLeftMs % 60000) / 1000);
-        return `🚨 **Buscado por la policía:** Debes permanecer escondido durante **${minutes}m y ${seconds}s** antes de intentar robar de nuevo.`;
-    }
-
+    /**
+     * @param {string} thief - Thief username.
+     * @param {string} victim - Target username.
+     * @param {number} amount - Amount stolen.
+     * @param {number} percentage - Percentage.
+     * @param {string} petMsg - Bonuses details.
+     * @returns {string} Resulting text.
+     */
     #getSuccessMessage(thief, victim, amount, percentage, petMsg) {
         const { STEALTH, HEIST } = GAME_CONFIG.ROB_CONFIG.THRESHOLDS;
         if (percentage <= STEALTH) return `👻 **Como un fantasma:** ${thief} le robó **${amount}€** a ${victim} y ni se dio cuenta${petMsg}.`;
@@ -98,26 +69,19 @@ class RobarCommand extends BaseCommand {
         return `🕵️ ${thief} ha robado **${amount}€** a ${victim} con éxito${petMsg}.`;
     }
 
+    /**
+     * @param {string} thief - Thief username.
+     * @param {string} victim - Target username.
+     * @param {number} penalty - Penalty amount.
+     * @param {number} percentage - Percentage.
+     * @returns {string} Resulting text.
+     */
     #getFailureMessage(thief, victim, penalty, percentage) {
         const { CLUMSY, GREEDY } = GAME_CONFIG.ROB_CONFIG.THRESHOLDS;
         if (percentage >= GREEDY) return `🚨 **Demasiado avaricioso:** ${thief} intentó robar casi todo el dinero de ${victim}. Hizo tanto ruido que la policía lo atrapó al instante, pagando **${penalty}€** en multas.`;
         if (percentage <= CLUMSY) return `🤦 **Mala suerte:** ${thief} intentó robar una miseria a ${victim}, pero tropezó absurdamente y la policía lo atrapó, perdiendo **${penalty}€**.`;
         return `👮 ${thief} intentó robar a ${victim} pero la policía lo atrapó, perdiendo **${penalty}€** en multas.`;
     }
-
-    async #updateStats(container, username, now, earned, spent) {
-        await container.gamblingRepository.executeTransaction(async (users) => {
-            const gambler = container.gamblingRepository.ensureUser(users, username);
-            gambler.timesSteal = (gambler.timesSteal || 0) + 1;
-            gambler.lastRobbery = now;
-            if (earned > 0) {
-                gambler.moneySteal = (gambler.moneySteal || 0) + earned;
-                gambler.totalEarnings = (gambler.totalEarnings || 0) + earned;
-            }
-            if (spent > 0) {
-                gambler.spend = (gambler.spend || 0) + spent;
-            }
-        });
-    }
 }
+
 export default new RobarCommand();
