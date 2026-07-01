@@ -1,16 +1,13 @@
 import { RPG_CONFIG } from "../core/rpgConfig.js";
 
 /**
- * @typedef {import('../core/types.js').ICraftingService} ICraftingService 
- * @typedef {import('../core/types.js').IInventoryRepository} IInventoryRepository 
- * @typedef {import('../core/types.js').IJobRepository} IJobRepository 
+ * Service managing potion crafting, resource consumption, and active player buff sessions.
  */
 
 export class CraftingService {
     /**
-     * 
-     * @param {IInventoryRepository} inventoryRepository 
-     * @param {IJobRepository} jobRepository  
+     * @param {import('../core/types.js').IInventoryRepository} inventoryRepository - RPG backpack repository.
+     * @param {import('../core/types.js').IJobRepository} jobRepository - RPG work profile repository.
      */
     constructor(inventoryRepository, jobRepository) {
         this.inventoryRepository = inventoryRepository;
@@ -21,7 +18,7 @@ export class CraftingService {
      * Crafts a recipe, consumes materials, and applies the buff to the user.
      * @param {string} username - The user executing the craft.
      * @param {string} recipeKey - The ID of the recipe from RPG_CONFIG.
-     * @returns {Promise<Object>} The recipe configuration that was successfully crafted.
+     * @returns {Promise<import('../core/rpgConfig.js').CraftingRecipe>} The recipe configuration that was successfully crafted.
      * @throws {Error} If recipe doesn't exist or insufficient materials.
      */
     async craftItem(username, recipeKey) {
@@ -57,17 +54,17 @@ export class CraftingService {
      * Retrieves the list of currently active buffs for a user.
      * Automatically cleans up expired buffs.
      * @param {string} username - The user to check.
-     * @returns {Promise<Object.<string, number>>} Map of active buffs and their remaining milliseconds.
+     * @returns {Promise<Record<string, number>>} Map of active buffs and their remaining milliseconds.
      */
     async getActiveBuffs(username) {
-        /** @type {{[key: string]: number}} */
+        /** @type {Record<string, number>} */
         let activeBuffsInfo = {};
 
          await this.jobRepository.updateTransactional(username, (profile) => {
             activeBuffsInfo = profile.cleanAndGetActiveBuffs();
         });
 
-        return activeBuffsInfo
+        return activeBuffsInfo;
     }
 
     /**
