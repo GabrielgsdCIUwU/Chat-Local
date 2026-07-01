@@ -64,6 +64,27 @@ export class Gambler extends Entity {
     get dailyStreak() { return this._props.dailyStreak; }
 
     /**
+     * Factory method to create a default Gambler aggregate root.
+     * @param {string} username - The gambler's username.
+     * @returns {Gambler} A brand new Gambler aggregate instance with default values.
+     */
+    static createDefault(username) {
+        return new Gambler({
+            name: username,
+            totalEarnings: 0,
+            spend: 0,
+            timesSteal: 0,
+            moneySteal: 0,
+            duelWin: 0,
+            duelLose: 0,
+            bankRupt: 0,
+            lastRobbery: 0,
+            lastDaily: 0,
+            dailyStreak: 0
+        });
+    }
+
+    /**
      * Records additional monetary expenditure into gambling statistics.
      * @param {number} amount - Amount spent.
      * @returns {void}
