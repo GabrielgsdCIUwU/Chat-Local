@@ -100,6 +100,8 @@ export class GuildService {
      * @returns {Promise<string>}
      */
     async inviteMember(inviterName, targetName) {
+        this.#purgeExpiredInvites()
+
         const guilds = await this.guildRepository.getAll();
         const guild = guilds.find(g => g.members.some(m => m.name === inviterName));
         if (!guild) throw new Error("No estás en ningún gremio.");
@@ -134,6 +136,8 @@ export class GuildService {
      * @throws If invite expired, already has a guild o guild doesn't exist
      */
     async resolveInvite(targetName, accept) {
+        this.#purgeExpiredInvites();
+
         const invite = this.pendingInvites.get(targetName);
         if (!invite || Date.now() > invite.expiresAt) {
             this.pendingInvites.delete(targetName);
@@ -199,5 +203,18 @@ export class GuildService {
     async getUserGuildLevel(username) {
         const guild = await this.getUserGuild(username);
         return guild ? guild.level : 0;
+    }
+
+    /**
+     * Passive garbage collector running opportunistically to clear expired memory references.
+     * @returns {void}
+     */
+    #purgeExpiredInvites() {
+        const now = Date.now();
+        for (const [targetUser, invite] of this.pendingInvites.entries()) {
+            if (now > invite.expiresAt) {
+                this.pendingInvites.delete(targetUser);
+            }
+        }
     }
 }
